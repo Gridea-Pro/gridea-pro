@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gridea Pro</title>
+    <script type="module" crossorigin src="/assets/index-YNlxz2j-.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-DYG_r-Uq.js">
+    <link rel="modulepreload" crossorigin href="/assets/editor-CNoDiSSW.js">
+    <link rel="modulepreload" crossorigin href="/assets/markdown-CQJcHIWH.js">
+    <link rel="stylesheet" crossorigin href="/assets/editor-DctiUxIZ.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-DWtd1eAk.css">
+  </head>
+  <body>
+    <div id="global-error-display" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; color:red; z-index:999999; padding:20px; overflow:auto; white-space:pre-wrap; font-family:monospace;"></div>
+    <script>
+      window.addEventListener('error', function(event) {
+        var display = document.getElementById('global-error-display');
+        display.style.display = 'block';
+        display.innerText += 'Global Error: ' + (event.error ? event.error.stack : event.message) + '\n\n';
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        var display = document.getElementById('global-error-display');
+        display.style.display = 'block';
+        display.innerText += 'Unhandled Promise Rejection: ' + event.reason + '\n\n';
+      });
+    </script>
+    <div id="app"></div>
+  </body>
+  </html>
+

@@ -1,0 +1,21 @@
+{
+    "name": "Gridea Pro",
+    "outputfilename": "Gridea Pro",
+    "frontend:dir": "./frontend",
+    "frontend:install": "npm install --force",
+    "frontend:build": "npm run build",
+    "frontend:dev:watcher": "npm run dev",
+    "frontend:dev:serverUrl": "http://localhost:5173",
+    "wailsjsdir": "./frontend/wailsjs",
+    "author": {
+        "name": "Eliauk",
+        "email": "tespera@foxmail.com"
+    },
+    "info": {
+        "companyName": "Eliauk Inc.",
+        "productName": "Gridea Pro",
+        "productVersion": "1.0.0",
+        "copyright": "Copyright © 2026 Gridea Pro",
+        "comments": "简单而强大的静态博客写作客户端"
+    }
+}

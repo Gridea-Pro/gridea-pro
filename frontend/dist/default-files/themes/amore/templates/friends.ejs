@@ -1,0 +1,45 @@
+<%- include('./includes/head', { siteTitle: '友链 | ' + themeConfig.siteName }) %>
+
+    <body>
+
+        <%- include('./includes/header') %>
+
+            <article class="mod-post mod-post__type-post">
+
+                <header>
+                    <h1 class="mod-post__title">
+                        友链
+                    </h1>
+                </header>
+
+                <div class="mod-post__entry wzulli">
+
+                    <ul class="links-list">
+                        <% if (site.customConfig.friends && site.customConfig.friends.length> 0) { %>
+                            <% site.customConfig.friends.forEach(function(friend) { %>
+                                <li>
+                                    <a href="<%= friend.siteLink %>" target="_blank" title="<%= friend.description %>">
+                                        <% if (friend.avatar) { %>
+                                            <img src="<%= friend.avatar %>" alt="<%= friend.siteName %>"
+                                                style="width: 32px; height: 32px; border-radius: 50%; vertical-align: middle; margin-right: 8px;">
+                                            <% } %>
+                                                <%= friend.siteName %>
+                                    </a>
+                                </li>
+                                <% }); %>
+                                    <% } else { %>
+                                        <li>暂无友链</li>
+                                        <% } %>
+                    </ul>
+
+                </div>
+
+                <%- include('./includes/comments') %>
+
+            </article>
+
+            <%- include('./includes/footer') %>
+
+    </body>
+
+    </html>

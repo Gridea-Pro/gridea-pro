@@ -1,0 +1,134 @@
+.main {
+  max-width: 768px;
+  margin: 0 auto;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.content-container {
+  flex: 1;
+  padding: 48px 16px 32px;
+}
+
+.post-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 32px 0;
+  max-height: 200px;
+  .content {
+    flex: 1;
+    // display: flex;
+    // flex-direction: column;
+    .post-title {
+      font-size: 22px;
+      color: #0C1E29;
+      display: inline-block;
+    }
+    .post-abstract {
+      font-size: 14px;
+      margin: 16px 0 8px;
+      flex: 1;
+      color: #4E616C;
+      overflow:hidden;
+      line-height: 24px;
+      position: relative;
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+
+      // &:after {
+      //   content: '';
+      //   position: absolute; 
+      //   bottom: 0; 
+      //   right: 0;
+      //   width: 120px; 
+      //   height: 32px;
+        
+      //   /* "transparent" only works here because == rgba(0,0,0,0) */
+      //   background-image: linear-gradient(to right, transparent, white);
+      // }
+
+      strong {
+        font-weight: bolder;
+      }
+
+      a {
+        font-weight: 600;
+        background: linear-gradient(180deg,transparent 70%,rgba(101,125,225,.4) 0);
+      }
+
+      code {
+        padding: 0 3px;
+        margin: 0 2px;
+        background: rgba(195,195,195,0.41);
+        font-size: 0.9em;
+        border-radius: 2px;
+      }
+
+    }
+  }
+
+  .feature-container {
+    margin-left: 16px;
+    flex-shrink: 0;
+    width: 240px;
+    height: 135px;
+    position: relative;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+.post-info {
+  color: var(--c-base-purple);
+  font-size: 12px;
+  span {
+    margin-right: 16px;
+  }
+  .icon {
+    font-size: 12px;
+    margin-right: 4px;
+  }
+  a {
+    color: var(--c-base-purple);
+  }
+}
+
+@media (max-width: 600px) {
+  .post-item {
+    flex-direction: column;
+    height: auto;
+    padding: 24px 0;
+    max-height: none;
+    .content {
+      order: 2;
+      display: block;
+      .post-title {
+        margin-top: 16px;
+        font-size: 18px;
+      }
+    }
+    .feature-container {
+      margin-left: 0;
+      order: 1;
+      height: 0;
+      width: 100%;
+      padding-top: 56%;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+      // .feature {
+      //   width: 100%;
+      //   height: 100%;
+      //   position: absolute;
+      //   top: 0;
+      //   left: 0;
+      //   right: 0;
+      //   bottom: 0;
+      // }
+    }
+  }
+}

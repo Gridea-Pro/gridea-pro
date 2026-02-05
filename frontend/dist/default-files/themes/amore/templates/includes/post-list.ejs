@@ -1,0 +1,16 @@
+<article class="mod-archive">
+    <div class="mod-archive__item">
+        <ul class="mod-archive__list">
+            <% posts.forEach(function(post) { %>
+            <li class="post-item">
+                <time class="mod-archive__time" datetime="<%= post.dateFormat %>"><%= post.dateFormat %></time>
+                <span>&nbsp;&nbsp;&nbsp;</span>
+                <a href="<%= post.link %>">
+                    <% if (post.isTop) { %>[置顶] <% } %>
+                    <%= post.title %>
+                </a>
+            </li>
+            <% }); %>
+        </ul>
+    </div>
+</article>

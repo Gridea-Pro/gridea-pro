@@ -1,0 +1,53 @@
+{{define "header"}}
+<div class="site-header">
+    <a href="/">
+        <img class="avatar" src="/images/avatar.png?v={{.Site.Utils.Now}}" alt="">
+    </a>
+    <h1 class="site-title">
+        {{.ThemeConfig.SiteName}}
+    </h1>
+    <p class="site-description">
+        {{.ThemeConfig.SiteDescription}}
+    </p>
+    <div class="menu-container">
+        {{range .Menus}}
+        {{if eq .OpenType "External"}}
+        <a href="{{.Link}}" class="menu" target="_blank">
+            {{.Name}}
+        </a>
+        {{else}}
+        <a href="{{.Link}}" class="menu">
+            {{.Name}}
+        </a>
+        {{end}}
+        {{end}}
+    </div>
+    <div class="social-container">
+        {{if .Site.CustomConfig.github}}
+        <a href="{{.Site.CustomConfig.github}}" target="_blank">
+            <i class="ri-github-line"></i>
+        </a>
+        {{end}}
+        {{if .Site.CustomConfig.twitter}}
+        <a href="{{.Site.CustomConfig.twitter}}" target="_blank">
+            <i class="ri-twitter-line"></i>
+        </a>
+        {{end}}
+        {{if .Site.CustomConfig.weibo}}
+        <a href="{{.Site.CustomConfig.weibo}}" target="_blank">
+            <i class="ri-weibo-line"></i>
+        </a>
+        {{end}}
+        {{if .Site.CustomConfig.zhihu}}
+        <a href="{{.Site.CustomConfig.zhihu}}" target="_blank">
+            <i class="ri-zhihu-line"></i>
+        </a>
+        {{end}}
+        {{if .Site.CustomConfig.facebook}}
+        <a href="{{.Site.CustomConfig.facebook}}" target="_blank">
+            <i class="ri-facebook-line"></i>
+        </a>
+        {{end}}
+    </div>
+</div>
+{{end}}

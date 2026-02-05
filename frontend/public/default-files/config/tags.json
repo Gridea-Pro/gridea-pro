@@ -1,0 +1,18 @@
+{
+    "tags": [
+        {
+            "id": "Gridea",
+            "name": "Gridea",
+            "slug": "gridea",
+            "used": true,
+            "color": "#eab308"
+        },
+        {
+            "id": "GrideaPro",
+            "name": "Gridea Pro",
+            "slug": "gridea-pro",
+            "used": true,
+            "color": "#22c55e"
+        }
+    ]
+}

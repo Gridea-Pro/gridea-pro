@@ -1,0 +1,29 @@
+<%- include('./includes/head', { siteTitle: (typeof post !=='undefined' ? post.title : '关于' ) + ' | ' +
+    themeConfig.siteName }) %>
+
+    <body>
+
+        <%- include('./includes/header') %>
+
+            <article class="mod-post mod-post__type-post">
+                <header>
+                    <h1 class="mod-post__title">
+                        <%= typeof post !=='undefined' ? post.title : '关于' %>
+                    </h1>
+                </header>
+
+                <div class="mod-post__entry wzulli">
+                    <%- typeof post !=='undefined' ? post.content : '' %>
+                </div>
+
+                </div>
+
+            </article>
+
+            <%- include('./includes/comments') %>
+
+                <%- include('./includes/footer') %>
+
+    </body>
+
+    </html>

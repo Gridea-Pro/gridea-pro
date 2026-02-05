@@ -1,0 +1,323 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Legacy Colors mapping */
+  --color-primary-bg: #f7f6f6;
+  --color-danger: #fa5252;
+  --color-link: #000000;
+  --color-label: #1b1b18;
+
+  /* Custom Shadows */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  /* Semantic Colors Legacy */
+  --color-body: var(--background);
+  --color-sidebar: var(--sidebar);
+  --color-text-primary: var(--foreground);
+  --color-text-secondary: var(--muted-foreground);
+
+  /* Border Colors Legacy */
+  --color-border-btn: #eaeaea;
+  --color-border-hover: #999;
+
+  /* Border Radius */
+  --radius: 0.5rem;
+  --radius-base: 6px;
+
+  /* Fonts */
+  --font-sans: "HarmonyOS_Sans_SC", "PingFang SC", "-apple-system", "SF UI Text", "Lucida Grande", "STheiti", "Microsoft YaHei", "sans-serif";
+
+  /* Spacing */
+  --spacing-sidebar: 200px;
+
+  /* Transition Duration */
+  --duration-fast: 200ms;
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+
+    to {
+      height: 0;
+    }
+  }
+}
+
+@layer base {
+
+  /* Default (Light) */
+  :root {
+    --background: #ffffff;
+    --foreground: #1b1b1b;
+
+    --card: #ffffff;
+    --card-foreground: #1b1b1b;
+
+    --popover: #ffffff;
+    --popover-foreground: #1b1b1b;
+
+    --primary: #1b1b1b;
+    --primary-foreground: #ffffff;
+
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+
+    --accent: #f1f5f9;
+    --accent-foreground: #0f172a;
+
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #1b1b18;
+
+    --radius: 0.5rem;
+
+    /* Legacy vars */
+    --bg-body: var(--background);
+    --bg-sidebar: #f8f9fa;
+    --sidebar: #f8f9fa;
+    --bg-card: var(--card);
+    --text-primary: var(--foreground);
+    --text-secondary: var(--muted-foreground);
+  }
+
+  /* Dark Mode Base */
+  .dark {
+    --background: #020817;
+    --foreground: #f8fafc;
+
+    --card: #020817;
+    --card-foreground: #f8fafc;
+
+    --popover: #020817;
+    --popover-foreground: #f8fafc;
+
+    --primary: #1b1b18;
+    --primary-foreground: #0f172a;
+
+    --secondary: #1e293b;
+    --secondary-foreground: #f8fafc;
+
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+
+    --accent: #1e293b;
+    --accent-foreground: #f8fafc;
+
+    --destructive: #7f1d1d;
+    --destructive-foreground: #f8fafc;
+
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #1b1b18;
+
+    /* Legacy vars */
+    --bg-body: var(--background);
+    --bg-sidebar: #1f1f1f;
+    --sidebar: #1f1f1f;
+    --bg-card: var(--card);
+    --text-primary: var(--foreground);
+    --text-secondary: var(--muted-foreground);
+  }
+
+  /* Geek Blue */
+  [data-theme='blue'] {
+    --primary: #1677ff;
+    --ring: #1677ff;
+  }
+
+  html.dark [data-theme='blue'] {
+    --primary: #3b82f6;
+    --ring: #3b82f6;
+  }
+
+  /* Warm (Claude Style) */
+  [data-theme='warm'] {
+    --background: #F5F2E8;
+    --foreground: #3C3836;
+    --card: #ffffff;
+    --card-foreground: #3C3836;
+    --popover: #F5F2E8;
+    --popover-foreground: #3C3836;
+    --primary: #D47B4A;
+    --primary-foreground: #ffffff;
+    --secondary: #EAE6D9;
+    --secondary-foreground: #3C3836;
+    --muted: #EAE6D9;
+    --muted-foreground: #6B665F;
+    --border: #EAE6D9;
+    --input: #EAE6D9;
+    --ring: #D47B4A;
+
+    --bg-sidebar: #EAE6D9;
+    --sidebar: #EAE6D9;
+  }
+
+  html.dark [data-theme='warm'] {
+    --background: #2D2A26;
+    --foreground: #D5C4A1;
+    --card: #36332E;
+    --card-foreground: #D5C4A1;
+    --popover: #2D2A26;
+    --popover-foreground: #D5C4A1;
+    --primary: #D47B4A;
+    --secondary: #36332E;
+    --secondary-foreground: #D5C4A1;
+    --bg-sidebar: #36332E;
+    --sidebar: #36332E;
+    --muted: #36332E;
+    --muted-foreground: #A89984;
+    --border: #36332E;
+  }
+
+  /* Sakura (Pink) */
+  [data-theme='sakura'] {
+    --background: #FFF0F5;
+    --foreground: #5C3A45;
+    --card: #ffffff;
+    --card-foreground: #5C3A45;
+    --popover: #FFF0F5;
+    --popover-foreground: #5C3A45;
+    --primary: #ff8eb7;
+    --primary-foreground: #ffffff;
+    --secondary: #FFE4E1;
+    --secondary-foreground: #5C3A45;
+    --muted: #FFE4E1;
+    --muted-foreground: #9E7E88;
+    --border: #FFE4E1;
+    --ring: #ff8eb7;
+
+    --bg-sidebar: #FFE4E1;
+    --sidebar: #FFE4E1;
+  }
+
+  html.dark [data-theme='sakura'] {
+    --background: #2B1D22;
+    --foreground: #FADADD;
+    --card: #36242A;
+    --card-foreground: #FADADD;
+    --popover: #2B1D22;
+    --popover-foreground: #FADADD;
+    --primary: #ff8eb7;
+    --secondary: #36242A;
+    --secondary-foreground: #FADADD;
+    --bg-sidebar: #36242A;
+    --sidebar: #36242A;
+    --muted: #36242A;
+    --muted-foreground: #C7A6AF;
+    --border: #36242A;
+  }
+
+  /* Twilight (Purple) */
+  [data-theme='twilight'] {
+    --background: #F3F0F9;
+    --foreground: #3A2E56;
+    --card: #ffffff;
+    --card-foreground: #3A2E56;
+    --popover: #F3F0F9;
+    --popover-foreground: #3A2E56;
+    --primary: #8b39ff;
+    --primary-foreground: #ffffff;
+    --secondary: #E6E0F5;
+    --secondary-foreground: #3A2E56;
+    --muted: #E6E0F5;
+    --muted-foreground: #70668F;
+    --border: #E6E0F5;
+    --ring: #8b39ff;
+
+    --bg-sidebar: #E6E0F5;
+    --sidebar: #E6E0F5;
+  }
+
+  html.dark [data-theme='twilight'] {
+    --background: #1E1B2E;
+    --foreground: #E0D4FC;
+    --card: #262238;
+    --card-foreground: #E0D4FC;
+    --popover: #1E1B2E;
+    --popover-foreground: #E0D4FC;
+    --primary: #9254DE;
+    --secondary: #262238;
+    --secondary-foreground: #E0D4FC;
+    --bg-sidebar: #262238;
+    --sidebar: #262238;
+    --muted: #262238;
+    --muted-foreground: #9B90C2;
+    --border: #262238;
+  }
+
+  *,
+  ::after,
+  ::before {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
+
+@layer utilities {
+  .transition {
+    transition: all 0.1s ease-in !important;
+  }
+
+  .translate-r-2px {
+    transform: translateX(2px) !important;
+  }
+
+  .transition-fast {
+    transition: all 0.2s ease !important;
+  }
+
+  @media (hover: hover) {
+    .hover\:translate-r-2px:hover {
+      transform: translateX(2px) !important;
+    }
+
+    .hover\:transition-fast:hover {
+      transition: all 0.2s ease !important;
+    }
+  }
+}

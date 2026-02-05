@@ -1,0 +1,21 @@
+{{define "disqus"}}
+<link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+    var options = {
+        shortname: '{{.CommentSetting.DisqusShortname}}',
+        apikey: '{{.CommentSetting.DisqusApiKey}}',
+    }
+    var disqusApi = '{{.CommentSetting.DisqusApi}}';
+    if (disqusApi) {
+        options.api = disqusApi;
+    }
+
+    var dsqjs = new DisqusJS(options)
+
+</script>
+{{end}}

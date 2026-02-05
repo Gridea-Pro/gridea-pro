@@ -1,0 +1,17 @@
+<% let years = []; posts.forEach((item) => { const year = item.date.substring(0, 4); if (!years.includes(year)) { years.push(year); } }); %>
+
+<div class="archives-container">
+  <% years.forEach(function(year) { %>
+    <h2 class="year"><%- year %></h2>
+    <% posts.forEach(function(post) { %>
+      <%if (post.date.indexOf(year) !== -1) { %>
+        <a href="<%= post.link %>" class="post">
+          <h2 class="post-title">
+            <%= post.title %>
+          </h2>
+          <div class="time"><%= post.dateFormat %></div>
+        </a>
+      <% } %>
+    <% }); %>
+  <% }); %>
+</div>

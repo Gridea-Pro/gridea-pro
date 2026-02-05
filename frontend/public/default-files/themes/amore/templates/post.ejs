@@ -1,0 +1,58 @@
+<%- include('./includes/head', { siteTitle: post.title + ' | ' + themeConfig.siteName }) %>
+
+    <body>
+
+        <%- include('./includes/header') %>
+
+            <article class="mod-post mod-post__type-post">
+                <header>
+                    <h1 class="mod-post__title">
+                        <%= post.title %>
+                    </h1>
+                </header>
+
+                <div class="mod-post__meta">
+                    <time datetime="<%= post.dateFormat %>">
+                        <%= post.dateFormat %>
+                    </time> • <%= post.stats.text %> •
+                        <% post.tags.forEach(function(tag, index) { %>
+                            <a href="<%= tag.link %>">
+                                <%= tag.name %>
+                            </a>
+                            <% if (index < post.tags.length - 1) { %> · <% } %>
+                                    <% }); %>
+                </div>
+
+
+
+                <div class="mod-post__entry wzulli">
+                    <% if (themeConfig.showFeatureImage && post.feature) { %> <img src="<%= post.feature %>" class="img"
+                            alt="<%= post.title %>" />
+                        <% } %>
+                            <%- post.content %>
+                </div>
+
+            </article>
+
+
+            <% if (post.link.indexOf('about')===-1) { %>
+                <%- include('./includes/post-tags') %>
+                    <% } %>
+
+                        <div class="mod-post__poster">
+                        </div>
+
+                        </div>
+
+                        <% if (post.link.indexOf('about')===-1) { %>
+                            <%- include('./includes/post-pagination') %>
+                                <% } %>
+
+                                    <%- include('./includes/comments') %>
+                                        <%- include('./includes/reading-progress') %>
+                                            <%- include('./includes/footer') %>
+
+
+    </body>
+
+    </html>

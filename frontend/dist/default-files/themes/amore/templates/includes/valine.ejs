@@ -1,0 +1,79 @@
+<% if (typeof commentSetting !=='undefined' && commentSetting.showComment && commentSetting.commentPlatform==='Valine' )
+    { %>
+    <div id="comments" class="cf">
+        <div class="comments-header">留言</div>
+        <div id="vcomments"></div>
+    </div>
+
+    <style>
+        /* Valine Author Badge Style - Injected directly to ensure priority */
+        #vcomments .vtag.vmaster {
+            color: #FFD700 !important;
+            font-size: 12px !important;
+            border-radius: 8px !important;
+            padding: 1px 6px !important;
+            display: inline-block !important;
+            vertical-align: middle !important;
+            font-weight: normal !important;
+            border: none !important;
+            line-height: 1.5 !important;
+        }
+
+        /* Dark mode compatibility */
+        body.dark-theme #vcomments .vtag.vmaster {
+            color: #FFD700 !important;
+        }
+    </style>
+
+    <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+    <script>
+        var valineOptions = {
+            el: '#vcomments',
+            appId: '<%= commentSetting.appId %>',
+            appKey: '<%= commentSetting.appKey %>',
+            serverURLs: '<%= commentSetting.serverURLs %>',
+            placeholder: '在这里输入内容...',
+            avatar: 'mp',
+            pageSize: 10,
+            visitor: true
+        };
+
+        new Valine(valineOptions);
+
+        // Custom Script to add "Blogger" badge
+        (function () {
+            // =========================================================
+            // 请在此处配置博主的昵称，用于显示「博主」标识
+            // Modify this value to your nickname
+            const MASTER_NICK = "Amore";
+            // =========================================================
+
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.addedNodes.length > 0) {
+                        const vcards = document.querySelectorAll('#vcomments .vcard');
+                        vcards.forEach(function (card) {
+                            const nickElem = card.querySelector('.vnick');
+                            if (nickElem) {
+                                const nickName = nickElem.innerText.trim();
+                                // Check if it's the master and badge doesn't exist yet
+                                if (nickName === MASTER_NICK && !card.querySelector('.vtag.vmaster')) {
+                                    const tag = document.createElement('span');
+                                    tag.className = 'vtag vmaster';
+                                    tag.innerText = '「博主」';
+                                    // Insert after nickname
+                                    nickElem.parentNode.insertBefore(tag, nickElem.nextSibling);
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+
+            const vcomments = document.getElementById('vcomments');
+            if (vcomments) {
+                observer.observe(vcomments, { childList: true, subtree: true });
+            }
+        })();
+    </script>
+    <% } %>

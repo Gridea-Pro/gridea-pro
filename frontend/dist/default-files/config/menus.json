@@ -1,0 +1,34 @@
+{
+    "menus": [
+        {
+            "name": "首页",
+            "link": "/",
+            "openType": "Internal"
+        },
+        {
+            "name": "博客",
+            "link": "/post",
+            "openType": "Internal"
+        },
+        {
+            "name": "归档",
+            "link": "/archives",
+            "openType": "Internal"
+        },
+        {
+            "name": "标签",
+            "link": "/tags",
+            "openType": "Internal"
+        },
+        {
+            "name": "友链",
+            "link": "/friends",
+            "openType": "Internal"
+        },
+        {
+            "name": "关于",
+            "link": "/post/about",
+            "openType": "Internal"
+        }
+    ]
+}

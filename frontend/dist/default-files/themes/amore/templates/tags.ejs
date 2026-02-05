@@ -1,0 +1,42 @@
+<%- include('./includes/head', { siteTitle: '标签 | ' + themeConfig.siteName }) %>
+
+<body>
+
+<%- include('./includes/header') %>
+
+<article class="mod-post mod-post__type-post">
+
+    <header>
+        <h1 class="mod-post__title">
+            标签
+        </h1>
+    </header>
+
+    <div class="mod-post__entry wzulli">
+
+        <div class="tags">
+            <% if (tags.length > 0) { %>
+                <ul class="tags-list">
+                    <% tags.forEach(function(tag) { %>
+                        <li>
+                            <a href="<%= tag.link %>" rel="tag" class="size-10" title="<%= tag.count %> 个话题">
+                                # <%= tag.name %> <span>(<%= tag.count %>)</span>
+                            </a>
+                        </li>
+                    <% }); %>
+                </ul>
+            <% } else { %>
+                <li>
+                    没有任何标签
+                </li>
+            <% } %>
+        </div>
+
+    </div>
+
+</article>
+
+<%- include('./includes/footer') %>
+
+</body>
+</html>

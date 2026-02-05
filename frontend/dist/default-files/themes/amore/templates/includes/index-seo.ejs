@@ -1,0 +1,30 @@
+<% if (posts && posts.length > 0) { %>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "name": "<%= themeConfig.siteName %>",
+      "description": "<%= themeConfig.siteDescription %>",
+      "keywords": "<%= site.customConfig.keywords %>",
+      "url": "<%= themeConfig.domain %>"
+    }
+    <% posts.slice(0, 10).forEach(function(post) { %>
+    ,{
+      "@type": "BlogPosting",
+      "title": "<%= post.title %>",
+      "description": "<%= post.abstract.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').replace(/"/g, '\\"').substr(0, 180) %>...",
+      "keywords": "<%= post.tags.map(function(tag) { return tag.name; }).join(', ') %>",
+      "url": "<%= post.link %>",
+      <% if (post.feature) { %>
+      "image": "<%= post.feature %>",
+      <% } %>
+      "published": "<%= post.date %>",
+      "author": "<%= post.author %>"
+    }
+    <% }); %>
+  ]
+}
+</script>
+<% } %>

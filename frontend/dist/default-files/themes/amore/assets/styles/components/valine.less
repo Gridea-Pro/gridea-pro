@@ -1,0 +1,179 @@
+
+
+/* ==========================================================================
+   Valine Comment System Overrides
+   ========================================================================== */
+
+#vcomments {
+  .comments-header {
+    margin-bottom: 20px;
+    font-size: 18px !important;
+    font-weight: 500;
+    color: #4b5563;
+  }
+  .vlist {
+    .vcard {
+      padding-top: 20px;
+      
+      .vimg {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-top: 5px; /* Fix alignment */
+        border: 1px solid @border-color;
+        padding: 2px;
+        float: left;
+      }
+
+      .vh {
+        border-bottom: 1px dashed rgba(119, 119, 119, 0.47);
+        padding-left: 55px; /* Space for avatar + gap */
+        
+        .vhead {
+          display: inline-block;
+          margin-bottom: 5px;
+          margin-right: 10px;
+          
+          /* Nickname */
+          .vnick {
+            font-size: 14px;
+            font-weight: bold;
+            color: @accent-color;
+            line-height: 20px;
+            vertical-align: middle;
+            
+            &:hover {
+              color: @link-hover-color;
+            }
+          }
+
+          /* System info - optional */
+          .vsys {
+            display: none; 
+          }
+        }
+
+        /* Time - Move to be inline with Nickname */
+        .vmeta {
+          display: inline-block;
+          margin-bottom: 0;
+          padding-top: 0;
+          vertical-align: middle;
+          
+          .vtime {
+            font-size: 12px;
+            color: @meta-color;
+          }
+          
+          .vat {
+            float: right; /* Reply button */
+            color: @accent-color;
+            font-size: 12px;
+            cursor: pointer;
+          }
+        }
+        
+        /* Content */
+        .vcontent {
+          margin-bottom: 10px;
+          color: #444; 
+          font-size: 14px;
+          line-height: 1.8;
+          padding-top: 5px;
+          clear: both; /* Ensure content is below floated head/meta if they wrap */
+          
+          p {
+            margin: 5px 0;
+          }
+          
+          .dark-theme & {
+            color: #dcdcdc !important; 
+          }
+        }
+      }
+      
+      /* Author Badge */
+      .vtag.vmaster {
+        background: #FFD700 !important; /* Gold */
+        color: #fff !important; 
+        font-size: 10px !important;
+        border-radius: 8px;
+        padding: 1px 5px !important;
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 5px;
+        font-weight: normal;
+        border: none !important;
+        line-height: 1.5;
+        
+        /* Dark mode compatibility */
+        .dark-theme & {
+            color: #333 !important;
+        }
+      }
+    }
+  }
+  
+  /* Input Area */
+  .vwrap {
+    border: 1px solid @border-color;
+    border-radius: 4px;
+    padding: 10px;
+    
+    .dark-theme & {
+       border-color: #444;
+       background-color: rgba(255,255,255,0.05);
+    }
+    
+    .vheader .vinput {
+      border-bottom: 1px dashed @border-color;
+      .dark-theme & {
+         color: @text-color-dark;
+         border-bottom-color: #555;
+      }
+    }
+  }
+
+  /* Submit Button - Restore Old Style */
+  .vbtn {
+    border: none !important;
+    background: none !important;
+    color: #333 !important;
+    font-size: 14px !important;
+    letter-spacing: 0.2rem;
+    padding: 5px 15px !important;
+    cursor: pointer;
+    font-weight: bold;
+    min-width: auto;
+    
+    &:hover {
+      color: @accent-color !important;
+      background: none !important;
+      border: none !important;
+    }
+    
+    .dark-theme & {
+       color: @text-color-dark !important;
+       &:hover {
+         color: @accent-color !important;
+       }
+    }
+  }
+  
+  /* Dark mode global adjustments for Valine */
+  .dark-theme & {
+     .vlist .vcard .vhead .vnick {
+       color: @text-color-dark;
+       &:hover { color: @accent-color; }
+     }
+     .vlist .vcard .vh {
+       border-bottom-color: #444;
+     }
+     .vlist .vcard .vcontent {
+       color: #ccc !important;
+     }
+     p {
+       color: #ccc !important;
+     }
+  }
+}

@@ -1,0 +1,111 @@
+<html>
+  <head>
+    <%- include('./includes/head', { siteTitle: `${post.title} | ${themeConfig.siteName}` }) %>
+    <meta name="description" content="<%- post.description %>" />
+    <meta name="keywords" content="<%- post.tags.map(tag => tag.name).join(',') %>" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <%- include('./includes/header') %>
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              <%= post.title %>
+            </h2>
+            <div class="post-info">
+              <span>
+                <%= post.dateFormat %>
+              </span>
+              <span>
+                <%= post.stats.text %>
+              </span>
+              <% post.tags.forEach(function(tag) { %>
+                <a href="<%= tag.link %>" class="post-tag">
+                  # <%= tag.name %>
+                </a>
+              <% }); %>
+            </div>
+            <% if (themeConfig.showFeatureImage && post.feature) { %>
+              <img class="post-feature-image" src="<%= post.feature %>" alt="">
+            <% } %>
+            <div class="post-content-wrapper">
+              <div class="post-content" v-pre>
+                <%- post.content %>
+              </div>
+              <div class="toc-container">
+                <%- post.toc %>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <% if (post.nextPost && !post.hideInList) { %>
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="<%= post.nextPost.link %>">
+              <h3 class="post-title">
+                <%= post.nextPost.title %>
+              </h3>
+            </a>
+          </div>
+        <% } %>
+
+        <% if (typeof commentSetting !== 'undefined' && commentSetting.showComment) { %>
+          <% if (commentSetting.commentPlatform === 'gitalk') { %>
+            <%- include('./includes/gitalk') %>
+          <% } %>
+
+          <% if (commentSetting.commentPlatform === 'disqus') { %>
+            <%- include('./includes/disqus') %>
+          <% } %>
+        <% } %>
+
+        <%- include('./includes/footer') %>
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

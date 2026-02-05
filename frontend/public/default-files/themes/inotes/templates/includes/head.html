@@ -1,0 +1,21 @@
+{{define "head"}}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{{.SiteTitle}}</title>
+<link rel="shortcut icon" href="/favicon.ico?v={{.Site.Utils.Now}}">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="{{.SiteTitle}} - Atom Feed" href="/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+{{if .Site.CustomConfig.ga}}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{.Site.CustomConfig.ga}}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  gtag('config', '{{.Site.CustomConfig.ga}}');
+</script>
+{{end}}
+{{end}}

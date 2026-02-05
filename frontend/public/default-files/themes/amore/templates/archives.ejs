@@ -1,0 +1,47 @@
+<%- include('./includes/head', { siteTitle: '归档 | ' + themeConfig.siteName }) %>
+
+<body>
+
+<%- include('./includes/header') %>
+
+<section class="section-body">
+    <header class="section-header u-textAlignCenter">
+        <h2 class="css91e91f2cb17f7a" style="text-align: center; margin-bottom: 30px;">归档</h2>
+    </header>
+<article class="mod-archive">
+
+	<div class="mod-archive__item"><div class="mod-archive__year"></div>
+
+</br>
+
+		<ul class="mod-archive__list">
+            <% posts.forEach(function(post) { %>
+			<li>
+				<time class="mod-archive__time" datetime="<%= post.dateFormat %>"><%= post.dateFormat %></time> 
+				<span>&nbsp;&nbsp;&nbsp;</span>
+      			 <a href="<%= post.link %>"><%= post.title %></a>
+      		</li>
+            <% }); %>
+				
+		</ul>
+
+		<div class="posts-nav">
+            <% if (pagination.next) { %>
+            <div style="float:right;">
+                <a href="<%= pagination.next %>" class="page-numbers current flip">下一页</a>
+            </div>
+            <% } %>
+            
+            <% if (pagination.prev) { %>
+            <a href="<%= pagination.prev %>" class="page-numbers current flip">上一页</a>
+            <% } %>
+		</div>
+
+	</div>
+</article>
+    </section>
+
+<%- include('./includes/footer') %>
+
+</body>
+</html>

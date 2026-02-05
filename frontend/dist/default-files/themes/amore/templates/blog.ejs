@@ -1,0 +1,122 @@
+<%- include('./includes/head', { siteTitle: '博客 | ' + themeConfig.siteName }) %>
+
+<body>
+
+<%- include('./includes/header') %>
+
+<article class="mod-archive">
+
+	<div class="mod-archive__item"><div class="mod-archive__year"></div>
+    
+		<ul class="mod-archive__list">
+            <% 
+                let displayPosts = [];
+                if (typeof posts !== 'undefined') {
+                    displayPosts = posts;
+                } else if (typeof site !== 'undefined' && site.posts) {
+                    displayPosts = site.posts;
+                }
+                
+                // Filter out 'about' page
+                displayPosts = displayPosts.filter(post => {
+                    const title = post.title.toLowerCase();
+                    return title !== 'about' && title !== '关于';
+                });
+
+                // Sort posts: Pinned posts first
+                displayPosts.sort((a, b) => {
+                    if (a.isTop && !b.isTop) return -1;
+                    if (!a.isTop && b.isTop) return 1;
+                    return 0;
+                });
+            %>
+            <% 
+                let perPage = 10;
+                if (typeof site.customConfig.postsPerPage !== 'undefined' && site.customConfig.postsPerPage) {
+                    perPage = parseInt(site.customConfig.postsPerPage);
+                }
+            %>
+            <% displayPosts.forEach(function(post, index) { %>
+			<li class="post-item <%= index >= perPage ? 'hide' : '' %>"><time class="mod-archive__time" datetime="<%= post.dateFormat %>"><%= post.dateFormat %></time> <span>&nbsp;&nbsp;&nbsp;</span>
+       <a href="<%= post.link %>">
+        <% if (post.isTop) { %>[置顶] <% } %>
+        <%= post.title %>
+       </a>
+      </li>
+            <% }); %>
+				</ul>
+
+		<div class="posts-nav">
+            <% if (typeof pagination !== 'undefined') { %>
+                <% if (pagination.next) { %>
+                <div style="float:right;">
+                    <a href="<%= pagination.next %>" class="page-numbers current flip">下一页</a>
+                </div>
+                <% } %>
+                
+                <% if (pagination.prev) { %>
+                <a href="<%= pagination.prev %>" class="page-numbers current flip">上一页</a>
+                <% } %>
+            <% } else { %>
+                <style> .hide { display: none; } </style>
+                <div id="pagination-config" data-per-page="<%= perPage %>" data-total-posts="<%= displayPosts.length %>" style="display: none;"></div>
+                <div class="<%= displayPosts.length <= perPage ? 'hide' : '' %>" style="float:right;" id="next-page-container">
+                    <a href="javascript:void(0);" onclick="nextPage()" class="page-numbers current flip">下一页</a>
+                </div>
+                <a href="javascript:void(0);" onclick="prevPage()" class="page-numbers current flip" id="prev-page-btn" style="display:none">上一页</a>
+                
+                <script>
+                    (function() {
+                        var config = document.getElementById('pagination-config');
+                        var currentPage = 1;
+                        var perPage = parseInt(config.getAttribute('data-per-page'));
+                        var totalPosts = parseInt(config.getAttribute('data-total-posts'));
+                        
+                        window.nextPage = function() {
+                            currentPage++;
+                            updateVisibility();
+                        }
+                        
+                        window.prevPage = function() {
+                            if (currentPage > 1) {
+                                currentPage--;
+                                updateVisibility();
+                            }
+                        }
+                        
+                        function updateVisibility() {
+                            var posts = document.querySelectorAll('.mod-archive__list li.post-item');
+                            var start = (currentPage - 1) * perPage;
+                            var end = currentPage * perPage;
+                            
+                            for (var i = 0; i < posts.length; i++) {
+                                var post = posts[i];
+                                if (i >= start && i < end) {
+                                    post.classList.remove('hide');
+                                } else {
+                                    post.classList.add('hide');
+                                }
+                            }
+                            
+                            var nextContainer = document.getElementById('next-page-container');
+                            var prevBtn = document.getElementById('prev-page-btn');
+                            
+                            if (nextContainer) {
+                                nextContainer.style.display = (end >= totalPosts) ? 'none' : 'block';
+                            }
+                            
+                            if (prevBtn) {
+                                prevBtn.style.display = (currentPage > 1) ? 'inline' : 'none';
+                            }
+                        }
+                    })();
+                </script>
+            <% } %>
+		</div>
+	</div>
+	
+</article>
+<%- include('./includes/footer') %>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+{{define "pagination"}}
+<div class="pagination-container">
+    {{if .Pagination.Prev}}
+    <a href="{{.Pagination.Prev}}" class="prev-page">上一页</a>
+    {{end}}
+    {{if .Pagination.Next}}
+    <a href="{{.Pagination.Next}}" class="next-page">下一页</a>
+    {{end}}
+</div>
+{{end}}

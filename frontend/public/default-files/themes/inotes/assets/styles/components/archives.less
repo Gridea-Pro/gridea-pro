@@ -1,0 +1,31 @@
+.archives-container {
+  padding: 32px;
+  flex: 1;
+  .year {
+    font-size: 1.375rem;
+    font-weight: bold;
+    margin: 24px 0 16px;
+    color: @oc-gray-6;
+    padding: 0 24px;
+  }
+  .post {
+    padding: 16px 24px;
+    display: block;
+    .post-title {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+    .time {
+      font-size: 0.75rem;
+      margin-top: 8px;
+      color: @oc-gray-4;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .archives-container {
+    padding: 16px;
+  }
+}

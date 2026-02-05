@@ -1,0 +1,10 @@
+dist
+dist-electron
+build
+node_modules
+wailsjs
+*.min.js
+public
+pnpm-lock.yaml
+package-lock.json
+yarn.lock

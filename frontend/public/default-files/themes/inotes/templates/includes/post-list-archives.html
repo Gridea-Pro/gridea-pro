@@ -1,0 +1,15 @@
+{{define "post-list-archives"}}
+<div class="archives-container">
+    {{range .Archives}}
+    <h2 class="year">{{.Year}}</h2>
+    {{range .Posts}}
+    <a href="{{.Link}}" class="post">
+        <h2 class="post-title">
+            {{.Title}}
+        </h2>
+        <div class="time">{{.DateFormat}}</div>
+    </a>
+    {{end}}
+    {{end}}
+</div>
+{{end}}

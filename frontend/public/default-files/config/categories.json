@@ -1,0 +1,9 @@
+{
+    "categories": [
+        {
+            "name": "默认分类",
+            "slug": "default",
+            "description": "默认分类"
+        }
+    ]
+}

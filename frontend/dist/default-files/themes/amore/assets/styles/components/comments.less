@@ -1,0 +1,688 @@
+
+/* =========================================
+   Valine Comment System Styles
+   ========================================= */
+
+/* Header Style */
+.comments-header {
+  letter-spacing: 0.2rem;
+  display: inline-block;
+  margin: 4rem 0 1rem 0;
+  font-size: 20px;
+  border-left: solid 2px #888;
+  padding-left: 15px;
+  margin-left: -10px;
+  color: #333;
+
+  .dark-theme & {
+    color: #a9a9b3;
+    border-left-color: #a9a9b3;
+  }
+}
+
+#vcomments {
+  margin-top: 20px;
+  font-family: inherit;
+
+  /* Container Reset */
+  .vwrap {
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 25px;
+  }
+
+  /* Input Fields (Name, Email, Website) */
+  .vheader .vinput {
+    padding: 10px;
+    margin-top: 11px;
+    background: none;
+    color: #555;
+    width: 32.5%;
+    font-size: 13px;
+    border: none !important;
+    border-bottom: 0.2px dashed rgba(153, 153, 153, 0.6) !important;
+    border-radius: 0;
+
+    @media (max-width: 768px) {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    &:focus,
+    &:hover {
+      border-bottom: 1px dashed @accent-color !important;
+    }
+
+    .dark-theme & {
+      color: @text-color-dark;
+      border-bottom-color: rgba(153, 153, 153, 0.3) !important;
+    }
+  }
+
+  /* Textarea (Editor) */
+  .veditor {
+    font-family: inherit;
+    letter-spacing: 0.1rem;
+    margin-top: 10px;
+    width: 100%;
+    min-height: 100px;
+    border: none !important;
+    background: none !important;
+    border-bottom: 0.2px dashed rgba(153, 153, 153, 0.6) !important;
+    resize: vertical;
+    padding: 10px 0 10px 8px;
+    color: @text-color;
+
+    &:focus,
+    &:hover {
+      border-bottom: 1px dashed @accent-color !important;
+    }
+
+    .dark-theme & {
+      color: @text-color-dark;
+      border-bottom-color: rgba(153, 153, 153, 0.3) !important;
+    }
+  }
+
+  .vcount {
+    padding: 5px;
+    font-weight: 600;
+  }
+
+  /* Submit Button - Match Amore_PHP */
+  .vcontrol .vbtn {
+    width: auto;
+    height: 28px;
+    font-size: 14px;
+    padding: 0;
+    float: right;
+    border: none;
+    background: none;
+    color: #333;
+    letter-spacing: 0.58rem;
+    cursor: pointer;
+    font-weight: normal;
+    border-radius: 0;
+    box-shadow: none;
+
+    &:hover {
+      color: #000;
+      background: none;
+      border: none;
+    }
+
+    &:active {
+      box-shadow: none;
+      background: none;
+    }
+
+    .dark-theme & {
+      color: @text-color-dark;
+      border-color: #444;
+    }
+  }
+
+  /* Comment List */
+  .vlist {
+    margin-top: 40px;
+    padding: 0;
+
+    .vcard {
+      padding-top: 20px;
+      padding-bottom: 0;
+      border: none;
+      margin-bottom: 0;
+
+      /* Avatar */
+      .vimg {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none !important;
+        margin-right: 15px;
+        /* Added gap */
+        float: left;
+        padding: 1px;
+        margin-top: 6px;
+      }
+
+      .vh {
+        overflow: hidden;
+        padding-bottom: .5em;
+        border-bottom: 0.2px dashed rgba(153, 153, 153, 0.6) !important;
+
+        .dark-theme & {
+          border-bottom: 0.2px dashed #555;
+        }
+
+        
+      .vmeta {
+        color: #555 !important;
+
+        .vat {
+          color: @accent-color !important;
+        }
+      }  
+      }
+
+      /* Head Area (Nick + Time + Badge) */
+      .vhead {
+        display: flex;
+        align-items: center;
+        padding-left: 0;
+        line-height: 1.2;
+        margin-bottom: 10px;
+
+        /* Nickname */
+        .vnick {
+          font-size: 14px;
+          color: #555;
+          font-weight: normal;
+          margin-right: 10px;
+          text-decoration: none;
+
+          &:hover {
+            color: @accent-color;
+          }
+
+          .dark-theme & {
+            color: @text-color-dark;
+          }
+        }
+
+        /* Time */
+        .vtime {
+          font-size: 12px;
+          color: #999;
+          margin-left: 0;
+
+          .dark-theme & {
+            color: #87878d;
+          }
+        }
+
+        /* Blogger Badge Style */
+        .vtag {
+          font-size: 0.6rem !important;
+          background: #FFD700 !important;
+          color: #fff !important;
+          border-radius: 12pt !important;
+          padding: 1px 4px !important;
+          margin-left: 5px;
+          line-height: 1.2;
+          transform: none !important;
+        }
+      }
+
+      /* Content Area */
+      .vcontent {
+        margin-left: 55px;
+        /* Avatar (32) + Gap (15) + extra (~8) */
+        padding-top: 0;
+        padding-bottom: 10px;
+        font-size: 14px;
+        color: @text-color;
+        border-bottom: .02rem dashed rgba(153, 153, 153, 0.6);
+        margin-bottom: 20px;
+        word-wrap: break-word;
+
+        p {
+          margin: 0;
+          color: #444 !important;
+        }
+
+        /* Dark Mode Visibility Fix */
+        .dark-theme & {
+          color: #555 !important;
+          /* Improved visibility */
+          border-bottom-color: rgba(153, 153, 153, 0.3);
+
+          p {
+            color: #555 ;
+          }
+        }
+      }
+
+      /* Quote / Nested Comments */
+      .vquote {
+        margin-left: 55px;
+        margin-top: 10px;
+        border: none;
+        padding-left: 22px;
+        border-left: 0.2px dashed rgba(153, 153, 153, 0.6);
+
+        .dark-theme & {
+          border-left-color: rgba(153, 153, 153, 0.3);
+        }
+      }
+    }
+  }
+
+
+#comments {
+  font-size: 0.8rem;
+
+  a {
+    border-bottom: none;
+    font-size: 0.8rem;
+  }
+
+  .comment-content a {
+    border-bottom: 1px solid #ddd
+  }
+
+  .widget-title {
+    color: #6E7173;
+    line-height: 2.7;
+    margin-top: 0;
+    font-size: 16px;
+    border-bottom: 0px solid #ddd;
+    display: block;
+    margin: 0;
+    padding-bottom: 0px
+  }
+}
+
+.comment-date {
+  margin-left: 15px;
+  padding-bottom: 10px;
+  color: #555;
+  font-size: 0.8rem;
+  display: inline;
+}
+
+.comment-main {
+  margin-left: 22px;
+  font-size: 0.9rem;
+  border-bottom: .02rem dashed #9999;
+  word-wrap: break-word;
+}
+
+.comment-meta {
+  font-size: 0.8rem;
+  margin-top: 22px;
+  margin-bottom: 10px;
+
+  a {
+    color: #999;
+    font-size: 0.8rem
+  }
+}
+
+.post-content a,
+#comments .comment-content a {
+  border-bottom: 1px solid #ddd
+}
+
+.post-meta a:hover,
+.post-content a:hover,
+.widget a:hover {
+  border-bottom-color: transparent
+}
+
+.post-content,
+.comment-content {
+  pre code {
+    padding: 1.5em 2em
+  }
+
+  p code {
+    display: inline;
+    margin: 0 5px;
+    padding: 3px 5px;
+    border: 1px solid #ddd
+  }
+}
+
+.comment-list {
+  margin-top: 10px;
+
+  &,
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0
+  }
+
+  li {
+    padding: 0
+  }
+
+  .comment-reply {
+    font-size: 0.8rem;
+    float: right;
+  }
+
+  .respond {
+    margin: 15px 0;
+    border-top: 1px solid #ddd
+  }
+}
+
+.comments-have {
+  font-weight: 500;
+  letter-spacing: 0.2rem;
+  display: inline-block;
+  margin-top: 5rem;
+  font-size: 15px;
+  border-bottom: solid 1px #888;
+  padding-bottom: 10px;
+}
+
+.page-navigator {
+  list-style: none;
+  text-align: center;
+  margin-top: 40px;
+  font-size: 12px;
+  margin-bottom: -40px;
+
+  li {
+    color: #000;
+    display: inline;
+    padding: 0 15px;
+  }
+
+  a {
+    padding: 1px;
+
+    &:hover {
+      color: #444;
+      border-bottom: 1px solid #444;
+    }
+  }
+
+  .current a {
+    color: #444;
+    border-bottom: 1px solid #444
+  }
+}
+
+.comments-header {
+  letter-spacing: 0.2rem;
+  display: inline-block;
+  margin: 4rem 0 1rem 0;
+  font-size: 20px;
+  border-left: solid 2px #888;
+  padding-left: 15px;
+  margin-left: -10px;
+}
+
+.comment-author {
+  display: inline-block;
+  padding-left: 22px;
+  border-left: 2px solid @accent-color;
+
+  .avatar {
+    float: left;
+    margin: 6px 7px 0 0;
+    border-radius: 50px;
+    width: 32px;
+    padding: 1px
+  }
+
+  cite {
+    font-style: normal;
+    line-height: 1.2
+  }
+}
+
+.comment-by-author cite.fn a:after {
+  content: "「博主」";
+  margin-left: .375rem;
+  font-size: 0.6rem !important;
+  color: @bg-color;
+  background: #FFD700;
+  border-radius: 12pt;
+  padding: .0625rem;
+}
+
+.comment-awaiting-moderation {
+  font-style: normal;
+  float: right;
+  margin-top: -20px;
+  color: @meta-color
+}
+
+.comment-body .respond {
+  border: none;
+  margin: 0 0 25px
+}
+
+.comment-children {
+  margin-top: 22px;
+  padding-left: 22px;
+}
+
+.respond .cancel-comment-reply {
+  margin-top: 25px;
+  font-size: 13px;
+  letter-spacing: 0.1rem;
+  font-weight: 100;
+}
+
+#comment-form {
+  padding-top: 5px;
+
+  label {
+    display: block;
+    color: #888;
+    position: relative;
+    margin: 1px 1px
+  }
+
+  input {
+    padding: 20px;
+    margin-top: 11px;
+    padding-left: 10px;
+    background: none;
+    color: #555;
+    width: 32.5%;
+    height: 30px;
+    font-size: 13px;
+    border: none;
+    border-bottom: 0.2px dashed #9999;
+
+    &:hover {
+      border: none;
+      border-bottom: 1px dashed @accent-color !important;
+    }
+  }
+
+  textarea {
+    font-family: "Microsoft JhengHei", "Hiragino Sans GB", "Heiti SC", "WenQuanYi Micro Hei", sans-serif;
+    letter-spacing: 0.1rem;
+    margin-top: 10px;
+    width: 100%;
+    height: 100px;
+    border: none;
+    background: none;
+    border-bottom: 0.2px dashed #9999;
+
+    &:hover {
+      border: none;
+      border-bottom: 1px dashed @accent-color !important;
+    }
+  }
+}
+
+button.submit {
+  width: auto;
+  height: 28px;
+  font-size: 14px;
+  padding: 0;
+  float: right;
+  border: none;
+  background: none;
+  color: #333;
+  letter-spacing: 0.58rem;
+  cursor: pointer;
+
+  .dark-theme & {
+    color: @text-color-dark;
+  }
+}
+
+textarea {
+  overflow: visible;
+  padding-left: 8px;
+  vertical-align: top;
+  width: 100%;
+
+  .dark-theme & {
+    color: @text-color-dark;
+  }
+}
+
+.col2 p,
+.col1 p {
+  margin: 10px 0
+}
+
+.col2 input {
+  width: 100%
+}
+
+.col1 {
+  width: 100%;
+  position: relative;
+  background-position: 0 0
+}
+
+.col2 {
+  max-width: 400px;
+  position: relative;
+  background-position: right top
+}
+
+.widget-title {
+  font-size: 15px;
+  margin: 15px 26px 0;
+  padding-bottom: 10px;
+  font-weight: normal
+}
+
+.widget {
+  margin-bottom: 30px;
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      line-height: 1.72
+    }
+  }
+}
+
+.widget-list {
+  list-style: none;
+  padding: 0;
+  margin: 50px 0 0 -1px;
+
+  li {
+    margin: 0;
+    line-height: 1.5;
+
+    span {
+      text-transform: uppercase;
+      color: #ccc
+    }
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 13px;
+
+    a {
+      display: block;
+      margin: 0;
+      line-height: 1.7;
+      padding: .4em 25px .4em 26px;
+      font-weight: normal;
+      color: #ccc;
+
+      &.active,
+      &.active:hover,
+      &:hover {
+        background-color: #666;
+        color: @bg-color;
+        text-decoration: none
+      }
+    }
+  }
+
+  a:hover span {
+    color: @bg-color
+  }
+}
+
+.widget-list2 {
+  margin: 0
+}
+
+.date-month {
+  font-size: 12px;
+  margin-right: 10px;
+  display: inline-block;
+  width: 3em
+}
+
+#response {
+  margin-bottom: 1em
+}
+
+.error-page {
+  margin-top: 100px;
+  margin-bottom: 100px
+}
+
+.comment-content {
+  letter-spacing: 0.1rem;
+  line-height: 2.0;
+  word-wrap: break-word;
+  padding: 10px 40px 10px 0;
+  font-size: 14px;
+
+  h2 {
+    font-size: 1.28571em
+  }
+
+  img {
+    max-width: 100%
+  }
+
+  hr {
+    margin: 2.4em auto;
+    border: 1px solid #ddd;
+    border-width: 1px 0 0 0;
+    position: relative
+  }
+}
+
+.aligncenter,
+div.aligncenter {
+  display: block;
+  margin-left: auto;
+  margin-right: auto
+}
+
+.alignleft {
+  float: left
+}
+
+.alignright {
+  float: right
+}
+
+img.alignleft {
+  margin: 5px 15px 0 0
+}
+
+  /* Hide Unwanted Elements */
+  .vsys,
+  .vpower,
+  .vicon {
+    display: none !important;
+  }
+}

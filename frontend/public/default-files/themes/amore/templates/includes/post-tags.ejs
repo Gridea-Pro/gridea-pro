@@ -1,0 +1,8 @@
+
+	<div class="mod-post__foot">
+	 文章标签: 
+     <% post.tags.forEach(function(tag, index) { %>
+        <a href="<%= tag.link %>"><%= tag.name %></a><% if (index < post.tags.length - 1) { %>, <% } %>
+     <% }); %>
+     </br>
+	</div>

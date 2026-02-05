@@ -1,0 +1,24 @@
+<html>
+
+<head>
+    {{template "head" .}}
+    <meta name="description" content="{{or .Site.CustomConfig.metaDescription .ThemeConfig.SiteDescription}}" />
+</head>
+
+<body>
+    <div class="main">
+        <div class="main-content">
+            {{template "header" .}}
+            <div class="current-tag-container">
+                <h2 class="title">
+                    标签：# {{.Tag.Name}}
+                </h2>
+            </div>
+            {{template "post-list" .}}
+            {{template "pagination" .}}
+            {{template "footer" .}}
+        </div>
+    </div>
+</body>
+
+</html>

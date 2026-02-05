@@ -1,0 +1,11 @@
+<% if (typeof commentSetting !=='undefined' && commentSetting.showComment) { %>
+    <% if (commentSetting.commentPlatform==='Waline' ) { %>
+        <%- include('./waline') %>
+            <% } else if (commentSetting.commentPlatform==='Valine' ) { %>
+                <%- include('./valine') %>
+                    <% } else if (commentSetting.commentPlatform==='gitalk' ) { %>
+                        <%- include('./gitalk') %>
+                            <% } else if (commentSetting.commentPlatform==='disqus' ) { %>
+                                <%- include('./disqus') %>
+                                    <% } %>
+                                        <% } %>

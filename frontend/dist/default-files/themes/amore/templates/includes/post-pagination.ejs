@@ -1,0 +1,23 @@
+
+<br>
+<% if (post.prevPost) { %>
+<div style="margin-bottom: 10px;">
+    上一篇 : <a href="<%= post.prevPost.link %>"><%= post.prevPost.title %></a>
+</div>
+<% } else { %>
+<div style="margin-bottom: 10px;">
+    上一篇 : 已经是第一篇文章了~
+</div>
+<% } %>
+
+<% if (post.nextPost) { %>
+<div style="margin-bottom: 40px;">
+    下一篇 : <a href="<%= post.nextPost.link %>"><%= post.nextPost.title %></a>
+</div>
+<% } else { %>
+<div>
+    下一篇 : 没有下一篇文章了~
+</div>
+<% } %>
+
+</div>	

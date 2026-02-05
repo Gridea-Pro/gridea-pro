@@ -1,0 +1,43 @@
+/* Global Overrides for Theme Adaptation */
+
+/* Background Variables */
+:root {
+  --bg-input: #FAFAFA;
+  --border-input: #EAEAEA;
+  --bg-table-hover: #fafafa;
+  --bg-modal: #ffffff;
+  --bg-popover: #ffffff;
+  --bg-notification: #1b1b18;
+  --text-notification: #fafafa;
+  --bg-tooltip: rgba(0, 0, 0, 0.75);
+}
+
+.dark {
+  --bg-input: rgba(255, 255, 255, 0.05);
+  --border-input: #444;
+  --bg-table-hover: rgba(255, 255, 255, 0.05);
+  --bg-modal: #1f1f1f;
+  --bg-popover: #1f1f1f;
+  --bg-notification: #333;
+  --text-notification: #eee;
+  --bg-tooltip: rgba(255, 255, 255, 0.9);
+}
+
+/* Base Styles */
+body {
+  font-family: "HarmonyOS_Sans_SC", Gilroy, "PingFang SC", "PingFang TC", "PingFang HK", -apple-system, BlinkMacSystemFont, sans-serif !important;
+  background: var(--bg-body) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Scrollbar (Webkit) - Refine */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-secondary); /* Use secondary text color for scrollbar, usually grey */
+  opacity: 0.3;
+  border-radius: 4px;
+}

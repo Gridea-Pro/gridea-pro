@@ -1,0 +1,153 @@
+{
+  "name": "Amore",
+  "version": "1.0.0",
+  "author": "Amore",
+  "description":"极简主题",
+  "repository": "",
+  "customConfig": [
+    {
+      "name": "github",
+      "label": "Github",
+      "group": "社交",
+      "value": "",
+      "type": "input",
+      "note": "链接地址"
+    },
+    {
+      "name": "twitter",
+      "label": "Twitter",
+      "group": "社交",
+      "value": "",
+      "type": "input",
+      "note": "链接地址"
+    },
+    {
+      "name": "weibo",
+      "label": "微博",
+      "group": "社交",
+      "value": "",
+      "type": "input",
+      "note": "链接地址"
+    },
+    {
+      "name": "zhihu",
+      "label": "知乎",
+      "group": "社交",
+      "value": "",
+      "type": "input",
+      "note": "链接地址"
+    },
+    {
+      "name": "facebook",
+      "label": "Facebook",
+      "group": "社交",
+      "value": "",
+      "type": "input",
+      "note": "链接地址"
+    },
+    {
+      "name": "customCss",
+      "label": "自定义CSS",
+      "group": "自定义样式",
+      "value": "",
+      "type": "textarea",
+      "note": ""
+    },
+    {
+      "name": "ga",
+      "label": "跟踪 ID",
+      "group": "谷歌统计",
+      "value": "",
+      "type": "input",
+      "note": "UA-xxxxxxxxx-x"
+    },
+    {
+      "name": "location",
+      "label": "地理位置",
+      "group": "信息",
+      "value": "中国 · 深圳",
+      "type": "input",
+      "note": ""
+    },
+    {
+      "name": "quoteText",
+      "label": "格言内容",
+      "group": "信息",
+      "value": "最顶级的人才喜欢一起工作，而且他们是不能容忍平庸作品的。",
+      "type": "textarea",
+      "note": ""
+    },
+    {
+      "name": "quoteAuthor",
+      "label": "格言作者",
+      "group": "信息",
+      "value": "史蒂夫 · 乔布斯",
+      "type": "input",
+      "note": ""
+    },
+    {
+      "name": "githubUser",
+      "label": "GitHub 用户名",
+      "group": "CDN 加速",
+      "value": "",
+      "type": "input",
+      "note": "例如：yourname"
+    },
+    {
+      "name": "repoName",
+      "label": "仓库名称",
+      "group": "CDN 加速",
+      "value": "",
+      "type": "input",
+      "note": "例如：xxx.github.io"
+    },
+    {
+      "name": "branch",
+      "label": "分支名称",
+      "group": "CDN 加速",
+      "value": "",
+      "type": "input",
+      "note": "例如：main 或 master"
+    },
+    {
+      "name": "cdnPrefix",
+      "label": "自定义 CDN 前缀 (可选)",
+      "group": "CDN 加速",
+      "value": "",
+      "type": "input",
+      "note": "默认：https://cdn.jsdelivr.net/gh/user/repo@version"
+    },
+        {
+      "name": "postsPerPage",
+      "label": "每页文章数",
+      "group": "数据配置",
+      "value": "10",
+      "type": "input",
+      "note": "自定义页面的每页文章展示数量"
+    },
+    {
+      "name": "valineID",
+      "label": "App ID",
+      "group": "Valine 评论",
+      "value": "dAWkPrxZg50VZ7iV39rrZL5U-MdYXbMMI",
+      "type": "input",
+      "note": "Valine 的 App ID"
+    },
+    {
+      "name": "valineKey",
+      "label": "App Key",
+      "group": "Valine 评论",
+      "value": "YCfYt8rhK8d0mh9vr42YTaA1",
+      "type": "input",
+      "note": "Valine 的 App Key"
+    },
+    {
+      "name": "serverURLs",
+      "label": "Server URLs",
+      "group": "Valine 评论",
+      "value": "https://dawkprxz.api.lncldglobal.com",
+      "type": "input",
+      "note": "Valine 的 Server URLs (LeanCloud 国际版可不填，国内版必填)"
+    }
+  ]
+}

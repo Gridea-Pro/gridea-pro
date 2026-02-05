@@ -1,0 +1,31 @@
+{{define "post-list"}}
+<div class="post-container">
+    {{range .Posts}}
+    <article class="post">
+        <a href="{{.Link}}">
+            <h2 class="post-title">{{.Title}}</h2>
+        </a>
+        <div class="post-info">
+            <span>
+                {{.DateFormat}}
+            </span>
+            <span>
+                {{.Stats.Text}}
+            </span>
+            {{range .Tags}}
+            <a href="{{.Link}}" class="post-tag">
+                # {{.Name}}
+            </a>
+            {{end}}
+        </div>
+        {{if and $.ThemeConfig.ShowFeatureImage .Feature}}
+        <a href="{{.Link}}" class="post-feature-image" style="background-image: url('{{.Feature}}')">
+        </a>
+        {{end}}
+        <div class="post-abstract">
+            {{.Abstract}}
+        </div>
+    </article>
+    {{end}}
+</div>
+{{end}}

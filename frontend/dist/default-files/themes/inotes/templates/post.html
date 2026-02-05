@@ -1,0 +1,114 @@
+<html>
+
+<head>
+    {{template "head" .}}
+    <meta name="description" content="{{.Post.Description}}" />
+    <meta name="keywords" content="{{range $i, $e := .Post.Tags}}{{if $i}},{{end}}{{$e.Name}}{{end}}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/highlight.min.js"></script>
+</head>
+
+<body>
+    <div class="main">
+        <div class="main-content">
+            {{template "header" .}}
+            <div class="post-detail">
+                <article class="post">
+                    <h2 class="post-title">
+                        {{.Post.Title}}
+                    </h2>
+                    <div class="post-info">
+                        <span>
+                            {{.Post.DateFormat}}
+                        </span>
+                        <span>
+                            {{.Post.Stats.Text}}
+                        </span>
+                        {{range .Post.Tags}}
+                        <a href="{{.Link}}" class="post-tag">
+                            # {{.Name}}
+                        </a>
+                        {{end}}
+                    </div>
+                    {{if and .ThemeConfig.ShowFeatureImage .Post.Feature}}
+                    <img class="post-feature-image" src="{{.Post.Feature}}" alt="">
+                    {{end}}
+                    <div class="post-content-wrapper">
+                        <div class="post-content" v-pre>
+                            {{.Post.Content}}
+                        </div>
+                        <div class="toc-container">
+                            {{.Post.Toc}}
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            {{if and .Post.NextPost (not .Post.HideInList)}}
+            <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="{{.Post.NextPost.Link}}">
+                    <h3 class="post-title">
+                        {{.Post.NextPost.Title}}
+                    </h3>
+                </a>
+            </div>
+            {{end}}
+
+            {{if and .CommentSetting .CommentSetting.ShowComment}}
+            {{if eq .CommentSetting.CommentPlatform "gitalk"}}
+            {{template "gitalk" .}}
+            {{end}}
+
+            {{if eq .CommentSetting.CommentPlatform "disqus"}}
+            {{template "disqus" .}}
+            {{end}}
+            {{end}}
+
+            {{template "footer" .}}
+        </div>
+    </div>
+
+    <script>
+        hljs.initHighlightingOnLoad()
+
+        let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+        // This should probably be throttled.
+        // Especially because it triggers during smooth scrolling.
+        // https://lodash.com/docs/4.17.10#throttle
+        // You could do like...
+        // window.addEventListener("scroll", () => {
+        //    _.throttle(doThatStuff, 100);
+        // });
+        // Only not doing it here to keep this Pen dependency-free.
+
+        window.addEventListener("scroll", event => {
+            let fromTop = window.scrollY;
+
+            mainNavLinks.forEach((link, index) => {
+                let section = document.getElementById(decodeURI(link.hash).substring(1));
+                let nextSection = null
+                if (mainNavLinks[index + 1]) {
+                    nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+                }
+                if (section.offsetTop <= fromTop) {
+                    if (nextSection) {
+                        if (nextSection.offsetTop > fromTop) {
+                            link.classList.add("current");
+                        } else {
+                            link.classList.remove("current");
+                        }
+                    } else {
+                        link.classList.add("current");
+                    }
+                } else {
+                    link.classList.remove("current");
+                }
+            });
+        });
+
+    </script>
+</body>
+
+</html>

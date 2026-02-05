@@ -1,0 +1,17 @@
+<footer id="footer" class="footer">
+    <nav>
+        <% menus.forEach(function(menu, index) { %>
+            <% if (index > 0) { %> · <% } %>
+            <a class="menu-item" href="<%= menu.link %>"><%= menu.name %></a>
+        <% }); %>
+    </nav>
+
+    <div class="Copyright">Copyright &copy; <%= new Date().getFullYear() %> <a href="<%= themeConfig.domain %>"><%= themeConfig.siteName %></a></div>
+
+    <footer id="footer" class="index_footer">
+        <%- themeConfig.footerInfo %> · 
+        <a class="rss" href="<%= themeConfig.domain %>/atom.xml" target="_blank" rel="noopener noreferrer">
+        <i class="ri-rss-line"></i> 🍀 RSS
+  </a>
+    </footer>
+</footer>

@@ -1,0 +1,116 @@
+<script>
+    // 自动为所有 target="_blank" 的链接添加 rel="noopener noreferrer"
+    document.addEventListener('DOMContentLoaded', function() {
+        var links = document.querySelectorAll('a[target="_blank"]');
+        links.forEach(function(link) {
+            var rel = link.getAttribute('rel') || '';
+            if (rel.indexOf('noopener') === -1) {
+                rel += ' noopener';
+            }
+            if (rel.indexOf('noreferrer') === -1) {
+                rel += ' noreferrer';
+            }
+            link.setAttribute('rel', rel.trim());
+        });
+    });
+</script>
+
+
+<script>
+/**
+ * 作用：将 GitHub Pages 的原图链接替换为 jsDelivr CDN 链接，加速图片加载
+ */
+(function() {
+    // === 配置区域，需要替换成自己的 GitHub 用户名和仓库名 ===
+    const CONFIG = {
+        githubUser: '<%= site.customConfig.githubUser || "tespera" %>',
+        repoName:   '<%= site.customConfig.repoName || "tespera.github.io" %>',
+        branch:     '<%= site.customConfig.branch || "master" %>',
+        cdnDomain:  'https://cdn.jsdelivr.net/gh',
+    };
+
+    // === 主逻辑 ===
+    function optimizeImages() {
+        // 如果没有配置 GitHub 信息，则直接返回
+        if (!CONFIG.githubUser || !CONFIG.repoName) {
+            return;
+        }
+
+        // 1. 获取页面上所有图片
+        const images = document.querySelectorAll('img');
+        
+        // 2. 构造旧域名的匹配规则 (强制转小写以避免大小写不匹配)
+        const oldDomain = `${CONFIG.githubUser}.github.io`.toLowerCase();
+        // 获取当前站点域名 (处理自定义域名的情况，如 are.ink)
+        const currentDomain = window.location.host.toLowerCase(); 
+
+        images.forEach((img) => {
+            // 获取当前图片的 src
+            let src = img.getAttribute('src'); 
+            
+            // 忽略空值、Base64图片、已经是CDN的链接
+            if (!src || src.startsWith('data:') || src.includes(CONFIG.cdnDomain)) {
+                return;
+            }
+
+            // 为了匹配检查，构造一个用于比较的 src
+            const srcForCheck = src.toLowerCase();
+
+            let relativePath = null;
+
+            // Case A: 包含 github.io 域名 (标准 GitHub Pages)
+            if (srcForCheck.includes(oldDomain)) {
+                const startIndex = srcForCheck.indexOf(oldDomain);
+                if (startIndex !== -1) {
+                    relativePath = src.substring(startIndex + oldDomain.length);
+                }
+            }
+            // Case B: 包含当前域名 (自定义域名 或 Localhost)
+            else if (srcForCheck.includes(currentDomain)) {
+                try {
+                    // 尝试解析 URL 获取 pathname
+                    const url = new URL(src, window.location.href);
+                    relativePath = decodeURIComponent(url.pathname);
+                } catch (e) {
+                    // 降级处理
+                    const parts = src.split(currentDomain);
+                    if (parts.length > 1) relativePath = parts[1];
+                }
+            }
+            // Case C: 相对路径 (以 / 开头，且不包含 //)
+            else if (src.startsWith('/') && !src.startsWith('//')) {
+                relativePath = src;
+            }
+
+            // 如果成功提取到了相对路径
+            if (relativePath) {
+                // 移除开头的斜杠，防止双斜杠
+                if (relativePath.startsWith('/')) {
+                    relativePath = relativePath.substring(1); 
+                }
+                
+                // 构造新的 CDN 链接
+                // 注意：jsDelivr 必须使用 GitHub 仓库的原始路径 (User/Repo)，与自定义域名 (CNAME) 无关
+                const newSrc = `${CONFIG.cdnDomain}/${CONFIG.githubUser}/${CONFIG.repoName}@${CONFIG.branch}/${relativePath}`;
+
+                // 替换图片链接
+                img.src = newSrc;
+                img.setAttribute('data-optimized', 'true');
+
+                // 添加错误回退机制
+                img.onerror = function() {
+                    this.src = src; // 恢复原图
+                    this.onerror = null; // 防止死循环
+                };
+            }
+        });
+    }
+
+    // 页面加载完成后立即执行
+    document.addEventListener('DOMContentLoaded', optimizeImages);
+    
+    // 兼容一些使用 Pjax (无刷新跳转) 的主题
+    document.addEventListener('pjax:complete', optimizeImages);
+
+})();
+</script>

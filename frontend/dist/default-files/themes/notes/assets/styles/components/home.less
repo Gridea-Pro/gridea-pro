@@ -1,0 +1,118 @@
+.post-container {
+  flex: 1;
+  .post {
+    padding-bottom: 32px;
+
+    .post-title {
+      font-size: 28px;
+      text-align: center;
+      padding: 24px 0;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+
+    .post-info {
+      text-align: center;
+      font-size: 12px;
+      padding-bottom: 24px;
+      > span {
+        color: @dark-gray;
+
+        &:not(:first-child) {
+          &:before {
+            content: "/ ";
+            font-size: 10px;
+            color: rgba(0,0,0,.1);
+            margin: 0 4px;
+          }
+        }
+      }
+      .post-tag {
+        padding: 8px 8px;
+      }
+    }
+    .post-feature-image {
+      display: block;
+      width: 100%;
+      padding-top: 32.6%;
+      border-radius: 2px;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      transition: all 0.3s;
+      img {
+        width: 100%;
+        // height: 100%
+      }
+      &:hover {
+        transform: scale(1.0082);
+      }
+    }
+    .post-abstract {
+      padding: 24px 0;
+      line-height: 1.5;
+      font-size: 16px;
+      strong {
+        font-weight: bolder;
+      }
+      a {
+        color: @main-color;
+        transition: all 0.3s;
+        &:hover {
+          color: @dark-main-color;
+          border-bottom: 1px dotted @dark-main-color;
+        }
+      }
+      code {
+        font-family: monospace;
+        font-size: inherit;
+        background-color: rgba(0,0,0,.06);
+        padding: 0 2px;
+        border: 1px solid rgba(0,0,0,.08);
+        border-radius: 2px 2px;
+        line-height: initial;
+        word-wrap: break-word;
+        text-indent: 0;
+      }
+    }
+  }
+}
+
+
+.pagination-container {
+  padding: 32px 16px;
+  overflow: hidden;
+  .prev-page {
+    float: left;
+  }
+  .next-page {
+    float: right;
+  }
+  .prev-page,
+  .next-page {
+    padding: 6px 12px;
+    font-weight: bold;
+    border-bottom: 2px solid transparent;
+    &:hover {
+      border-bottom: 2px solid;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .post-container {
+    .post {
+      padding: 16px 16px;
+      .post-title {
+        padding: 16px 0;
+        font-size: 24px;
+      }
+      .post-abstract {
+        padding: 16px 0;
+      }
+      .post-feature-image {
+        padding-top: 56.25%;
+      }
+    }
+  }
+}

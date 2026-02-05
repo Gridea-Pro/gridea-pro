@@ -1,0 +1,169 @@
+<template>
+  <Teleport to="body">
+    <TransitionGroup
+      tag="div"
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="transform -translate-y-4 opacity-0 scale-95"
+      enter-to-class="transform translate-y-0 opacity-100 scale-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="transform translate-y-0 opacity-100 scale-100"
+      leave-to-class="transform -translate-y-4 opacity-0 scale-95"
+      class="fixed top-6 left-1/2 z-[9999] flex -translate-x-1/2 flex-col gap-3"
+    >
+      <div
+        v-for="toast in toasts"
+        :key="toast.id"
+        class="pointer-events-auto flex w-auto min-w-[300px] max-w-md items-center gap-3 rounded-xl border border-white/20 bg-white/70 px-4 py-3 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-black/70"
+        @mouseenter="pauseToast(toast.id)"
+        @mouseleave="resumeToast(toast.id)"
+      >
+        <!-- Icon -->
+        <div class="flex-shrink-0">
+          <component
+            :is="getIcon(toast.type)"
+            class="h-5 w-5"
+            :class="getIconColor(toast.type)"
+          />
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+          {{ toast.message }}
+        </div>
+
+        <!-- Close Button -->
+        <button
+          @click="removeToast(toast.id)"
+          class="flex-shrink-0 rounded-lg p-1 text-gray-400 hover:bg-black/5 hover:text-gray-600 dark:hover:bg-white/10 dark:hover:text-gray-300 transition-colors"
+        >
+          <XMarkIcon class="h-4 w-4" />
+        </button>
+      </div>
+    </TransitionGroup>
+  </Teleport>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+  InformationCircleIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+} from '@heroicons/vue/24/solid'
+import { EventsOn } from 'wailsjs/runtime'
+import { onToast } from '@/helpers/toast'
+
+interface Toast {
+  id: number
+  message: string
+  type: 'success' | 'error' | 'info' | 'warning'
+  duration: number
+  timer?: any
+  remaining?: number
+  start?: number
+}
+
+const toasts = ref<Toast[]>([])
+let nextId = 0
+
+const getIcon = (type: string) => {
+  switch (type) {
+    case 'success':
+      return CheckCircleIcon
+    case 'error':
+      return XCircleIcon
+    case 'warning':
+      return ExclamationTriangleIcon
+    case 'info':
+    default:
+      return InformationCircleIcon
+  }
+}
+
+const getIconColor = (type: string) => {
+  switch (type) {
+    case 'success':
+      return 'text-green-500'
+    case 'error':
+      return 'text-red-500'
+    case 'warning':
+      return 'text-amber-500'
+    case 'info':
+    default:
+      return 'text-blue-500'
+  }
+}
+
+const addToast = (message: string, type: Toast['type'] = 'info', duration = 3000) => {
+  console.log('🔔 Toast Triggered:', { message, type, duration })
+  const id = nextId++
+  const toast: Toast = {
+    id,
+    message,
+    type,
+    duration,
+    remaining: duration,
+    start: Date.now(),
+  }
+
+  if (duration > 0) {
+    toast.timer = setTimeout(() => removeToast(id), duration)
+  }
+
+  toasts.value.push(toast)
+}
+
+const removeToast = (id: number) => {
+  const index = toasts.value.findIndex((t) => t.id === id)
+  if (index !== -1) {
+    const toast = toasts.value[index]
+    if (toast.timer) clearTimeout(toast.timer)
+    toasts.value.splice(index, 1)
+  }
+}
+
+const pauseToast = (id: number) => {
+  const toast = toasts.value.find((t) => t.id === id)
+  if (toast && toast.timer) {
+    clearTimeout(toast.timer)
+    toast.timer = undefined
+    if (toast.start && toast.remaining) {
+      toast.remaining -= Date.now() - toast.start
+    }
+  }
+}
+
+const resumeToast = (id: number) => {
+  const toast = toasts.value.find((t) => t.id === id)
+  if (toast && toast.remaining && toast.remaining > 0) {
+    toast.start = Date.now()
+    toast.timer = setTimeout(() => removeToast(id), toast.remaining)
+  }
+}
+
+// Listen to events
+onMounted(() => {
+  // 1. Listen to Frontend events (Direct call)
+  const cleanup = onToast((message, type, duration) => {
+    addToast(message, type, duration)
+  })
+
+  // 2. Listen to Backend events (Wails)
+  EventsOn('app:toast', (data: any) => {
+    if (data && data.message) {
+      addToast(data.message, data.type || 'info', data.duration || 3000)
+    }
+  })
+  
+  // Expose to window for frontend usage if needed
+  // @ts-ignore
+  window.$toast = addToast
+
+  // Cleanup on unmount
+  onUnmounted(() => {
+    cleanup()
+  })
+})
+</script>

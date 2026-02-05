@@ -1,0 +1,72 @@
+# macOS
+.DS_Store
+*.DS_Store
+
+# Dependencies
+node_modules
+/vendor
+
+# Build outputs
+/dist
+/dist-electron
+/build
+/out
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Editor directories and files
+.idea
+.vscode/*
+.agent/*
+.github/*
+.trae/*
+!.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw*
+*.swp
+*~
+
+# Wails build output
+/wailsjs
+
+
+# Go build output
+/gridea-pro
+gridea-pro.exe
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test coverage
+coverage
+*.coverprofile
+
+# Temporary files
+.tmp
+.temp
+tmp
+temp
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+
+# Backend assets copy
+backend/cmd/gridea-pro/frontend
