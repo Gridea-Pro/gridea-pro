@@ -1,6 +1,7 @@
 package facade
 
 import (
+	"context"
 	"gridea-pro/backend/internal/service"
 )
 
@@ -14,5 +15,9 @@ func NewDeployFacade(s *service.DeployService) *DeployFacade {
 }
 
 func (f *DeployFacade) DeployToGit() error {
-	return f.internal.DeployToGit()
+	ctx := WailsContext
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	return f.internal.DeployToGit(ctx)
 }

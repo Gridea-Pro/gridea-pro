@@ -93,8 +93,8 @@ import {
   InformationCircleIcon,
   FolderOpenIcon
 } from '@heroicons/vue/24/outline'
-import { EventsEmit, EventsOn, EventsOnce, BrowserOpenURL } from 'wailsjs/runtime'
-import { OpenFolderDialog } from 'wailsjs/wailsjs/go/app/App'
+import { EventsEmit, EventsOn, EventsOnce, BrowserOpenURL } from '@/wailsjs/runtime'
+import { OpenFolderDialog } from '@/wailsjs/go/app/App'
 import { setI18nLanguage, type LocaleType } from '@/locales'
 
 const { t, locale } = useI18n()

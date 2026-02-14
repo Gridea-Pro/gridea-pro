@@ -5,10 +5,14 @@ import (
 	"embed"
 	"gridea-pro/backend/internal/repository"
 	"gridea-pro/backend/internal/service"
+	"sync"
 )
 
-// AppServices holds all facades
+// WailsContext holds the global application context
+var WailsContext context.Context
+
 type AppServices struct {
+	mu       sync.RWMutex
 	Category *CategoryFacade
 	Post     *PostFacade
 	Menu     *MenuFacade
@@ -38,6 +42,13 @@ type AppServices struct {
 	assets embed.FS // Keep reference for UpdateAppDir
 }
 
+// Startup captures the Wails context on application start
+func (s *AppServices) Startup(ctx context.Context) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	WailsContext = ctx
+}
+
 func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	// 1. Init Repositories
 	postRepo := repository.NewPostRepository(appDir)
@@ -52,8 +63,8 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 
 	// 2. Init Services
 	tagService := service.NewTagService(tagRepo)
-	postService := service.NewPostService(postRepo, tagRepo, tagService, mediaRepo)
 	categoryService := service.NewCategoryService(categoryRepo)
+	postService := service.NewPostService(postRepo, tagRepo, tagService, categoryService, mediaRepo)
 	menuService := service.NewMenuService(menuRepo)
 	linkService := service.NewLinkService(linkRepo)
 	themeService := service.NewThemeService(themeRepo)
@@ -61,6 +72,9 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	// RendererService
 	rendererService := service.NewRendererService(appDir, postRepo, themeRepo, settingRepo)
 	rendererService.SetMenuRepo(menuRepo)
+	rendererService.SetLinkRepo(linkRepo)
+	rendererService.SetTagRepo(tagRepo)
+	rendererService.SetMemoRepo(memoRepo)
 	settingService := service.NewSettingService(appDir, settingRepo)
 	scaffoldService := service.NewScaffoldService(assets)
 	// CommentService
@@ -115,6 +129,9 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 }
 
 func (s *AppServices) UpdateAppDir(appDir string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	// Re-initialize logic
 	newServices := NewAppServices(appDir, s.assets)
 	s.Category.internal = newServices.Services.Category
@@ -135,14 +152,11 @@ func (s *AppServices) UpdateAppDir(appDir string) {
 }
 
 func (s *AppServices) RegisterEvents(ctx context.Context) {
-	// Register theme-save event (needs renderer)
-	s.Theme.RegisterEvents(ctx, s.Renderer)
+	// Inject dependencies
+	s.Theme.SetRenderer(s.Renderer)
 
 	// Register app-site-reload event
 	s.Renderer.RegisterEvents(ctx)
-
-	// Register post events
-	s.Post.RegisterEvents(ctx)
 
 	// Register link events
 	s.Link.RegisterEvents(ctx)
@@ -155,7 +169,4 @@ func (s *AppServices) RegisterEvents(ctx context.Context) {
 
 	// Register tag events
 	s.Tag.RegisterEvents(ctx)
-
-	// Register memo events
-	s.Memo.RegisterEvents(ctx)
 }

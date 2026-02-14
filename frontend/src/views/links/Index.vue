@@ -134,8 +134,10 @@ import {
   Bars2Icon,
   EyeIcon,
 } from '@heroicons/vue/24/outline'
-import { EventsEmit, EventsOnce, EventsOff, BrowserOpenURL } from 'wailsjs/runtime'
+import { EventsEmit, BrowserOpenURL } from '@/wailsjs/runtime'
 import { generateAvatar } from '@/utils/avatarGenerator'
+import { SaveLinkFromFrontend, DeleteLinkFromFrontend, SaveLinks } from '@/wailsjs/go/facade/LinkFacade'
+import { domain, facade } from '@/wailsjs/go/models'
 
 const { t } = useI18n()
 const siteStore = useSiteStore()
@@ -208,18 +210,28 @@ const editLink = (link: ILink, index: number) => {
   form.index = index
 }
 
-const saveLink = () => {
+const saveLink = async () => {
   buildId()
 
-  EventsEmit('link-save', { ...form })
-  EventsOnce('link-saved', (result: any) => {
-    if (result.success && result.links) {
-      siteStore.links = result.links
-      linkList.value = [...result.links]
+  try {
+    const linkForm = new facade.LinkForm({
+      id: form.id,
+      name: form.name,
+      url: form.url,
+      avatar: form.avatar,
+      description: form.description,
+    })
+    const links = await SaveLinkFromFrontend(linkForm)
+
+    if (links) {
+      siteStore.links = links
+      linkList.value = [...links]
+      toast.success(t('link.saved'))
+      visible.value = false
     }
-    toast.success(t('link.saved'))
-    visible.value = false
-  })
+  } catch (e: any) {
+    toast.error(e.message || 'Error saving link')
+  }
 }
 
 const confirmDelete = (id: string) => {
@@ -227,16 +239,18 @@ const confirmDelete = (id: string) => {
   deleteModalVisible.value = true
 }
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (linkToDelete.value) {
-    EventsEmit('link-delete', linkToDelete.value)
-    EventsOnce('link-deleted', (result: any) => {
-      if (result.success && result.links) {
-        siteStore.links = result.links
-        linkList.value = [...result.links]
+    try {
+      const links = await DeleteLinkFromFrontend(linkToDelete.value)
+      if (links) {
+        siteStore.links = links
+        linkList.value = [...links]
+        toast.success(t('link.deleted'))
       }
-      toast.success(t('link.deleted'))
-    })
+    } catch (e: any) {
+      toast.error(e.message || 'Error deleting link')
+    }
   }
   deleteModalVisible.value = false
   linkToDelete.value = null
@@ -246,18 +260,16 @@ const openLink = (url: string) => {
   BrowserOpenURL(url)
 }
 
-const handleLinkSort = () => {
-  EventsEmit('link-sort', JSON.parse(JSON.stringify(linkList.value)))
+const handleLinkSort = async () => {
+  try {
+    const links = linkList.value.map(l => new domain.Link(l))
+    await SaveLinks(links)
+  } catch (e: any) {
+    toast.error(e.message || 'Error sorting links')
+  }
 }
 
 onMounted(() => {
   linkList.value = [...siteStore.links]
-  EventsOff('link-saved')
-  EventsOff('link-deleted')
-})
-
-onUnmounted(() => {
-  EventsOff('link-saved')
-  EventsOff('link-deleted')
 })
 </script>

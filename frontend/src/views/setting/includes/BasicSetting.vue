@@ -69,7 +69,7 @@
       <template v-if="['github', 'coding', 'gitee'].includes(form.platform)">
         <div class="grid grid-cols-[180px_1fr] items-center gap-4">
           <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.repository')
-            }}</label>
+          }}</label>
           <div class="max-w-sm">
             <Input v-model="form.repository" class="" />
           </div>
@@ -82,7 +82,7 @@
         </div>
         <div class="grid grid-cols-[180px_1fr] items-center gap-4">
           <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.username')
-            }}</label>
+          }}</label>
           <div class="max-w-sm">
             <Input v-model="form.username" class="" />
           </div>
@@ -95,7 +95,7 @@
         </div>
         <div class="grid grid-cols-[180px_1fr] items-center gap-4" v-if="form.platform === 'coding'">
           <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.tokenUsername')
-            }}</label>
+          }}</label>
           <div class="max-w-sm">
             <Input v-model="form.tokenUsername" class="" />
           </div>
@@ -196,14 +196,14 @@
         <template v-if="form.enabledProxy === 'proxy'">
           <div class="grid grid-cols-[180px_1fr] items-center gap-4">
             <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.proxyAddress')
-              }}</label>
+            }}</label>
             <div class="max-w-sm">
               <Input v-model="form.proxyPath" class="" />
             </div>
           </div>
           <div class="grid grid-cols-[180px_1fr] items-center gap-4">
             <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.proxyPort')
-              }}</label>
+            }}</label>
             <div class="max-w-sm">
               <Input v-model="form.proxyPort" class="" />
             </div>
@@ -246,7 +246,9 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { EventsEmit, EventsOnce } from 'wailsjs/runtime'
+import { EventsEmit, EventsOnce } from '@/wailsjs/runtime'
+import { SaveSettingFromFrontend, RemoteDetectFromFrontend } from '@/wailsjs/go/facade/SettingFacade'
+import { domain } from '@/wailsjs/go/models'
 
 const { t } = useI18n()
 const siteStore = useSiteStore()
@@ -333,7 +335,7 @@ onMounted(() => {
   }
 })
 
-const submit = () => {
+const submit = async () => {
   const formData = {
     ...form,
     domain: `${protocol.value}${form.domain}`,
@@ -345,13 +347,17 @@ const submit = () => {
     formData.password = ''
   }
 
-  EventsEmit('setting-save', formData)
-  EventsOnce('setting-saved', (result: any) => {
+  try {
+    const settingDomain = new domain.Setting(formData)
+    await SaveSettingFromFrontend(settingDomain)
     EventsEmit('app-site-reload')
-    toast.success(t('settings.basic.saveSuccess')) // TODO: Check if network has saveSuccess
+    toast.success(t('settings.basic.saveSuccess'))
 
     ga('Setting', 'Setting - save', form.platform)
-  })
+  } catch (e) {
+    console.error(e)
+    toast.error('保存失败')
+  }
 }
 
 const remoteDetect = async () => {
@@ -360,29 +366,34 @@ const remoteDetect = async () => {
     domain: `${protocol.value}${form.domain}`,
   }
 
-  EventsEmit('setting-save', formData)
-  EventsOnce('setting-saved', () => {
+  // 先保存
+  try {
+    const settingDomain = new domain.Setting(formData)
+    await SaveSettingFromFrontend(settingDomain)
     EventsEmit('app-site-reload')
-    EventsOnce('app-site-loaded', () => {
-      detectLoading.value = true
-      EventsEmit('remote-detect')
 
-      ga('Setting', 'Setting - detect', form.platform)
-      EventsOnce('remote-detected', (result: any) => {
-        console.log('检测结果', result)
-        detectLoading.value = false
-        if (result.success) {
-          toast.success(t('settings.network.connectSuccess'))
+    // Wait for reload or rely on backend processing
+    detectLoading.value = true
+    ga('Setting', 'Setting - detect', form.platform)
 
-          ga('Setting', 'Setting - detect-success', form.platform)
-        } else {
-          toast.error(t('settings.network.connectFailed'))
+    const result = await RemoteDetectFromFrontend(settingDomain)
+    console.log('检测结果', result)
+    detectLoading.value = false
 
-          ga('Setting', 'Setting - detect-failed', form.platform)
-        }
-      })
-    })
-  })
+    if (result && result.success) {
+      toast.success(t('settings.network.connectSuccess'))
+      ga('Setting', 'Setting - detect-success', form.platform)
+    } else {
+      toast.error(t('settings.network.connectFailed'))
+      ga('Setting', 'Setting - detect-failed', form.platform)
+    }
+
+  } catch (e) {
+    console.error(e)
+    detectLoading.value = false
+    toast.error('检测失败')
+    ga('Setting', 'Setting - detect-failed', form.platform)
+  }
 }
 
 watch(() => form.token, (val) => {

@@ -186,7 +186,8 @@ import {
   PencilIcon,
   FolderIcon,
 } from '@heroicons/vue/24/outline'
-import { EventsEmit, EventsOnce, EventsOff, BrowserOpenURL } from 'wailsjs/runtime'
+import { EventsEmit, EventsOnce, EventsOff, BrowserOpenURL } from '@/wailsjs/runtime'
+import { DeletePostFromFrontend } from '@/wailsjs/go/facade/PostFacade'
 
 const { t } = useI18n()
 const siteStore = useSiteStore()
@@ -326,17 +327,40 @@ const deleteSinglePost = (post: IPost) => {
   deleteModalVisible.value = true
 }
 
-const confirmDelete = () => {
+const confirmDelete = async () => {
   deleteModalVisible.value = false
   const postsToDelete = JSON.parse(JSON.stringify(selectedPost.value))
-  EventsEmit('app-post-list-delete', postsToDelete)
-  EventsOnce('app-post-list-deleted', (data: { success: boolean; posts?: IPost[] }) => {
-    if (data.success && data.posts) {
-      siteStore.posts = data.posts
+
+  try {
+    // Delete posts one by one as the backend API currently supports single file deletion or we can add a bulk delete.
+    // The previous implementation used 'app-post-list-delete' which handled array.
+    // My previous backend refactor removed 'app-post-list-delete' but didn't explicitly add a 'DeletePostsFromFrontend' (plural).
+    // I added 'DeletePostFromFrontend' (singular).
+    // Let's check if I should loop or update backend.
+    // The original event handler looped: `for _, post := range posts { _ = facade.DeletePost(post.FileName) }`
+    // I should probably do the same loop here or add a bulk delete method.
+    // For now, let's loop in frontend to match the single method available.
+
+    let updatedPosts: IPost[] = []
+
+    // We can't rely on the return value of each delete command to give us the full list if we delete concurrently.
+    // But since we want the final state, maybe we can just delete all and then reload once?
+    // Or just use the return value of the last one.
+    // Actually, `DeletePostFromFrontend` returns the list.
+
+    for (const post of postsToDelete) {
+      updatedPosts = await DeletePostFromFrontend(post.fileName) as IPost[]
+    }
+
+    if (updatedPosts) {
+      siteStore.posts = updatedPosts
       toast.success(t('article.delete'))
       selectedPost.value = []
     }
-  })
+  } catch (e) {
+    console.error(e)
+    toast.error('删除失败')
+  }
 }
 
 watch(keyword, (val) => {
@@ -345,10 +369,8 @@ watch(keyword, (val) => {
 })
 
 onMounted(() => {
-  EventsOff('app-post-list-deleted')
 })
 
 onUnmounted(() => {
-  EventsOff('app-post-list-deleted')
 })
 </script>

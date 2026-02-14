@@ -16,7 +16,7 @@
 
           <div>
             <Label class="text-sm font-medium text-[var(--text-primary)] mb-2 block">{{ t('settings.comment.platform')
-              }}</Label>
+            }}</Label>
             <Select v-model="formState.platform">
               <SelectTrigger>
                 <SelectValue />
@@ -85,7 +85,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useCommentStore } from '@/stores/comment'
 import type { CommentSettings } from '@/types/comment'
-import { BrowserOpenURL } from 'wailsjs/runtime'
+import { BrowserOpenURL } from '@/wailsjs/runtime'
 
 import ValineWalineConfig from './platforms/ValineWalineConfig.vue'
 import TwikooConfig from './platforms/TwikooConfig.vue'

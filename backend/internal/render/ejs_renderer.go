@@ -15,6 +15,8 @@ import (
 
 //go:embed ejs.min.js
 var ejsJS string
+var ejsProgram *goja.Program
+var ejsProgramOnce sync.Once
 
 // EjsRenderer EJS 渲染器
 // 使用 Goja (Go 的 JavaScript 运行时) + ejs.js 直接执行 EJS
@@ -25,9 +27,53 @@ type EjsRenderer struct {
 	cache     map[string]string // 缓存模板内容
 	cacheLock sync.RWMutex
 
-	// Goja VM (复用以提升性能)
-	vm     *goja.Runtime
-	vmLock sync.Mutex
+	// VM Pool
+	pool chan *goja.Runtime
+}
+
+// createVM 创建新的 VM 实例
+func (r *EjsRenderer) createVM() (*goja.Runtime, error) {
+	// 创建新的 VM
+	vm := goja.New()
+
+	// 1. 注入 Node.js 环境模拟 (fs, path, require, process)
+	// 计算当前主题的根目录作为 CWD
+	themeDir := filepath.Join(r.config.AppDir, "themes", r.config.ThemeName)
+	SetupNodePolyfills(vm, themeDir)
+
+	// 2. 模拟 CommonJS 环境 (module, exports)
+	vm.Set("exports", vm.NewObject())
+	moduleObj := vm.NewObject()
+	moduleObj.Set("exports", vm.Get("exports"))
+	vm.Set("module", moduleObj)
+
+	// 3. 加载 ejs.js 库
+	// Use pre-compiled program if possible
+	var err error
+	ejsProgramOnce.Do(func() {
+		ejsProgram, err = goja.Compile("ejs.min.js", ejsJS, true)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("编译 ejs.min.js 失败: %w", err)
+	}
+
+	if ejsProgram != nil {
+		_, err = vm.RunProgram(ejsProgram)
+	} else {
+		_, err = vm.RunString(ejsJS)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("加载 ejs.js 失败: %w", err)
+	}
+
+	// 4. 验证 ejs 全局变量
+	ejsVal := vm.Get("ejs")
+	if ejsVal == nil || goja.IsUndefined(ejsVal) {
+		return nil, fmt.Errorf("EJS 加载失败：全局 ejs 对象未定义")
+	}
+
+	return vm, nil
 }
 
 // NewEjsRenderer 创建 EJS 渲染器
@@ -35,6 +81,7 @@ func NewEjsRenderer(config RenderConfig) *EjsRenderer {
 	return &EjsRenderer{
 		config: config,
 		cache:  make(map[string]string),
+		pool:   make(chan *goja.Runtime, 32), // Allow up to 32 concurrent VMs
 	}
 }
 
@@ -54,9 +101,15 @@ func (r *EjsRenderer) ClearCache() {
 	defer r.cacheLock.Unlock()
 	r.cache = make(map[string]string)
 
-	r.vmLock.Lock()
-	defer r.vmLock.Unlock()
-	r.vm = nil
+	// Clear pool
+loop:
+	for {
+		select {
+		case <-r.pool:
+		default:
+			break loop
+		}
+	}
 }
 
 // renderViaGoja 通过 Goja 直接执行 EJS
@@ -67,28 +120,21 @@ func (r *EjsRenderer) renderViaGoja(templateName string, data *template.Template
 		return "", err
 	}
 
-	// 获取或创建 VM
-	vm, err := r.getVM()
-	if err != nil {
-		return "", fmt.Errorf("创建 JS 运行时失败: %w", err)
-	}
-
-	r.vmLock.Lock()
-	defer r.vmLock.Unlock()
-
-	// 将数据转换为 JSON 字符串
+	// 提前序列化数据 (Move out of critical section/init)
 	dataJSON, err := json.Marshal(data)
 	if err != nil {
 		return "", fmt.Errorf("序列化数据失败: %w", err)
 	}
 
+	// 获取或创建 VM
+	vm, err := r.getVM()
+	if err != nil {
+		return "", fmt.Errorf("创建 JS 运行时失败: %w", err)
+	}
+	defer r.returnVM(vm)
+
 	// 主题路径
 	themePath := filepath.Join(r.config.AppDir, "themes", r.config.ThemeName)
-
-	// 88-90 lines removed
-
-	// fs 和 path 模拟已经在 getVM 中初始化了，这里只需要确保全局变量更新
-	// r.setupNodePolyfills(vm) // 已经在创建 VM 时调用了
 
 	// 构造模板的绝对路径，用于 EJS 的 filename 选项
 	// 这样 EJS 才能正确解析相对路径 include (例如 ./includes/head)
@@ -152,6 +198,8 @@ func (r *EjsRenderer) renderViaGoja(templateName string, data *template.Template
 
 	resultStr := result.String()
 	if len(resultStr) > 10 && resultStr[:10] == "EJS Error:" {
+		// Log error for debugging
+		// fmt.Println(resultStr)
 		return "", fmt.Errorf("%s", resultStr)
 	}
 
@@ -160,42 +208,21 @@ func (r *EjsRenderer) renderViaGoja(templateName string, data *template.Template
 
 // getVM 获取或创建 Goja VM
 func (r *EjsRenderer) getVM() (*goja.Runtime, error) {
-	r.vmLock.Lock()
-	defer r.vmLock.Unlock()
-
-	if r.vm != nil {
-		return r.vm, nil
+	select {
+	case vm := <-r.pool:
+		return vm, nil
+	default:
+		return r.createVM()
 	}
+}
 
-	// 创建新的 VM
-	vm := goja.New()
-
-	// 1. 注入 Node.js 环境模拟 (fs, path, require, process)
-	// 计算当前主题的根目录作为 CWD
-	themeDir := filepath.Join(r.config.AppDir, "themes", r.config.ThemeName)
-	SetupNodePolyfills(vm, themeDir)
-
-	// 2. 模拟 CommonJS 环境 (module, exports)
-	// 这样 ejs.min.js (UMD) 会认为自己在 Node 环境下，从而主动 require('fs')
-	vm.Set("exports", vm.NewObject())
-	moduleObj := vm.NewObject()
-	moduleObj.Set("exports", vm.Get("exports"))
-	vm.Set("module", moduleObj)
-
-	// 3. 加载 ejs.js 库
-	// 现在使用的是 unbundled 版本，它会直接使用全局 require 和 fs/path 模块
-	if _, err := vm.RunString(ejsJS); err != nil {
-		return nil, fmt.Errorf("加载 ejs.js 失败: %w", err)
+// returnVM 归还 VM 到池中
+func (r *EjsRenderer) returnVM(vm *goja.Runtime) {
+	select {
+	case r.pool <- vm:
+	default:
+		// Pool is full, discard
 	}
-
-	// 4. 验证 ejs 全局变量已设置 (unbundled 版本会自动设置)
-	ejsVal := vm.Get("ejs")
-	if ejsVal == nil || goja.IsUndefined(ejsVal) {
-		return nil, fmt.Errorf("EJS 加载失败：全局 ejs 对象未定义")
-	}
-
-	r.vm = vm
-	return vm, nil
 }
 
 // setupNodePolyfills has been replaced by node_polyfills.go SetupNodePolyfills

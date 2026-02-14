@@ -40,7 +40,7 @@ func SetupNodePolyfills(vm *goja.Runtime, baseDir string) {
 		for i, arg := range call.Arguments {
 			args[i] = arg.Export()
 		}
-		fmt.Println(args...)
+		fmt.Fprintln(os.Stderr, args...)
 		return goja.Undefined()
 	})
 	consoleObj.Set("error", func(call goja.FunctionCall) goja.Value {
@@ -48,7 +48,7 @@ func SetupNodePolyfills(vm *goja.Runtime, baseDir string) {
 		for i, arg := range call.Arguments {
 			args[i] = arg.Export()
 		}
-		fmt.Printf("JS Error: %v\n", args...)
+		fmt.Fprintf(os.Stderr, "JS Error: %v\n", args...)
 		return goja.Undefined()
 	})
 	consoleObj.Set("warn", func(call goja.FunctionCall) goja.Value {
@@ -56,7 +56,7 @@ func SetupNodePolyfills(vm *goja.Runtime, baseDir string) {
 		for i, arg := range call.Arguments {
 			args[i] = arg.Export()
 		}
-		fmt.Printf("JS Warn: %v\n", args...)
+		fmt.Fprintf(os.Stderr, "JS Warn: %v\n", args...)
 		return goja.Undefined()
 	})
 	vm.Set("console", consoleObj)

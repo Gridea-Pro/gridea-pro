@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gridea-pro/backend/internal/comment"
 	"gridea-pro/backend/internal/domain"
+	"sync"
 )
 
 // CommentService 评论服务
@@ -13,6 +14,7 @@ type CommentService struct {
 	postRepo  domain.PostRepository
 	themeRepo domain.ThemeRepository
 	appDir    string
+	mu        sync.RWMutex
 }
 
 // NewCommentService 创建评论服务
@@ -27,16 +29,23 @@ func NewCommentService(appDir string, repo domain.CommentRepository, postRepo do
 
 // GetSettings 获取评论设置
 func (s *CommentService) GetSettings(ctx context.Context) (domain.CommentSettings, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.repo.GetSettings(ctx)
 }
 
 // SaveSettings 保存评论设置
 func (s *CommentService) SaveSettings(ctx context.Context, settings domain.CommentSettings) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	return s.repo.SaveSettings(ctx, settings)
 }
 
 // FetchComments 获取管理端评论列表
 func (s *CommentService) FetchComments(ctx context.Context, page, pageSize int) (*domain.PaginatedComments, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	settings, err := s.repo.GetSettings(ctx)
 	if err != nil {
 		return nil, err
@@ -63,9 +72,9 @@ func (s *CommentService) FetchComments(ctx context.Context, page, pageSize int) 
 		return nil, err
 	}
 
-	// 填充文章标题
+	// 填充文章标题 - 优化 O(1) 查找
 	posts, _ := s.postRepo.GetAll(ctx)
-	postMap := make(map[string]string)
+	postMap := make(map[string]string) // Key: URL Path / ID, Value: Title
 	if len(posts) > 0 {
 		for _, p := range posts {
 			// 匹配常见路径格式
@@ -104,6 +113,9 @@ func (s *CommentService) FetchComments(ctx context.Context, page, pageSize int) 
 
 // ReplyComment 回复评论
 func (s *CommentService) ReplyComment(ctx context.Context, parentID string, content string, articleID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	settings, err := s.repo.GetSettings(ctx)
 	if err != nil {
 		return err
@@ -154,15 +166,14 @@ func (s *CommentService) getSiteOwnerInfo(ctx context.Context) domain.Comment {
 
 	// 构造默认头像地址 (相对于域名的 /images/avatar.png)
 	// 如果 info.URL 是完整的 url (http/https)，则拼接
-	// 暂时简单处理：假定前端或 Provider 会处理相对路径，或者我们在这里拼完整
 	if info.URL != "" {
 		// 简单的 URL 拼接
-		domain := info.URL
+		domainUrl := info.URL
 		// remove trailing slash
-		if len(domain) > 0 && domain[len(domain)-1] == '/' {
-			domain = domain[:len(domain)-1]
+		if len(domainUrl) > 0 && domainUrl[len(domainUrl)-1] == '/' {
+			domainUrl = domainUrl[:len(domainUrl)-1]
 		}
-		info.Avatar = fmt.Sprintf("%s/images/avatar.png", domain)
+		info.Avatar = fmt.Sprintf("%s/images/avatar.png", domainUrl)
 	}
 
 	return info
@@ -170,6 +181,9 @@ func (s *CommentService) getSiteOwnerInfo(ctx context.Context) domain.Comment {
 
 // DeleteComment 删除评论
 func (s *CommentService) DeleteComment(ctx context.Context, commentID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	settings, err := s.repo.GetSettings(ctx)
 	if err != nil {
 		return err

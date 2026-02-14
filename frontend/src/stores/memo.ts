@@ -1,7 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { IMemo, IMemoStats, IMemoLoadResponse, IMemoSaveResponse } from '@/interfaces/memo'
-import { EventsEmit, EventsOnce, EventsOff } from 'wailsjs/runtime'
+import { domain } from '@/wailsjs/go/models'
+import { EventsEmit, EventsOnce, EventsOff } from '@/wailsjs/runtime'
+import {
+    LoadMemosFromFrontend,
+    SaveMemoFromFrontend,
+    UpdateMemoFromFrontend,
+    DeleteMemoFromFrontend,
+    RenameMemoTagFromFrontend,
+    DeleteMemoTagFromFrontend
+} from '@/wailsjs/go/facade/MemoFacade'
 
 export const useMemoStore = defineStore('memo', () => {
     // State
@@ -65,96 +74,91 @@ export const useMemoStore = defineStore('memo', () => {
     const heatmapData = computed(() => stats.value?.heatmap || {})
     const tagStats = computed(() => stats.value?.tags || [])
 
+
     // Actions
     function fetchMemos(): Promise<void> {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             loading.value = true
-            EventsEmit('memo-load')
-            EventsOnce('memo-loaded', (result: IMemoLoadResponse) => {
+            try {
+                const result = await LoadMemosFromFrontend()
                 loading.value = false
-                if (result.success) {
-                    memos.value = result.memos || []
-                    stats.value = result.stats
-                    resolve()
-                } else {
-                    reject(new Error('Failed to load memos'))
-                }
-            })
+                // Result has {memos: [], stats: ...}
+                // Need to cast result to correct type or just access properties
+                memos.value = (result.memos as IMemo[]) || []
+                stats.value = result.stats as IMemoStats
+                resolve()
+            } catch (e) {
+                loading.value = false
+                reject(new Error('Failed to load memos'))
+            }
         })
     }
 
     function saveMemo(content: string): Promise<IMemo | undefined> {
-        return new Promise((resolve, reject) => {
-            EventsEmit('memo-save', content)
-            EventsOnce('memo-saved', (result: IMemoSaveResponse) => {
-                if (result.success) {
-                    memos.value = result.memos || []
-                    stats.value = result.stats
-                    resolve(result.memo)
-                } else {
-                    reject(new Error('Failed to save memo'))
-                }
-            })
+        return new Promise(async (resolve, reject) => {
+            try {
+                const result = await SaveMemoFromFrontend(content)
+                memos.value = (result.memos as IMemo[]) || []
+                stats.value = result.stats as IMemoStats
+                // Find the new memo (first one usually)
+                const newMemo = memos.value[0]
+                resolve(newMemo)
+            } catch (e) {
+                reject(new Error('Failed to save memo'))
+            }
         })
     }
 
     function updateMemo(memo: IMemo): Promise<void> {
-        return new Promise((resolve, reject) => {
-            EventsEmit('memo-update', memo)
-            EventsOnce('memo-updated', (result: IMemoSaveResponse) => {
-                if (result.success) {
-                    memos.value = result.memos || []
-                    stats.value = result.stats
-                    resolve()
-                } else {
-                    reject(new Error('Failed to update memo'))
-                }
-            })
+        return new Promise(async (resolve, reject) => {
+            try {
+                const memoDomain = new domain.Memo(memo)
+                const result = await UpdateMemoFromFrontend(memoDomain)
+                memos.value = (result.memos as IMemo[]) || []
+                stats.value = result.stats as IMemoStats
+                resolve()
+            } catch (e) {
+                reject(new Error('Failed to update memo'))
+            }
         })
     }
 
     function deleteMemo(id: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            EventsEmit('memo-delete', id)
-            EventsOnce('memo-deleted', (result: IMemoSaveResponse) => {
-                if (result.success) {
-                    memos.value = result.memos || []
-                    stats.value = result.stats
-                    resolve()
-                } else {
-                    reject(new Error('Failed to delete memo'))
-                }
-            })
+        return new Promise(async (resolve, reject) => {
+            try {
+                const result = await DeleteMemoFromFrontend(id)
+                memos.value = (result.memos as IMemo[]) || []
+                stats.value = result.stats as IMemoStats
+                resolve()
+            } catch (e) {
+                reject(new Error('Failed to delete memo'))
+            }
         })
     }
 
     function renameTag(oldName: string, newName: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            EventsEmit('memo-rename-tag', oldName, newName)
-            EventsOnce('memo-renamed-tag', (result: IMemoSaveResponse) => {
-                if (result.success) {
-                    memos.value = result.memos || []
-                    stats.value = result.stats
-                    resolve()
-                } else {
-                    reject(new Error('Failed to rename tag'))
-                }
-            })
+        return new Promise(async (resolve, reject) => {
+            try {
+                const result = await RenameMemoTagFromFrontend(oldName, newName)
+                memos.value = (result.memos as IMemo[]) || []
+                stats.value = result.stats as IMemoStats
+                resolve()
+            } catch (e) {
+                reject(new Error('Failed to rename tag'))
+            }
         })
     }
 
     function deleteTag(tagName: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            EventsEmit('memo-delete-tag', tagName)
-            EventsOnce('memo-deleted-tag', (result: IMemoSaveResponse) => {
-                if (result.success) {
-                    memos.value = result.memos || []
-                    stats.value = result.stats
-                    resolve()
-                } else {
-                    reject(new Error('Failed to delete tag'))
-                }
-            })
+        return new Promise(async (resolve, reject) => {
+            try {
+                const result = await DeleteMemoTagFromFrontend(tagName)
+                memos.value = (result.memos as IMemo[]) || []
+                stats.value = result.stats as IMemoStats
+                resolve()
+            } catch (e) {
+                reject(new Error('Failed to delete tag'))
+            }
         })
     }
 

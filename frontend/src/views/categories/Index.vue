@@ -37,7 +37,7 @@
             <div class="flex items-center px-4">
               <div class="text-xs text-muted-foreground opacity-70 group-hover:hidden">
                 {{siteStore.posts.filter(p => p.data.published && (p.data.categories ||
-                  []).includes(category.name)).length }}
+                  []).includes(category.name)).length}}
               </div>
               <div class="hidden group-hover:flex items-center gap-2">
                 <button
@@ -116,7 +116,8 @@ import {
   TrashIcon,
   PencilIcon,
 } from '@heroicons/vue/24/outline'
-import { EventsEmit, EventsOnce, EventsOff } from 'wailsjs/runtime'
+import { EventsEmit } from '@/wailsjs/runtime'
+import { SaveCategoryFromFrontend, DeleteCategoryFromFrontend, SaveCategories } from '@/wailsjs/go/facade/CategoryFacade'
 
 const { t } = useI18n()
 const siteStore = useSiteStore()
@@ -150,7 +151,7 @@ const canSubmit = computed(() => {
 })
 
 const handleNameChange = (e: any) => {
-  const val = e.target.value || form.name // Handle both Event and direct value if needed, but Input emits update:modelValue
+  const val = e.target.value || form.name
   if (!slugChanged.value) {
     form.slug = slug(val)
   }
@@ -202,7 +203,7 @@ const checkCategoryValid = () => {
   return foundIndex === -1
 }
 
-const saveCategory = () => {
+const saveCategory = async () => {
   buildSlug()
 
   const valid = checkCategoryValid()
@@ -211,15 +212,23 @@ const saveCategory = () => {
     return
   }
 
-  EventsEmit('category-save', { ...form })
-  EventsOnce('category-saved', (result: any) => {
-    if (result.success && result.categories) {
-      siteStore.categories = result.categories
-      categoryList.value = [...result.categories]
+  try {
+    const categories = await SaveCategoryFromFrontend({
+      name: form.name,
+      slug: form.slug,
+      description: form.description,
+      originalSlug: form.originalSlug || '',
+    })
+
+    if (categories) {
+      siteStore.categories = categories
+      categoryList.value = [...categories]
+      toast.success(t('category.saved'))
+      visible.value = false
     }
-    toast.success(t('category.saved'))
-    visible.value = false
-  })
+  } catch (e: any) {
+    toast.error(e.message || 'Error saving category')
+  }
 }
 
 const confirmDelete = (slug: string) => {
@@ -227,33 +236,32 @@ const confirmDelete = (slug: string) => {
   deleteModalVisible.value = true
 }
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (categoryToDelete.value) {
-    EventsEmit('category-delete', categoryToDelete.value)
-    EventsOnce('category-deleted', (result: any) => {
-      if (result.success && result.categories) {
-        siteStore.categories = result.categories
-        categoryList.value = [...result.categories]
+    try {
+      const categories = await DeleteCategoryFromFrontend(categoryToDelete.value)
+      if (categories) {
+        siteStore.categories = categories
+        categoryList.value = [...categories]
+        toast.success(t('category.deleted'))
       }
-      toast.success(t('category.deleted'))
-    })
+    } catch (e: any) {
+      toast.error(e.message || 'Error deleting category')
+    }
   }
   deleteModalVisible.value = false
   categoryToDelete.value = null
 }
 
-const handleCategorySort = () => {
-  EventsEmit('category-sort', JSON.parse(JSON.stringify(categoryList.value)))
+const handleCategorySort = async () => {
+  try {
+    await SaveCategories(JSON.parse(JSON.stringify(categoryList.value)))
+  } catch (e: any) {
+    toast.error(e.message || 'Error sorting categories')
+  }
 }
 
 onMounted(() => {
   categoryList.value = [...siteStore.categories]
-  EventsOff('category-saved')
-  EventsOff('category-deleted')
-})
-
-onUnmounted(() => {
-  EventsOff('category-saved')
-  EventsOff('category-deleted')
 })
 </script>

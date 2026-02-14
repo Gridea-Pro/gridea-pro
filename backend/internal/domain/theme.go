@@ -34,7 +34,9 @@ type ThemeConfig struct {
 	ArchivesPath     string                 `json:"archivesPath"`
 	PostPath         string                 `json:"postPath"`
 	TagPath          string                 `json:"tagPath"`
+	TagsPath         string                 `json:"tagsPath"`
 	LinkPath         string                 `json:"linkPath"`
+	MemosPath        string                 `json:"memosPath"`
 	CustomConfig     map[string]interface{} `json:"customConfig,omitempty"`
 }
 

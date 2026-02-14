@@ -368,7 +368,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/helpers/toast'
-import { EventsEmit, EventsOnce, EventsOn, EventsOff, BrowserOpenURL } from 'wailsjs/runtime'
+import { ITag } from '@/interfaces/tag'
+import { EventsEmit, EventsOnce, EventsOn, EventsOff, BrowserOpenURL } from '@/wailsjs/runtime'
+import { SavePostFromFrontend, UploadImagesFromFrontend } from '@/wailsjs/go/facade/PostFacade'
+import { domain } from '@/wailsjs/go/models'
 
 const props = defineProps<{
   visible: boolean
@@ -808,12 +811,13 @@ const formatForm = (published?: boolean) => {
     },
     featureImagePath: !rawForm.featureImage.path && rawForm.featureImagePath ? (rawForm.featureImagePath || '') : '',
     deleteFileName: rawForm.deleteFileName || '',
+    tagIds: [],
   }
 
-  return formData
+  return new domain.PostInput(formData)
 }
 
-const saveDraft = () => {
+const saveDraft = async () => {
   console.log('Save draft clicked', canSubmit.value)
   // Save draft
   if (!canSubmit.value) return
@@ -822,16 +826,18 @@ const saveDraft = () => {
   // Submit form data
   if (!formData) return
 
-  EventsEmit('app-post-create', formData)
-  EventsOnce('app-post-created', (data: any) => {
-    if (data.success) {
-      if (data.posts) siteStore.posts = data.posts
-      if (data.tags) siteStore.tags = data.tags
-    }
+  try {
+    const data = await SavePostFromFrontend(formData)
+    if (data && data.posts) siteStore.posts = data.posts as IPost[]
+    if (data && data.tags) siteStore.tags = data.tags as ITag[]
+
     updatePostSavedStatus()
     toast.success(`🎉  ${t('draftSuccess')}`)
     emit('close')
-  })
+  } catch (e) {
+    console.error(e)
+    toast.error('保存失败')
+  }
 
   ga('Post', 'Post - click-save-draft', '')
 }
@@ -840,36 +846,40 @@ const publishPost = () => {
   handlePostSettingClick()
 }
 
-const handleConfirmPublish = () => {
+const handleConfirmPublish = async () => {
   console.log('Confirm publish clicked', canSubmit.value)
   if (!canSubmit.value) return
   const formData = formatForm(true)
   console.log('Publish form data', formData)
   if (!formData) return
 
-  EventsEmit('app-post-create', formData)
-  EventsOnce('app-post-created', (data: any) => {
-    if (data.success) {
-      if (data.posts) siteStore.posts = data.posts
-      if (data.tags) siteStore.tags = data.tags
-    }
+  try {
+    const data = await SavePostFromFrontend(formData)
+    if (data && data.posts) siteStore.posts = data.posts as IPost[]
+    if (data && data.tags) siteStore.tags = data.tags as ITag[]
+
     updatePostSavedStatus()
     toast.success(`🎉  ${t('published')}`)
     postSettingsVisible.value = false
     emit('close')
-  })
+  } catch (e) {
+    console.error(e)
+    toast.error('发布失败')
+  }
 }
 
-const normalSavePost = () => {
+const normalSavePost = async () => {
   if (!canSubmit.value) return
   const formData = formatForm()
   if (!formData) return
 
-  EventsEmit('app-post-create', formData)
-  EventsOnce('app-post-created', (data: any) => {
+  try {
+    await SavePostFromFrontend(formData)
     updatePostSavedStatus()
     emit('fetchData')
-  })
+  } catch (e) {
+    console.error(e)
+  }
 }
 
 const insertImage = () => {
@@ -891,9 +901,9 @@ const handleEmojiClick = () => {
   ga('Post', 'Post - click-emoji-card', '')
 }
 
-const uploadImageFiles = (files: any[]) => {
-  EventsEmit('image-upload', files)
-  EventsOnce('image-uploaded', (data: any) => {
+const uploadImageFiles = async (files: domain.UploadedFile[]) => {
+  try {
+    const data = await UploadImagesFromFrontend(files)
     if (!monacoMarkdownEditor.value?.editor) {
       console.error('Monaco editor is not ready')
       return
@@ -913,7 +923,10 @@ const uploadImageFiles = (files: any[]) => {
       }])
     }
     editor.focus()
-  })
+  } catch (e) {
+    console.error(e)
+    toast.error('上传图片失败')
+  }
 }
 
 const insertMore = () => {
@@ -975,13 +988,11 @@ const fileChangeHandler = (e: any) => {
     return
   }
   if (file && isImage) {
-    uploadImageFiles([
-      {
-        name: file.name,
-        path: file.path,
-        type: file.type,
-      },
-    ])
+    const uploadedFile = new domain.UploadedFile({
+      name: file.name,
+      path: file.path,
+    })
+    uploadImageFiles([uploadedFile])
   }
 }
 

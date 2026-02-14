@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gridea-pro/backend/internal/domain"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/gosimple/slug"
@@ -14,6 +15,7 @@ import (
 
 type TagService struct {
 	repo domain.TagRepository
+	mu   sync.RWMutex
 }
 
 func NewTagService(repo domain.TagRepository) *TagService {
@@ -21,10 +23,15 @@ func NewTagService(repo domain.TagRepository) *TagService {
 }
 
 func (s *TagService) LoadTags(ctx context.Context) ([]domain.Tag, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.repo.GetAll(ctx)
 }
 
 func (s *TagService) SaveTag(ctx context.Context, tag domain.Tag, originalName string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	tags, err := s.repo.GetAll(ctx)
 	if err != nil {
 		return err
@@ -54,6 +61,9 @@ func (s *TagService) SaveTag(ctx context.Context, tag domain.Tag, originalName s
 }
 
 func (s *TagService) DeleteTag(ctx context.Context, name string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	tags, err := s.repo.GetAll(ctx)
 	if err != nil {
 		return err
@@ -70,6 +80,10 @@ func (s *TagService) DeleteTag(ctx context.Context, name string) error {
 
 // GetOrCreateTag gets an existing tag by name or creates a new one with standardized slug and ID
 func (s *TagService) GetOrCreateTag(ctx context.Context, name string) (domain.Tag, error) {
+	// Critical Section: Ensure check and create are atomic
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return domain.Tag{}, fmt.Errorf("tag name cannot be empty")
@@ -97,11 +111,19 @@ func (s *TagService) GetOrCreateTag(ctx context.Context, name string) (domain.Ta
 	// Generate Slug
 	slugStr := s.generateSlug(name, tags)
 
+	// Random Color
+	hash := 0
+	for _, c := range name {
+		hash += int(c)
+	}
+	color := domain.TagColors[hash%len(domain.TagColors)]
+
 	newTag := domain.Tag{
-		ID:   id,
-		Name: name,
-		Slug: slugStr,
-		Used: true, // Assuming creation means usage
+		ID:    id,
+		Name:  name,
+		Slug:  slugStr,
+		Used:  true, // Assuming creation means usage
+		Color: color,
 	}
 
 	// 3. Save

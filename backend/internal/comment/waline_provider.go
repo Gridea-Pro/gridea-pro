@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -123,7 +124,7 @@ func (p *WalineProvider) GetAdminComments(ctx context.Context, page, pageSize in
 	if err != nil {
 		if strings.Contains(err.Error(), "Waline Logged Auth Failed (401)") {
 			// Fallback logic for 401
-			fmt.Printf("[Waline] Admin Auth failed (401), falling back to public recent comments.\n")
+			fmt.Fprintf(os.Stderr, "[Waline] Admin Auth failed (401), falling back to public recent comments.\n")
 			recentComments, err := p.GetRecentComments(ctx, pageSize)
 			if err != nil {
 				return nil, fmt.Errorf("Waline 认证失败且无法获取公开评论: %v", err)
@@ -198,7 +199,7 @@ func (p *WalineProvider) GetComments(ctx context.Context, articleID string) ([]d
 	serverURL := strings.TrimSuffix(p.ServerURLs, "/")
 	apiURL := fmt.Sprintf("%s/api/comment?path=%s", serverURL, url.QueryEscape(articleID))
 
-	fmt.Printf("[Waline] GetComments Request: %s\n", apiURL)
+	fmt.Fprintf(os.Stderr, "[Waline] GetComments Request: %s\n", apiURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
@@ -207,30 +208,30 @@ func (p *WalineProvider) GetComments(ctx context.Context, articleID string) ([]d
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("[Waline] GetComments Request Failed: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[Waline] GetComments Request Failed: %v\n", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("[Waline] GetComments HTTP Error: %d\n", resp.StatusCode)
+		fmt.Fprintf(os.Stderr, "[Waline] GetComments HTTP Error: %d\n", resp.StatusCode)
 		return nil, fmt.Errorf("Waline API error status: %d", resp.StatusCode)
 	}
 
 	var result walineResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		fmt.Printf("[Waline] GetComments JSON Decode Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[Waline] GetComments JSON Decode Error: %v\n", err)
 		return nil, err
 	}
 
 	if result.Errno != 0 {
-		fmt.Printf("[Waline] GetComments API Error: %s\n", toString(result.Errmsg))
+		fmt.Fprintf(os.Stderr, "[Waline] GetComments API Error: %s\n", toString(result.Errmsg))
 		return nil, fmt.Errorf("Waline API error: %s", toString(result.Errmsg))
 	}
 
 	commentsList, _, err := parseWalineData(result.Data)
 	if err != nil {
-		fmt.Printf("[Waline] GetComments Data Parse Error: %v | Raw: %s\n", err, string(result.Data))
+		fmt.Fprintf(os.Stderr, "[Waline] GetComments Data Parse Error: %v | Raw: %s\n", err, string(result.Data))
 		// Don't fail hard, return empty if parsing fails but errno is 0?
 		// Better to fail so we know.
 		return nil, err
@@ -262,7 +263,7 @@ func (p *WalineProvider) GetRecentComments(ctx context.Context, limit int) ([]do
 	serverURL := strings.TrimSuffix(p.ServerURLs, "/")
 	apiURL := fmt.Sprintf("%s/api/comment?type=recent&count=%d", serverURL, limit)
 
-	fmt.Printf("[Waline] GetRecentComments Request: %s\n", apiURL)
+	fmt.Fprintf(os.Stderr, "[Waline] GetRecentComments Request: %s\n", apiURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
@@ -271,30 +272,30 @@ func (p *WalineProvider) GetRecentComments(ctx context.Context, limit int) ([]do
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("[Waline] GetRecentComments Request Failed: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[Waline] GetRecentComments Request Failed: %v\n", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("[Waline] GetRecentComments HTTP Error: %d\n", resp.StatusCode)
+		fmt.Fprintf(os.Stderr, "[Waline] GetRecentComments HTTP Error: %d\n", resp.StatusCode)
 		return nil, fmt.Errorf("Waline API error status: %d", resp.StatusCode)
 	}
 
 	var result walineResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		fmt.Printf("[Waline] GetRecentComments JSON Decode Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[Waline] GetRecentComments JSON Decode Error: %v\n", err)
 		return nil, err
 	}
 
 	if result.Errno != 0 {
-		fmt.Printf("[Waline] GetRecentComments API Error: %s\n", toString(result.Errmsg))
+		fmt.Fprintf(os.Stderr, "[Waline] GetRecentComments API Error: %s\n", toString(result.Errmsg))
 		return nil, fmt.Errorf("Waline API error: %s", toString(result.Errmsg))
 	}
 
 	commentsList, _, err := parseWalineData(result.Data)
 	if err != nil {
-		fmt.Printf("[Waline] GetRecentComments Data Parse Error: %v | Raw: %s\n", err, string(result.Data))
+		fmt.Fprintf(os.Stderr, "[Waline] GetRecentComments Data Parse Error: %v | Raw: %s\n", err, string(result.Data))
 		return nil, err
 	}
 
@@ -411,12 +412,12 @@ func (p *WalineProvider) DeleteComment(ctx context.Context, commentID string) er
 	serverURL := strings.TrimSuffix(p.ServerURLs, "/")
 	apiURL := fmt.Sprintf("%s/api/comment/%s", serverURL, commentID)
 
-	fmt.Printf("[Waline] DeleteComment Request: %s\n", apiURL)
+	fmt.Fprintf(os.Stderr, "[Waline] DeleteComment Request: %s\n", apiURL)
 
 	resp, err := p.executeAuthRequest(ctx, "DELETE", apiURL, nil)
 	if err != nil {
 		// Log error but return friendly message
-		fmt.Printf("[Waline] DeleteComment Request Failed or Auth Failed: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[Waline] DeleteComment Request Failed or Auth Failed: %v\n", err)
 		if strings.Contains(err.Error(), "Waline Logged Auth Failed (401)") {
 			return fmt.Errorf("Waline 删除失败 (401): Master Key 无效。已尝试多种验证格式均失败。请检查 Token 设置。")
 		}
@@ -429,24 +430,24 @@ func (p *WalineProvider) DeleteComment(ctx context.Context, commentID string) er
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		body, _ := io.ReadAll(resp.Body)
-		fmt.Printf("[Waline] DeleteComment 401 Unauthorized. Body: %s\n", string(body))
+		fmt.Fprintf(os.Stderr, "[Waline] DeleteComment 401 Unauthorized. Body: %s\n", string(body))
 		return fmt.Errorf("Waline 删除失败 (401): Master Key 无效或权限不足。请检查是否填写了正确的 Token。API返回: %s", string(body))
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		fmt.Printf("[Waline] DeleteComment Error Status: %d. Body: %s\n", resp.StatusCode, string(body))
+		fmt.Fprintf(os.Stderr, "[Waline] DeleteComment Error Status: %d. Body: %s\n", resp.StatusCode, string(body))
 		return fmt.Errorf("Waline API error: %d %s", resp.StatusCode, string(body))
 	}
 
 	var result walineResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		fmt.Printf("[Waline] DeleteComment JSON Decode Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[Waline] DeleteComment JSON Decode Error: %v\n", err)
 		// If decode fails, but status 200, maybe it's fine or empty body
 		return nil
 	}
 	if result.Errno != 0 {
-		fmt.Printf("[Waline] DeleteComment API Error: %s\n", toString(result.Errmsg))
+		fmt.Fprintf(os.Stderr, "[Waline] DeleteComment API Error: %s\n", toString(result.Errmsg))
 		return fmt.Errorf("Waline API error: %s", toString(result.Errmsg))
 	}
 
@@ -495,7 +496,7 @@ func (p *WalineProvider) executeAuthRequest(ctx context.Context, method, apiURL 
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", token)
 
-		fmt.Printf("[Waline] Trying Auth: %s... (truncated)\n", token[:min(len(token), 15)])
+		fmt.Fprintf(os.Stderr, "[Waline] Trying Auth: %s... (truncated)\n", token[:min(len(token), 15)])
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {

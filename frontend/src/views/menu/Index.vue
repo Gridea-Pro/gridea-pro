@@ -138,7 +138,7 @@ import {
   TrashIcon,
   PencilIcon,
 } from '@heroicons/vue/24/outline'
-import { EventsEmit, EventsOnce } from 'wailsjs/runtime'
+import { EventsEmit } from '@/wailsjs/runtime'
 
 const { t } = useI18n()
 const siteStore = useSiteStore()
@@ -156,6 +156,9 @@ const form = reactive<IForm>({
   openType: MenuTypes.Internal,
   link: '',
 })
+
+import { SaveMenuFromFrontend, DeleteMenuFromFrontend, SaveMenus } from '@/wailsjs/go/facade/MenuFacade'
+import { domain, facade } from '@/wailsjs/go/models'
 
 const menuList = ref<IMenu[]>([])
 const visible = ref(false)
@@ -182,7 +185,7 @@ const menuLinks = computed(() => {
     },
     {
       text: '🏷️ Tags',
-      value: urlJoin(setting.domain, 'tags'),
+      value: urlJoin(setting.domain, themeConfig.tagPath || 'tags'),
     },
     ...posts,
   ].filter((item) => typeof item.value === 'string' && item.value.trim() !== '')
@@ -218,18 +221,26 @@ const reloadSite = () => {
   EventsEmit('app-site-reload')
 }
 
-const saveMenu = () => {
-  EventsEmit('menu-save', { ...form })
-  EventsOnce('menu-saved', (result: any) => {
-    if (result.success && result.menus) {
-      siteStore.menus = result.menus
-      menuList.value = [...result.menus]
-    }
-    toast.success(t('siteMenu.saved'))
-    visible.value = false
+const saveMenu = async () => {
+  try {
+    const menuForm = new facade.MenuForm({
+      name: form.name,
+      openType: form.openType,
+      link: form.link,
+      index: form.index,
+    })
+    const menus = await SaveMenuFromFrontend(menuForm)
 
-    ga('Menu', 'Menu - save', form.name)
-  })
+    if (menus) {
+      siteStore.menus = menus
+      menuList.value = [...menus]
+      toast.success(t('siteMenu.saved'))
+      visible.value = false
+      ga('Menu', 'Menu - save', form.name)
+    }
+  } catch (e: any) {
+    toast.error(e.message || 'Error saving menu')
+  }
 }
 
 const confirmDelete = (index: number) => {
@@ -237,23 +248,30 @@ const confirmDelete = (index: number) => {
   deleteModalVisible.value = true
 }
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (menuToDelete.value !== null) {
-    EventsEmit('menu-delete', menuToDelete.value)
-    EventsOnce('menu-deleted', (result: any) => {
-      if (result.success && result.menus) {
-        siteStore.menus = result.menus
-        menuList.value = [...result.menus]
+    try {
+      const menus = await DeleteMenuFromFrontend(menuToDelete.value)
+      if (menus) {
+        siteStore.menus = menus
+        menuList.value = [...menus]
+        toast.success(t('siteMenu.deleted'))
       }
-      toast.success(t('siteMenu.deleted'))
-    })
+    } catch (e: any) {
+      toast.error(e.message || 'Error deleting menu')
+    }
   }
   deleteModalVisible.value = false
   menuToDelete.value = null
 }
 
-const handleMenuSort = () => {
-  EventsEmit('menu-sort', JSON.parse(JSON.stringify(menuList.value)))
+const handleMenuSort = async () => {
+  try {
+    const menus = menuList.value.map(m => new domain.Menu(m))
+    await SaveMenus(menus)
+  } catch (e: any) {
+    toast.error(e.message || 'Error sorting menu')
+  }
 }
 
 onMounted(() => {

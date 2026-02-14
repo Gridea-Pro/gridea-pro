@@ -7,7 +7,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSiteStore } from '@/stores/site'
-import { EventsEmit, EventsOnce } from 'wailsjs/runtime'
+import { EventsEmit, EventsOnce } from '@/wailsjs/runtime'
 import { toast } from '@/helpers/toast'
 import type { PostForm, PostFormData, ValidationResult } from '@/types/post'
 import type { IPost } from '@/interfaces/post'

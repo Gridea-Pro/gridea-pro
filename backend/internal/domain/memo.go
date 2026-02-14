@@ -17,3 +17,22 @@ type MemoRepository interface {
 	GetAll(ctx context.Context) ([]Memo, error)
 	SaveAll(ctx context.Context, memos []Memo) error
 }
+
+// TagStat box struct for tag statistics
+type TagStat struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+}
+
+// MemoStats struct for statistics
+type MemoStats struct {
+	Total   int            `json:"total"`
+	Tags    []TagStat      `json:"tags"`
+	Heatmap map[string]int `json:"heatmap"`
+}
+
+// MemoDashboardDTO for frontend dashboard
+type MemoDashboardDTO struct {
+	Memos []Memo    `json:"memos"`
+	Stats MemoStats `json:"stats"`
+}

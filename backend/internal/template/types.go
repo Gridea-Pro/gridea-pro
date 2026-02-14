@@ -36,6 +36,9 @@ type TemplateData struct {
 
 	// 所有标签
 	Tags []TagView `json:"tags"`
+
+	// 闪念列表（闪念页使用）
+	Memos []MemoView `json:"memos"`
 }
 
 // ThemeConfigView 主题配置视图
@@ -56,7 +59,9 @@ type ThemeConfigView struct {
 	ArchivesPath     string `json:"archivesPath"`
 	PostPath         string `json:"postPath"`
 	TagPath          string `json:"tagPath"`
+	TagsPath         string `json:"tagsPath"`
 	LinkPath         string `json:"linkPath"`
+	MemosPath        string `json:"memosPath"`
 }
 
 // SiteView 站点视图
@@ -111,6 +116,15 @@ type TagView struct {
 	Link     string `json:"link"`
 	Count    int    `json:"count"`
 	UsedName string `json:"usedName"` // 兼容旧版
+}
+
+// MemoView 闪念视图
+type MemoView struct {
+	ID         string        `json:"id"`
+	Content    template.HTML `json:"content"` // HTML 内容
+	Tags       []string      `json:"tags"`
+	CreatedAt  string        `json:"createdAt"`
+	DateFormat string        `json:"dateFormat"`
 }
 
 // CategoryView 分类视图

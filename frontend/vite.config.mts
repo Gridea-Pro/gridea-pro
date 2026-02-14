@@ -16,7 +16,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
-      'wailsjs': resolve(__dirname, 'wailsjs'),
+      'wailsjs': resolve(__dirname, 'src/wailsjs'),
     },
   },
   css: {

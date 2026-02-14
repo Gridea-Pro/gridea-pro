@@ -31,6 +31,26 @@ func SaveJSONFile(path string, v interface{}) error {
 	return os.WriteFile(path, data, 0644)
 }
 
+// SaveJSONFileIdempotent 将数据保存为 JSON 文件，但只有内容变化时才写入
+func SaveJSONFileIdempotent(path string, v interface{}) error {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	// Read existing file to compare
+	existingData, err := os.ReadFile(path)
+	if err == nil && string(existingData) == string(data) {
+		return nil // Content matches, skip write
+	}
+
+	return os.WriteFile(path, data, 0644)
+}
+
 func CopyFile(src, dst string) error {
 	sourceFile, err := os.Open(src)
 	if err != nil {

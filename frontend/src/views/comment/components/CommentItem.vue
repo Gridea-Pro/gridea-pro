@@ -108,7 +108,7 @@ import {
 import { Button } from '@/components/ui/button'
 import MarkdownContent from './MarkdownContent.vue'
 import { useContentOverflow } from '@/composables/useContentOverflow'
-import { BrowserOpenURL, Environment } from 'wailsjs/runtime'
+import { BrowserOpenURL, Environment } from '@/wailsjs/runtime'
 import { useSiteStore } from '@/stores/site' // For openLink domain logic if needed
 
 const props = defineProps<{

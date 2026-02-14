@@ -168,7 +168,7 @@ import { useMemoStore } from '@/stores/memo'
 import { useSiteStore } from '@/stores/site'
 import AppSystem from '@/components/AppSystem/Index.vue'
 import { Button } from '@/components/ui/button'
-import { EventsEmit, EventsOn, BrowserOpenURL } from 'wailsjs/runtime'
+import { EventsEmit, EventsOn, BrowserOpenURL } from '@/wailsjs/runtime'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import {
   DocumentTextIcon,

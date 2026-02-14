@@ -72,7 +72,7 @@ func (r *postRepository) GetAll(ctx context.Context) ([]domain.Post, error) {
 	// We preserve it here.)
 	dbPath := filepath.Join(r.appDir, "config", "posts.json")
 	db := map[string]interface{}{"posts": posts}
-	_ = SaveJSONFile(dbPath, db)
+	_ = SaveJSONFileIdempotent(dbPath, db)
 
 	return posts, nil
 }
@@ -163,6 +163,14 @@ isTop: %t
 	)
 
 	postPath := filepath.Join(postsDir, input.FileName+".md")
+
+	// Idempotent check: Read existing file
+	existingContent, err := os.ReadFile(postPath)
+	if err == nil && string(existingContent) == mdContent {
+		// Content unchanged, skip write
+		return nil
+	}
+
 	if err := os.WriteFile(postPath, []byte(mdContent), 0644); err != nil {
 		return fmt.Errorf("failed to write post file: %w", err)
 	}

@@ -129,22 +129,27 @@ func Run(assets embed.FS) {
 		OnStartup: func(ctx context.Context) {
 			prefsWindow.SetContext(ctx)
 			application.Startup(ctx)
+			services.Startup(ctx) // Initialize global context in facades
 		},
 		OnShutdown: application.Shutdown,
 		Menu:       appMenu,
 		Bind: []interface{}{
+			// Explicitly bind App struct
 			application,
-			// Bind Facades
+
+			// Explicitly bind EACH Facade instance for Context Injection to work
 			services.Category,
 			services.Post,
 			services.Menu,
 			services.Link,
-			services.Tag, // Added TagFacade
+			services.Tag,
 			services.Deploy,
 			services.Theme,
 			services.Renderer,
 			services.Setting,
-			services.Comment, // Added CommentFacade
+			services.Memo,
+			services.Comment,
+			// Add other facades here as needed
 		},
 		Mac: &mac.Options{
 			TitleBar:             mac.TitleBarHiddenInset(),

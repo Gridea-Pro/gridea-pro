@@ -12,12 +12,12 @@ import (
 )
 
 type App struct {
-	ctx            context.Context
-	appDir         string
-	buildDir       string
-	previewService *facade.PreviewFacade
-	services       *facade.AppServices
-	themeWatcher   *service.ThemeWatcher
+	ctx             context.Context
+	appDir          string
+	buildDir        string
+	previewService  *facade.PreviewFacade
+	services        *facade.AppServices
+	resourceWatcher *service.ResourceWatcher
 }
 
 func NewApp(appDir string, services *facade.AppServices) *App {
@@ -43,14 +43,13 @@ func (a *App) Startup(ctx context.Context) {
 	a.previewService = facade.NewPreviewFacade(a.buildDir)
 	a.previewService.SetContext(ctx)
 
-	// 初始化并启动主题监听
+	// Initialize and start ResourceWatcher
 	var err error
-	a.themeWatcher, err = service.NewThemeWatcher(a.appDir)
+	a.resourceWatcher, err = service.NewResourceWatcher(a.appDir)
 	if err == nil {
-		a.themeWatcher.Start(ctx)
+		a.resourceWatcher.Start(ctx)
 	} else {
-		// Log error or ignore? A logger would be good here.
-		// For now just ignore as it shouldn't block app startup.
+		// Log error
 	}
 
 	// Initialize Services Context and Events
@@ -158,13 +157,13 @@ func (a *App) Startup(ctx context.Context) {
 			}()
 		}
 
-		// 更新 ThemeWatcher
-		if a.themeWatcher != nil {
-			a.themeWatcher.Close()
+		// Update ResourceWatcher
+		if a.resourceWatcher != nil {
+			a.resourceWatcher.Close()
 		}
-		a.themeWatcher, _ = service.NewThemeWatcher(newPath)
-		if a.themeWatcher != nil {
-			a.themeWatcher.Start(ctx)
+		a.resourceWatcher, _ = service.NewResourceWatcher(newPath)
+		if a.resourceWatcher != nil {
+			a.resourceWatcher.Start(ctx)
 		}
 
 		// 4.重新加载站点数据
@@ -182,8 +181,8 @@ func (a *App) Shutdown(ctx context.Context) {
 	if a.previewService != nil {
 		_ = a.previewService.StopPreviewServer()
 	}
-	if a.themeWatcher != nil {
-		a.themeWatcher.Close()
+	if a.resourceWatcher != nil {
+		a.resourceWatcher.Close()
 	}
 }
 

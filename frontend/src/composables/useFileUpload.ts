@@ -4,7 +4,7 @@
  * 封装图片上传相关逻辑
  */
 
-import { EventsEmit, EventsOnce } from 'wailsjs/runtime'
+import { EventsEmit, EventsOnce } from '@/wailsjs/runtime'
 import { toast } from '@/helpers/toast'
 
 export interface FeatureImage {

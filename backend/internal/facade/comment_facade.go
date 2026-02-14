@@ -18,31 +18,52 @@ func NewCommentFacade(s *service.CommentService) *CommentFacade {
 
 // GetSettings 获取评论设置
 func (f *CommentFacade) GetSettings() (domain.CommentSettings, error) {
-	return f.internal.GetSettings(context.TODO())
+	ctx := WailsContext
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	return f.internal.GetSettings(ctx)
 }
 
 // SaveSettings 保存评论设置
 func (f *CommentFacade) SaveSettings(settings domain.CommentSettings) error {
-	return f.internal.SaveSettings(context.TODO(), settings)
+	ctx := WailsContext
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	return f.internal.SaveSettings(ctx, settings)
 }
 
 // FetchComments 获取评论列表
 func (f *CommentFacade) FetchComments(page, pageSize int) (*domain.PaginatedComments, error) {
+	ctx := WailsContext
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+
 	if page < 1 {
 		page = 1
 	}
 	if pageSize < 1 {
 		pageSize = 50
 	}
-	return f.internal.FetchComments(context.TODO(), page, pageSize)
+	return f.internal.FetchComments(ctx, page, pageSize)
 }
 
 // ReplyComment 回复评论
 func (f *CommentFacade) ReplyComment(parentID string, content string, articleID string) error {
-	return f.internal.ReplyComment(context.TODO(), parentID, content, articleID)
+	ctx := WailsContext
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	return f.internal.ReplyComment(ctx, parentID, content, articleID)
 }
 
 // DeleteComment 删除评论
 func (f *CommentFacade) DeleteComment(commentID string) error {
-	return f.internal.DeleteComment(context.TODO(), commentID)
+	ctx := WailsContext
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	return f.internal.DeleteComment(ctx, commentID)
 }

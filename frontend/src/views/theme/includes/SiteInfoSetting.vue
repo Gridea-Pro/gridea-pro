@@ -12,7 +12,7 @@
       <!-- Site Description -->
       <div class="grid grid-cols-[180px_1fr] items-start gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('settings.basic.siteDescription')
-          }}</label>
+        }}</label>
         <div class="max-w-sm">
           <Textarea v-model="form.siteDescription" rows="3" />
           <div class="text-xs text-muted-foreground mt-1">{{ $t('article.htmlSupport') }}</div>
@@ -22,7 +22,7 @@
       <!-- Site Author -->
       <div class="grid grid-cols-[180px_1fr] items-center gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground">{{ $t('settings.basic.siteAuthor')
-          }}</label>
+        }}</label>
         <div class="max-w-sm">
           <Input v-model="form.siteAuthor" />
         </div>
@@ -39,7 +39,7 @@
       <!-- Footer Info -->
       <div class="grid grid-cols-[180px_1fr] items-start gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('settings.basic.footerInfo')
-          }}</label>
+        }}</label>
         <div class="max-w-sm">
           <Textarea v-model="form.footerInfo" rows="3" placeholder="Powered by Gridea Pro" />
           <div class="text-xs text-muted-foreground mt-1">{{ $t('htmlSupport') }}</div>
@@ -49,7 +49,7 @@
       <!-- Favicon -->
       <div class="grid grid-cols-[180px_1fr] items-start gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('settings.basic.favicon')
-          }}</label>
+        }}</label>
         <div class="max-w-sm">
           <div
             class="w-24 h-24 border-1 border-dashed border-input rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors relative overflow-hidden bg-background"
@@ -66,7 +66,7 @@
       <!-- Avatar -->
       <div class="grid grid-cols-[180px_1fr] items-start gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('settings.basic.avatar')
-          }}</label>
+        }}</label>
         <div class="max-w-sm">
           <div
             class="w-24 h-24 border-1 border-dashed border-input rounded-lg flex items-center justify-center cursor-pointer hover:border-primary transition-colors relative overflow-hidden bg-background"
@@ -104,8 +104,10 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import ga from '@/helpers/analytics'
-import { EventsEmit, EventsOnce } from 'wailsjs/runtime'
-import { SaveFavicon, SaveAvatar } from '../../../../wailsjs/wailsjs/go/facade/SettingFacade'
+import { EventsEmit, EventsOnce } from '@/wailsjs/runtime'
+import { SaveFavicon, SaveAvatar } from '@/wailsjs/go/facade/SettingFacade'
+import { SaveThemeConfigFromFrontend } from '@/wailsjs/go/facade/ThemeFacade'
+import { domain } from '@/wailsjs/go/models'
 
 const { t } = useI18n()
 const siteStore = useSiteStore()
@@ -158,45 +160,28 @@ const form = reactive({
   footerInfo: '',
 })
 
-const saveTheme = () => {
+const saveTheme = async () => {
   console.log('开始保存站点信息')
 
-  let timeoutId: any = null
-
-  EventsOnce('theme-saved', async (result: any) => {
-    console.log('收到 theme-saved 事件:', result)
-
-    if (timeoutId) {
-      clearTimeout(timeoutId)
-      timeoutId = null
-    }
-
-    if (!result) {
-      toast.error('主题保存失败')
-      return
-    }
-
-    toast.success(t('settings.theme.configSaved'))
-    ga('Theme', 'SiteInfo - save', form.siteName)
-
-    EventsEmit('app-site-reload')
+  // Construct full config to save
+  const fullConfig = new domain.ThemeConfig({
+    ...siteStore.site.themeConfig,
+    siteName: form.siteName,
+    siteAuthor: form.siteAuthor,
+    siteEmail: form.siteEmail,
+    siteDescription: form.siteDescription,
+    footerInfo: form.footerInfo,
   })
 
-  timeoutId = setTimeout(() => {
-    console.error('保存主题超时')
-    toast.error('保存主题超时，请重试')
-  }, 10000)
-
-  // Construct full config to save
-  const fullConfig = { ...siteStore.site.themeConfig }
-  fullConfig.siteName = form.siteName
-  fullConfig.siteAuthor = form.siteAuthor
-  fullConfig.siteEmail = form.siteEmail
-  fullConfig.siteDescription = form.siteDescription
-  fullConfig.footerInfo = form.footerInfo
-
-  EventsEmit('theme-save', fullConfig)
-  console.log('已发送 theme-save 事件')
+  try {
+    await SaveThemeConfigFromFrontend(fullConfig)
+    toast.success(t('settings.theme.configSaved'))
+    ga('Theme', 'SiteInfo - save', form.siteName)
+    EventsEmit('app-site-reload')
+  } catch (e) {
+    console.error(e)
+    toast.error('主题保存失败')
+  }
 }
 
 onMounted(() => {

@@ -119,11 +119,10 @@ import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet'
 import {
   PlusIcon,
-  Bars3Icon,
   TrashIcon,
   PencilIcon,
 } from '@heroicons/vue/24/outline'
-import { EventsEmit, EventsOnce, EventsOff } from 'wailsjs/runtime'
+import { EventsEmit } from '@/wailsjs/runtime'
 
 const { t } = useI18n()
 const siteStore = useSiteStore()
@@ -152,13 +151,15 @@ const form = reactive<IForm>({
   color: '#3b82f6',
 })
 
-const PRESET_COLORS = [
-  '#ef4444', '#f97316', '#f59e0b', '#eab308',
-  '#84cc16', '#22c55e', '#10b981', '#14b8a6',
-  '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1',
-  '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
-  '#f43f5e', '#64748b'
-]
+import { GetTagColors, SaveTagFromFrontend, DeleteTagFromFrontend } from '@/wailsjs/go/facade/TagFacade'
+import { domain, facade } from '@/wailsjs/go/models'
+
+const PRESET_COLORS = ref<string[]>([])
+
+onMounted(async () => {
+  PRESET_COLORS.value = await GetTagColors()
+  tagList.value = [...siteStore.tags]
+})
 
 const tagList = ref<ITag[]>([])
 
@@ -188,7 +189,11 @@ const newTag = () => {
   form.index = -1
   form.originalSlug = ''
   form.originalName = ''
-  form.color = PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)]
+  if (PRESET_COLORS.value.length > 0) {
+    form.color = PRESET_COLORS.value[Math.floor(Math.random() * PRESET_COLORS.value.length)]
+  } else {
+    form.color = '#3b82f6'
+  }
   slugChanged.value = false
   visible.value = true
   isUpdate.value = false
@@ -221,7 +226,7 @@ const checkTagValid = () => {
   return foundIndex === -1
 }
 
-const saveTag = () => {
+const saveTag = async () => {
   buildSlug()
 
   const valid = checkTagValid()
@@ -230,15 +235,24 @@ const saveTag = () => {
     return
   }
 
-  EventsEmit('tag-save', { ...form })
-  EventsOnce('tag-saved', (result: any) => {
-    if (result.success && result.tags) {
-      siteStore.tags = result.tags
-      tagList.value = [...result.tags]
+  try {
+    const tagForm = new facade.TagForm({
+      name: form.name,
+      slug: form.slug,
+      color: form.color || '',
+      originalName: form.originalName || '',
+    })
+    const newTags = await SaveTagFromFrontend(tagForm)
+
+    if (newTags) {
+      siteStore.tags = newTags
+      tagList.value = [...newTags]
+      toast.success(t('tagSaved'))
+      visible.value = false
     }
-    toast.success(t('tagSaved')) // TODO: Check i18n key
-    visible.value = false
-  })
+  } catch (e: any) {
+    toast.error(e.message || 'Error saving tag')
+  }
 }
 
 const confirmDelete = (slug: string) => {
@@ -246,23 +260,36 @@ const confirmDelete = (slug: string) => {
   deleteModalVisible.value = true
 }
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (tagToDelete.value) {
-    EventsEmit('tag-delete', tagToDelete.value)
-    EventsOnce('tag-deleted', (result: any) => {
-      if (result.success && result.tags) {
-        siteStore.tags = result.tags
-        tagList.value = [...result.tags]
+    // Find tag name by slug because backend DeleteTag expects name currently (based on my refactor analysis, 
+    // but wait, DeleteTagFromFrontend calls DeleteTag which calls internal.DeleteTag(ctx, name).
+    // Let's check if we have the name available.
+    // The previous loop found the tag name by slug. I should do the same or pass the name if possible.
+    // However, the confirmDelete only sets slug.
+
+    // Let's find the name from the slug
+    const tag = siteStore.tags.find(t => t.slug === tagToDelete.value)
+    if (tag) {
+      try {
+        const newTags = await DeleteTagFromFrontend(tag.name)
+        if (newTags) {
+          siteStore.tags = newTags
+          tagList.value = [...newTags]
+          toast.success(t('tagDeleted'))
+        }
+      } catch (e: any) {
+        toast.error(e.message || 'Error deleting tag')
       }
-      toast.success(t('tagDeleted')) // TODO: Check i18n key
-    })
+    }
   }
   deleteModalVisible.value = false
   tagToDelete.value = null
 }
 
 const handleTagSort = () => {
-  EventsEmit('tag-sort', JSON.parse(JSON.stringify(tagList.value)))
+  const tags = tagList.value.map(t => new domain.Tag(t))
+  EventsEmit('tag-sort', tags)
 }
 
 watch(() => siteStore.tags, (newTags) => {
@@ -271,12 +298,5 @@ watch(() => siteStore.tags, (newTags) => {
 
 onMounted(() => {
   tagList.value = [...siteStore.tags]
-  EventsOff('tag-saved')
-  EventsOff('tag-deleted')
-})
-
-onUnmounted(() => {
-  EventsOff('tag-saved')
-  EventsOff('tag-deleted')
 })
 </script>

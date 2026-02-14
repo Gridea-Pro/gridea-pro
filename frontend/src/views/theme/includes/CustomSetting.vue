@@ -255,7 +255,8 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { EventsEmit, EventsOnce, ResolveFilePaths } from 'wailsjs/runtime'
+import { EventsEmit, EventsOnce, ResolveFilePaths } from '@/wailsjs/runtime'
+import { SaveThemeCustomConfigFromFrontend } from '@/wailsjs/go/facade/ThemeFacade'
 
 // Modal logic replacement
 const confirmReset = (callback: () => void) => {
@@ -268,7 +269,7 @@ const { t } = useI18n()
 const router = useRouter()
 const siteStore = useSiteStore()
 
-const form = reactive<any>({})
+const form = reactive<Record<string, any>>({})
 const fileInputRefs = ref<Map<string, HTMLInputElement>>(new Map())
 
 const setFileInputRef = (el: any, key: string) => {
@@ -346,34 +347,32 @@ const getPostTitleByLink = (link: string) => {
   return (foundPost && foundPost.data.title) || ''
 }
 
-const saveThemeCustomConfig = () => {
+const saveThemeCustomConfig = async () => {
   console.log('this.form', form)
-  EventsEmit('theme-custom-config-save', { ...form })
-  EventsOnce('theme-custom-config-saved', (result: any) => {
-    if (result.success) {
-      siteStore.site.themeCustomConfig = { ...form }
-      toast.success(t('settings.theme.configSaved'))
-    } else {
-      toast.error(t('settings.theme.saveFailed')) // TODO: Check i18n key
-    }
-  })
+  try {
+    await SaveThemeCustomConfigFromFrontend(form)
+    siteStore.site.themeCustomConfig = { ...form }
+    toast.success(t('settings.theme.configSaved'))
+  } catch (e) {
+    console.error(e)
+    toast.error(t('settings.theme.saveFailed'))
+  }
 }
 
 const resetThemeCustomConfig = () => {
-  confirmReset(() => {
-    EventsEmit('theme-custom-config-save', {})
-    EventsOnce('theme-custom-config-saved', async (result: any) => {
-      if (result.success) {
-        siteStore.site.themeCustomConfig = {}
-        Object.keys(form).forEach(key => {
-          delete form[key]
-        })
-        loadCustomConfig()
-        toast.success(t('settings.theme.resetSuccess')) // TODO: Check i18n key
-      } else {
-        toast.error(t('settings.theme.resetFailed')) // TODO: Check i18n key
-      }
-    })
+  confirmReset(async () => {
+    try {
+      await SaveThemeCustomConfigFromFrontend({})
+      siteStore.site.themeCustomConfig = {}
+      Object.keys(form).forEach(key => {
+        delete form[key]
+      })
+      loadCustomConfig()
+      toast.success(t('settings.theme.resetSuccess'))
+    } catch (e) {
+      console.error(e)
+      toast.error(t('settings.theme.resetFailed'))
+    }
   })
 }
 
@@ -403,6 +402,7 @@ const handleImageUpload = async (event: Event, formItemName: string, arrayFieldI
   if (!isImage) return
 
   // Use ResolveFilePaths to get the actual file path
+  // Wails adds a 'path' property to File objects. Cast to any works for now or define interface.
   const fileArray = Array.from(files)
   await ResolveFilePaths(fileArray as any)
   const filePath = (fileArray[0] as any).path

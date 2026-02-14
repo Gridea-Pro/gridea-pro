@@ -3,7 +3,7 @@
  * 用于在纯 Vite 开发服务器环境下安全调用 Wails Runtime API
  */
 
-import { EventsOn as WailsEventsOn, EventsEmit as WailsEventsEmit, WindowShow as WailsWindowShow } from 'wailsjs/runtime'
+import { EventsOn as WailsEventsOn, EventsEmit as WailsEventsEmit, WindowShow as WailsWindowShow } from '@/wailsjs/runtime'
 
 /**
  * 检测当前是否运行在 Wails 环境中

@@ -9,7 +9,7 @@
 <script lang="ts" setup>
 import { useI18n } from 'vue-i18n'
 import pkg from '../../../../package.json'
-import { BrowserOpenURL } from 'wailsjs/runtime'
+import { BrowserOpenURL } from '@/wailsjs/runtime'
 
 const { t } = useI18n()
 const version = pkg.version

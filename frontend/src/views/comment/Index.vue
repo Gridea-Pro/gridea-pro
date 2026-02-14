@@ -87,7 +87,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination'
 import { useCommentStore } from '@/stores/comment'
-import { Environment } from 'wailsjs/runtime'
+import { Environment } from '@/wailsjs/runtime'
 import { parseEmoji } from '@/utils/emoji'
 import markdownIt from '@/helpers/markdown'
 import type { Comment } from '@/types/comment'

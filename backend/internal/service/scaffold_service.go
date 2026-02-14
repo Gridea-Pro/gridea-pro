@@ -8,10 +8,12 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 type ScaffoldService struct {
 	assets embed.FS
+	mu     sync.Mutex
 }
 
 func NewScaffoldService(assets embed.FS) *ScaffoldService {
@@ -22,6 +24,9 @@ func NewScaffoldService(assets embed.FS) *ScaffoldService {
 
 // InitSite checks if the site is initialized, if not, it copies default files
 func (s *ScaffoldService) InitSite(appDir string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	// 1. Locate default-files source path in embed.FS
 	// Source path in embed.FS: frontend/dist/default-files or frontend/public/default-files
 	srcParams := []string{"frontend/dist/default-files", "frontend/public/default-files"}

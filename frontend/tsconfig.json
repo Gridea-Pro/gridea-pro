@@ -12,7 +12,8 @@
     "sourceMap": true,
     "baseUrl": ".",
     "skipLibCheck": true,
-    "allowJs": true,
+    "allowJs": false,
+    "checkJs": false,
     "noEmit": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -25,7 +26,7 @@
         "src/*"
       ],
       "wailsjs/*": [
-        "wailsjs/*"
+        "src/wailsjs/*"
       ]
     },
     "lib": [
@@ -38,7 +39,6 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "wailsjs/**/*.ts",
     "tests/**/*.ts",
     "tests/**/*.tsx",
     "wails.d.ts"
@@ -48,6 +48,7 @@
     "dist",
     "build",
     "node_modules/gray-matter/gray-matter.d.ts",
-    "src/components/MonacoMarkdownEditor/theme.js"
+    "src/components/MonacoMarkdownEditor/theme.js",
+    "src/wailsjs/**/*.js"
   ]
 }

@@ -3,23 +3,13 @@
     <div class="text-base font-medium mb-4 text-foreground">{{ t('sourceFolder') }}</div>
     <div class="space-y-4">
       <div class="flex items-center gap-2">
-        <Input 
-          v-model="currentFolderPath" 
-          readonly 
-          class="flex-1"
-        />
-        <Button 
-          variant="outline"
-          size="icon"
-          @click="handleFolderSelect"
-        >
+        <Input v-model="currentFolderPath" readonly class="flex-1" />
+        <Button variant="outline" size="icon" @click="handleFolderSelect">
           <FolderOpenIcon class="size-5" />
         </Button>
       </div>
       <div>
-        <Button 
-          @click="save" 
-        >
+        <Button @click="save">
           {{ t('save') }}
         </Button>
       </div>
@@ -35,8 +25,8 @@ import { toast } from '@/helpers/toast'
 import { FolderOpenIcon } from '@heroicons/vue/24/outline'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { EventsEmit, EventsOnce } from 'wailsjs/runtime'
-import { OpenFolderDialog } from 'wailsjs/wailsjs/go/app/App'
+import { EventsEmit, EventsOnce } from '@/wailsjs/runtime'
+import { OpenFolderDialog } from '@/wailsjs/go/app/App'
 
 const { t } = useI18n()
 const siteStore = useSiteStore()

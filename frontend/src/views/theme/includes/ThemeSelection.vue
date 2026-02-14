@@ -190,7 +190,7 @@ import { useSiteStore } from '@/stores/site'
 import { useImageUrl } from '@/composables/useImageUrl'
 import { Button } from '@/components/ui/button'
 import { toast } from 'vue-sonner'
-import { EventsEmit, EventsOnce, BrowserOpenURL } from 'wailsjs/runtime'
+import { EventsEmit, EventsOnce, BrowserOpenURL } from '@/wailsjs/runtime'
 import { EyeIcon, UserIcon, PhotoIcon, AdjustmentsHorizontalIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 
 const emit = defineEmits(['change-tab'])
