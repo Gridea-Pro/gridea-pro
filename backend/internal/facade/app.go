@@ -5,6 +5,7 @@ import (
 	"embed"
 	"gridea-pro/backend/internal/repository"
 	"gridea-pro/backend/internal/service"
+	"path/filepath"
 	"sync"
 )
 
@@ -24,6 +25,7 @@ type AppServices struct {
 	Setting  *SettingFacade
 	Comment  *CommentFacade
 	Memo     *MemoFacade
+	Preview  *PreviewFacade
 	// Internal services for event/update handling
 	Services struct {
 		Category *service.CategoryService
@@ -38,6 +40,7 @@ type AppServices struct {
 		Scaffold *service.ScaffoldService
 		Comment  *service.CommentService
 		Memo     *service.MemoService
+		Preview  *service.PreviewService
 	}
 	assets embed.FS // Keep reference for UpdateAppDir
 }
@@ -81,6 +84,7 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	commentRepo := repository.NewCommentRepository(appDir)
 	commentService := service.NewCommentService(appDir, commentRepo, postRepo, themeRepo)
 	memoService := service.NewMemoService(memoRepo)
+	previewService := service.NewPreviewService(filepath.Join(appDir, "output"))
 	// Set CommentRepo on RendererService for template injection
 	rendererService.SetCommentRepo(commentRepo)
 
@@ -97,6 +101,7 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 		Setting:  NewSettingFacade(settingService),
 		Comment:  NewCommentFacade(commentService),
 		Memo:     NewMemoFacade(memoService),
+		Preview:  NewPreviewFacade(previewService),
 		Services: struct {
 			Category *service.CategoryService
 			Post     *service.PostService
@@ -110,6 +115,7 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 			Scaffold *service.ScaffoldService
 			Comment  *service.CommentService
 			Memo     *service.MemoService
+			Preview  *service.PreviewService
 		}{
 			Category: categoryService,
 			Post:     postService,
@@ -123,6 +129,7 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 			Scaffold: scaffoldService,
 			Comment:  commentService,
 			Memo:     memoService,
+			Preview:  previewService,
 		},
 		assets: assets,
 	}
@@ -145,10 +152,12 @@ func (s *AppServices) UpdateAppDir(appDir string) {
 	s.Setting.internal = newServices.Services.Setting
 	s.Comment.internal = newServices.Services.Comment
 	s.Memo.internal = newServices.Services.Memo
+	s.Preview.internal = newServices.Services.Preview
 	// Scaffold service doesn't need update generally, but good to keep in sync
 	s.Services.Scaffold = newServices.Services.Scaffold
 	s.Services.Comment = newServices.Services.Comment
 	s.Services.Memo = newServices.Services.Memo
+	s.Services.Preview = newServices.Services.Preview
 }
 
 func (s *AppServices) RegisterEvents(ctx context.Context) {

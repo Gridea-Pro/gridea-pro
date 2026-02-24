@@ -188,6 +188,7 @@
         },
         "network": {
             "title": "Сервер",
+            "platform": "Платформа",
             "domain": "Домен",
             "repository": "Репозиторий",
             "branch": "Ветка",

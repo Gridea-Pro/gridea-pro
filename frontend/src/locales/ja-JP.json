@@ -188,6 +188,7 @@
         },
         "network": {
             "title": "リモート",
+            "platform": "プラットフォーム",
             "domain": "ドメイン",
             "repository": "リポジトリ名",
             "branch": "ブランチ",

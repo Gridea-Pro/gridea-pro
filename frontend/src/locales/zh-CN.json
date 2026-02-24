@@ -195,6 +195,7 @@
         },
         "network": {
             "title": "配 置",
+            "platform": "平 台",
             "domain": "域 名",
             "repository": "仓库名称",
             "branch": "分 支",

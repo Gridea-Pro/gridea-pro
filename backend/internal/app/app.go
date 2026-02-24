@@ -53,23 +53,8 @@ func (a *App) Startup(ctx context.Context) {
 		runtime.LogError(ctx, "Failed to init site: "+err.Error())
 	}
 
-	// buildDir 使用站点目录下的 output 文件夹（与原版 Gridea 一致）
-	a.mu.Lock()
-	a.buildDir = filepath.Join(a.appDir, "output")
-	a.mu.Unlock()
-
 	// 初始化预览服务
-	// Need to access buildDir safely?
-	// Since we released lock, and nothing else modifies it concurrently yet (Events not started), it's safe.
-	// But let's use RLock for correctness if we were stricter.
-	// Actually we just set it. We can use it.
-
-	a.mu.RLock()
-	buildDir := a.buildDir
-	a.mu.RUnlock()
-
-	a.previewService = facade.NewPreviewFacade(buildDir)
-	a.previewService.SetContext(ctx)
+	a.previewService = a.services.Preview
 
 	// Initialize and start ResourceWatcher
 	var err error
@@ -162,15 +147,18 @@ func (a *App) handleSourceFolderChange(newPath string) {
 	a.buildDir = newBuildDir
 	a.mu.Unlock()
 
-	// 2. 更新所有业务 Service 的路径
-	a.services.UpdateAppDir(newPath)
-
 	// 3. 更新 PreviewService 的路径
-	// 更新内部状态，并尝试重启服务如果它正在运行。
-	a.previewService.SetBuildDir(newBuildDir)
-
+	// 先停止服务，因为 UpdateAppDir 会替换 PreviewService 的内部实例
+	shouldRestart := false
 	if a.previewService.IsRunning() {
 		_ = a.previewService.StopPreviewServer()
+		shouldRestart = true
+	}
+
+	// 2. 更新所有业务 Service 的路径 (这会更新 PreviewFacade.internal)
+	a.services.UpdateAppDir(newPath)
+
+	if shouldRestart {
 		// 重新启动
 		go func() {
 			// 自动触发一次渲染，确保新目录有内容

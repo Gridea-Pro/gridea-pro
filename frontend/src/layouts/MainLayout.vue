@@ -167,7 +167,7 @@ import { useI18n } from 'vue-i18n'
 import { useCommentStore } from '@/stores/comment'
 import { useMemoStore } from '@/stores/memo'
 import { useSiteStore } from '@/stores/site'
-import AppSystem from '@/components/AppSystem/Index.vue'
+import AppSystem from '@/views/preferences/index.vue'
 import { Button } from '@/components/ui/button'
 import { EventsEmit, EventsOn, BrowserOpenURL } from '@/wailsjs/runtime'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -224,7 +224,7 @@ const sideMenus = computed(() => {
       icon: LightBulbIcon,
       text: t('nav.memo'),
       count: memoStore.totalMemos || 0,
-      router: '/memo',
+      router: '/memos',
     },
     {
       icon: ChatBubbleLeftRightIcon,
@@ -264,7 +264,7 @@ const sideMenus = computed(() => {
     {
       icon: ServerIcon,
       text: t('nav.server'),
-      router: '/setting',
+      router: '/settings',
     },
   ]
 })

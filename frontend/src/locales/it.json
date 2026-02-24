@@ -189,6 +189,7 @@
         },
         "network": {
             "title": "Server",
+            "platform": "Piattaforma",
             "domain": "Dominio",
             "repository": "Nome Repository",
             "branch": "Ramo",
@@ -204,8 +205,7 @@
             "remotePathTip": "Compila il percorso assoluto, es: /home/username/www/",
             "testConnection": "Test Connessione",
             "connectSuccess": "Connessione remota riuscita",
-            "connectFailed": "Connessione remota fallita, controlla impostazioni repository, nome utente e token",
-            "platform": "Piattaforma"
+            "connectFailed": "Connessione remota fallita, controlla impostazioni repository, nome utente e token"
         },
         "system": {
             "displayLanguage": "Lingua visualizzazione",

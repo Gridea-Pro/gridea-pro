@@ -188,6 +188,7 @@
         },
         "network": {
             "title": "서버",
+            "platform": "플랫폼",
             "domain": "도메인",
             "repository": "저장소",
             "branch": "브랜치",

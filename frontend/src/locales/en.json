@@ -189,6 +189,7 @@
         },
         "network": {
             "title": "Server",
+            "platform": "Platform",
             "domain": "Domain",
             "repository": "Repository Name",
             "branch": "Branch",

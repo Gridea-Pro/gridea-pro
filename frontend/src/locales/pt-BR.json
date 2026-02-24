@@ -188,6 +188,7 @@
         },
         "network": {
             "title": "Servidor",
+            "platform": "Plataforma",
             "domain": "Domínio",
             "repository": "Repositório",
             "branch": "Branch",

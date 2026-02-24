@@ -1,15 +1,14 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
-import Articles from '@/views/article/Articles.vue'
-import Menu from '@/views/menu/Index.vue'
-import Tags from '@/views/tags/Index.vue'
-import Categories from '@/views/categories/Index.vue'
-import Links from '@/views/links/Index.vue'
-import Theme from '@/views/theme/Index.vue'
-import Setting from '@/views/setting/Index.vue'
-import Comment from '@/views/comment/Index.vue'
-import Memo from '@/views/memo/Index.vue'
-import Loading from '@/views/loading/Index.vue'
+import Articles from '@/views/articles/index.vue'
+import Menu from '@/views/menu/index.vue'
+import Tags from '@/views/tags/index.vue'
+import Categories from '@/views/categories/index.vue'
+import Links from '@/views/links/index.vue'
+import Theme from '@/views/theme/index.vue'
+import Setting from '@/views/settings/index.vue'
+import Comment from '@/views/comments/index.vue'
+import Memo from '@/views/memos/index.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -29,8 +28,8 @@ const routes: RouteRecordRaw[] = [
         component: Comment,
       },
       {
-        path: '/memo',
-        name: 'memo',
+        path: '/memos',
+        name: 'memos',
         component: Memo,
       },
       {
@@ -59,14 +58,9 @@ const routes: RouteRecordRaw[] = [
         component: Theme,
       },
       {
-        path: '/setting',
-        name: 'setting',
+        path: '/settings',
+        name: 'settings',
         component: Setting,
-      },
-      {
-        path: '/loading',
-        name: 'loading',
-        component: Loading,
       },
       {
         path: '/:pathMatch(.*)*',
@@ -82,3 +76,4 @@ const router = createRouter({
 })
 
 export default router
+ 

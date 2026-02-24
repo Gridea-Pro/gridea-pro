@@ -12,9 +12,10 @@ type PreviewFacade struct {
 }
 
 // NewPreviewFacade 创建新的 PreviewFacade 实例
-func NewPreviewFacade(buildDir string) *PreviewFacade {
+// NewPreviewFacade 创建新的 PreviewFacade 实例
+func NewPreviewFacade(s *service.PreviewService) *PreviewFacade {
 	return &PreviewFacade{
-		internal: service.NewPreviewService(buildDir),
+		internal: s,
 	}
 }
 

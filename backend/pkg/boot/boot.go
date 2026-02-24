@@ -245,6 +245,7 @@ func Run(assets embed.FS) {
 			services.Setting,
 			services.Memo,
 			services.Comment,
+			services.Preview,
 		},
 		Mac: &mac.Options{
 			TitleBar:             mac.TitleBarHiddenInset(),

@@ -188,6 +188,7 @@
         },
         "network": {
             "title": "Serveur",
+            "platform": "Plateforme",
             "domain": "Domaine",
             "repository": "Nom du dépôt",
             "branch": "Branche",

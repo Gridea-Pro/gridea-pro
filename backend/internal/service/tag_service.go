@@ -33,29 +33,47 @@ func (s *TagService) SaveTag(ctx context.Context, tag domain.Tag, originalName s
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Logic change: we should just Update or Create based on ID.
-	// But the frontend might be sending partial data or we're maintaining legacy behavior.
-	// The original logic iterated tags to find by name.
-	if tag.ID != "" {
-		// Likely an update
-		return s.repo.Update(ctx, &tag)
+	tags, err := s.repo.List(ctx)
+	if err != nil {
+		return err
 	}
 
-	// If no ID, but originalName is provided, we might be renaming?
-	// The original logic was complex: check by name, if found update, else append.
-	// We can use GetOrCreate? No, SaveTag is for editing.
+	var existing *domain.Tag
+	if originalName != "" {
+		for _, t := range tags {
+			if t.Name == originalName {
+				existing = &t
+				break
+			}
+		}
+	} else if tag.ID != "" {
+		for _, t := range tags {
+			if t.ID == tag.ID {
+				existing = &t
+				break
+			}
+		}
+	}
 
-	// Let's replicate original logic using the new Repo API (which requires loading list anyway for current repo impl)
-	// But `Repo` now has Update(Tag).
-	// If we don't have ID, we can't efficiently call Update.
-	// If the user's flow is "Edit Tag -> Save", they should have ID.
-	// If "Create Tag", no ID.
+	if existing != nil {
+		existing.Name = tag.Name
+		existing.Slug = tag.Slug
+		existing.Color = tag.Color
+		return s.repo.Update(ctx, existing)
+	}
 
+	// Create new
 	if tag.ID == "" {
-		// Check duplicates by name?
-		return s.repo.Create(ctx, &tag)
+		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		id, err := gonanoid.Generate(alphabet, 5)
+		if err != nil {
+			return err
+		}
+		tag.ID = id
 	}
-	return s.repo.Update(ctx, &tag)
+	tag.Used = true // Assuming creation means usage in this context
+
+	return s.repo.Create(ctx, &tag)
 }
 
 func (s *TagService) DeleteTag(ctx context.Context, name string) error {

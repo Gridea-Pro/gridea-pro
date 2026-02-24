@@ -45,7 +45,7 @@ export interface ValidationResult {
     error?: string
 }
 
-export interface PostStats {
+export interface ArticleStats {
     wordsNumber: number
     formatTime: string
 }
