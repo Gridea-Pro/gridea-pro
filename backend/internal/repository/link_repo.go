@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"gridea-pro/backend/internal/domain"
+
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 type linkRepository struct {
@@ -14,7 +16,16 @@ func NewLinkRepository(appDir string) domain.LinkRepository {
 	return &linkRepository{base}
 }
 
+func ensureLinkID(link *domain.Link) {
+	if link.ID == "" {
+		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		id, _ := gonanoid.Generate(alphabet, 6)
+		link.ID = id
+	}
+}
+
 func (r *linkRepository) Create(ctx context.Context, link *domain.Link) error {
+	ensureLinkID(link)
 	return r.Add(ctx, *link)
 }
 
@@ -28,4 +39,11 @@ func (r *linkRepository) GetByID(ctx context.Context, id string) (*domain.Link, 
 		return nil, err
 	}
 	return &link, nil
+}
+
+func (r *linkRepository) SaveAll(ctx context.Context, links []domain.Link) error {
+	for i := range links {
+		ensureLinkID(&links[i])
+	}
+	return r.BaseJSONRepository.SaveAll(ctx, links)
 }

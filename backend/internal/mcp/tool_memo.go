@@ -42,7 +42,8 @@ func createMemoHandler(s *service.MemoService) server.ToolHandlerFunc {
 		}
 
 		memos, _ := s.LoadMemos(ctx)
-		id, _ := gonanoid.New(6)
+		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		id, _ := gonanoid.Generate(alphabet, 6)
 		now := time.Now()
 
 		newMemo := domain.Memo{

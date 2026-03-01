@@ -1,6 +1,6 @@
 <template>
-  <div class="post-card" v-if="posts && posts.length > 0">
-    <div class="item-container" v-for="(post, index) in posts" :key="index">
+  <div v-if="posts && posts.length > 0" class="post-card">
+    <div v-for="(post, index) in posts" :key="index" class="item-container">
       <div @click="handleClick(post)">{{ post.data.title }}</div>
     </div>
   </div>

@@ -9,7 +9,7 @@ import (
 // Tag 标签结构
 // Added json tags for frontend compatibility.
 type Tag struct {
-	ID    string `json:"id"`
+	ID    string `json:"_id"`
 	Name  string `json:"name"`
 	Slug  string `json:"slug"`
 	Used  bool   `json:"used"`
@@ -34,6 +34,7 @@ type TagRepository interface {
 	Create(ctx context.Context, tag *Tag) error
 	Update(ctx context.Context, tag *Tag) error
 	Delete(ctx context.Context, id string) error
+	SaveAll(ctx context.Context, tags []Tag) error
 }
 
 // GetID implements Identifiable interface

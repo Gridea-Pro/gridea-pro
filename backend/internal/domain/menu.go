@@ -8,7 +8,7 @@ import (
 // Menu 菜单实体 (Pure Entity)
 // Added json tags for frontend compatibility.
 type Menu struct {
-	ID       string `json:"id"` // NanoID or UUID, added for granular CRUD
+	ID       string `json:"_id"` // NanoID or UUID, added for granular CRUD
 	Name     string `json:"name"`
 	Link     string `json:"link"`
 	OpenType string `json:"openType"` // "_blank" or "_self"

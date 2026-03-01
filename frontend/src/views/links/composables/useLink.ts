@@ -1,7 +1,6 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSiteStore, type ILink } from '@/stores/site'
-import { customAlphabet } from 'nanoid'
 import { toast } from '@/helpers/toast'
 import { SaveLinkFromFrontend, DeleteLinkFromFrontend, SaveLinks } from '@/wailsjs/go/facade/LinkFacade'
 import { BrowserOpenURL } from '@/wailsjs/runtime'
@@ -10,7 +9,6 @@ import { facade, domain } from '@/wailsjs/go/models'
 export function useLink() {
     const { t } = useI18n()
     const siteStore = useSiteStore()
-    const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 6)
 
     const visible = ref(false)
     const isUpdate = ref(false)

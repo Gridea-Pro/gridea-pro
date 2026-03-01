@@ -49,7 +49,8 @@ func createLinkHandler(s *service.LinkService) server.ToolHandlerFunc {
 		}
 
 		links, _ := s.LoadLinks(ctx)
-		id, _ := gonanoid.New(9)
+		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		id, _ := gonanoid.Generate(alphabet, 6)
 
 		newLink := domain.Link{
 			ID:          id,

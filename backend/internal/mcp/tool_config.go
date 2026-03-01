@@ -47,7 +47,6 @@ func updateThemeConfigTool() mcp.Tool {
 		mcp.WithString("siteDescription", mcp.Description("Site Description")),
 		mcp.WithString("siteAuthor", mcp.Description("Site Author")),
 		mcp.WithString("footerInfo", mcp.Description("Footer Info")),
-		mcp.WithBoolean("showFeatureImage", mcp.Description("Show Feature Image")),
 		mcp.WithString("configJson", mcp.Description("Full or partial config JSON to merge (advanced)")),
 		mcp.WithBoolean("confirm", mcp.Description("Set to true to confirm the update"), mcp.Required()),
 	)
@@ -76,9 +75,6 @@ func updateThemeConfigHandler(s *service.ThemeService) server.ToolHandlerFunc {
 		if v := request.GetString("footerInfo", ""); v != "" {
 			updated.FooterInfo = v
 		}
-		if v := request.GetBool("showFeatureImage", current.ShowFeatureImage); v != current.ShowFeatureImage {
-			updated.ShowFeatureImage = v
-		}
 
 		// Handle JSON merge if provided
 		if jsonStr := request.GetString("configJson", ""); jsonStr != "" {
@@ -101,9 +97,6 @@ func updateThemeConfigHandler(s *service.ThemeService) server.ToolHandlerFunc {
 			}
 			if updated.FooterInfo != current.FooterInfo {
 				changes = append(changes, fmt.Sprintf("  footerInfo: '%s' → '%s'", current.FooterInfo, updated.FooterInfo))
-			}
-			if updated.ShowFeatureImage != current.ShowFeatureImage {
-				changes = append(changes, fmt.Sprintf("  showFeatureImage: %v → %v", current.ShowFeatureImage, updated.ShowFeatureImage))
 			}
 
 			if len(changes) == 0 {

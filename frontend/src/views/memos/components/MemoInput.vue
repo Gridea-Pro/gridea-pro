@@ -2,15 +2,18 @@
     <div
         class="memo-input-wrapper bg-card/50 border border-border/50 rounded-xl transition-all duration-200 ring-offset-background focus-within:ring-1 focus-within:ring-primary/10 relative overflow-visible">
         <div class="px-6 py-6">
-            <textarea ref="textareaRef" v-model="content" :placeholder="placeholderText"
+            <textarea
+ref="textareaRef" v-model="content" :placeholder="placeholderText"
                 class="w-full bg-transparent border-none focus:ring-0 resize-none p-0 min-h-[80px] text-sm leading-5 tracking-wider text-foreground placeholder:text-muted-foreground outline-none"
                 :rows="1" @input="handleInput" @keydown="handleKeydown" @click="handleInput" />
 
             <!-- Tag Suggestions Dropdown -->
-            <div v-if="showTagSuggestions && filteredTags.length > 0"
+            <div
+v-if="showTagSuggestions && filteredTags.length > 0"
                 class="absolute z-500 bg-card text-popover-foreground border border-border rounded-md shadow-md min-w-[120px] max-h-[200px] overflow-y-auto"
                 :style="suggestionStyle">
-                <div v-for="(tag, index) in filteredTags" :key="tag.name"
+                <div
+v-for="(tag, index) in filteredTags" :key="tag.name"
                     class="px-3 py-1.5 text-xs cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between"
                     :class="{ 'bg-primary/10 text-primary text-xs': index === selectedTagIndex }"
                     @click="selectTag(tag.name)">
@@ -21,12 +24,14 @@
         </div>
         <div class="flex items-center justify-end px-4 pb-3 pt-2 border-t border-border/30">
             <div class="flex items-center gap-2">
-                <Button v-if="isEditing" variant="outline" size="sm" @click="handleCancel"
-                    class="h-7 px-4 text-xs justify-center rounded-full bg-primary/5 border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer">
+                <Button
+v-if="isEditing" variant="outline" size="sm" class="h-7 px-4 text-xs justify-center rounded-full bg-primary/5 border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
+                    @click="handleCancel">
                     {{ t('common.cancel') }}
                 </Button>
 
-                <Button variant="default" size="sm"
+                <Button
+variant="default" size="sm"
                     class="h-7 px-4 rounded-full text-[10px] font-medium transition-all shadow-sm hover:shadow-md"
                     :disabled="!canSubmit" @click="handleSubmit">
                     <PaperAirplaneIcon class="w-3 h-3 mr-1 mb-0.5 -rotate-45" />

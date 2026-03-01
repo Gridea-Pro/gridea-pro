@@ -5,7 +5,7 @@
   </div>
   <div class="mt-4">
     <Label class="mb-2 block">Client Secret <span class="text-red-500">*</span></Label>
-    <Input type="password" v-model="config.clientSecret" />
+    <Input v-model="config.clientSecret" type="password" />
   </div>
   <div class="mt-4">
     <Label class="mb-2 block">Repository <span class="text-red-500">*</span></Label>

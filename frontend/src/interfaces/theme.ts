@@ -7,14 +7,12 @@ export interface ITheme {
   siteEmail?: string
   siteDescription: string
   footerInfo: string
-  showFeatureImage: boolean
   postUrlFormat: string
   tagUrlFormat: string
   dateFormat: string
   language: string
   feedFullText: boolean
   feedCount: number
-  archivesPath: string
   postPath: string
   tagPath: string
 }

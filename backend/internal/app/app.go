@@ -56,6 +56,20 @@ func (a *App) Startup(ctx context.Context) {
 	// 初始化预览服务
 	a.previewService = a.services.Preview
 
+	// === 执行基础数据格式迁移与清洗 (ID 统一化) ===
+	migrator := service.NewDataMigrator(
+		a.appDir,
+		a.services.Repositories.Category,
+		a.services.Repositories.Tag,
+		a.services.Repositories.Post,
+		a.services.Repositories.Menu,
+		a.services.Repositories.Link,
+		a.services.Repositories.Memo,
+	)
+	if err := migrator.RunMigration(ctx); err != nil {
+		runtime.LogError(ctx, "Data migration failed: "+err.Error())
+	}
+
 	// Initialize and start ResourceWatcher
 	var err error
 	a.resourceWatcher, err = service.NewResourceWatcher(a.appDir)

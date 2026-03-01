@@ -108,7 +108,8 @@
 
     <footer-box>
       <div class="flex justify-end w-full">
-        <Button variant="default"
+        <Button
+variant="default"
           class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
           @click="saveTheme">
           {{ $t('common.save') }}

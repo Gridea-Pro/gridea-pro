@@ -65,7 +65,7 @@ func (s *TagService) SaveTag(ctx context.Context, tag domain.Tag, originalName s
 	// Create new
 	if tag.ID == "" {
 		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		id, err := gonanoid.Generate(alphabet, 5)
+		id, err := gonanoid.Generate(alphabet, 6)
 		if err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func (s *TagService) GetOrCreateTag(ctx context.Context, name string) (domain.Ta
 
 	// 2. Create New Tag
 	const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	id, err := gonanoid.Generate(alphabet, 5)
+	id, err := gonanoid.Generate(alphabet, 6)
 	if err != nil {
 		return domain.Tag{}, err
 	}
@@ -188,7 +188,7 @@ func (s *TagService) generateSlug(name string, existingTags []domain.Tag) string
 	if finalSlug == "" {
 		// Fallback for purely special chars or empty slug result
 		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		finalSlug, _ = gonanoid.Generate(alphabet, 5)
+		finalSlug, _ = gonanoid.Generate(alphabet, 6)
 	}
 
 	// 3. Handle Duplicates

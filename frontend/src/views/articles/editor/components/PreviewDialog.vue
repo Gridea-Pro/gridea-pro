@@ -11,11 +11,11 @@
                     <h1 class="preview-title text-foreground">{{ title }}</h1>
                     <div class="preview-date">{{ dateFormatted }}</div>
                     <div class="preview-tags">
-                        <span class="tag" v-for="(tag, index) in tags" :key="index">
+                        <span v-for="(tag, index) in tags" :key="index" class="tag">
                             {{ tag }}
                         </span>
                     </div>
-                    <div class="preview-container" ref="containerRef"></div>
+                    <div ref="containerRef" class="preview-container"></div>
                 </div>
             </div>
         </SheetContent>

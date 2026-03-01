@@ -13,13 +13,15 @@
                     </div>
                     <div>
                         <Label class="mb-1.5 block">{{ t('link.url') }} <span class="text-destructive">*</span></Label>
-                        <Input :model-value="form.url" @input="$emit('url-change', $event)"
-                            placeholder="https://example.com" />
+                        <Input
+:model-value="form.url" placeholder="https://example.com"
+                            @input="$emit('url-change', $event)" />
                     </div>
                     <div>
                         <Label class="mb-1.5 block">{{ t('link.avatar') }}</Label>
-                        <Input :model-value="form.avatar" @input="$emit('avatar-change', $event)"
-                            placeholder="https://example.com/avatar.png" />
+                        <Input
+:model-value="form.avatar" placeholder="https://example.com/avatar.png"
+                            @input="$emit('avatar-change', $event)" />
                     </div>
                     <div>
                         <Label class="mb-1.5 block">{{ t('link.description') }}</Label>
@@ -28,10 +30,12 @@
                 </div>
             </div>
             <SheetFooter class="flex-shrink-0 px-6 py-4 border-t gap-3">
-                <Button variant="outline"
+                <Button
+variant="outline"
                     class="w-18 h-8 text-xs justify-center rounded-full border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
                     @click="$emit('close')">{{ t('common.cancel') }}</Button>
-                <Button variant="default"
+                <Button
+variant="default"
                     class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
                     :disabled="!canSubmit" @click="$emit('save')">{{ t('common.save') }}</Button>
             </SheetFooter>

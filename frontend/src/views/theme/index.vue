@@ -1,18 +1,20 @@
 <template>
   <div class="h-full flex flex-col bg-background">
-    <TabGroup :selectedIndex="selectedIndex" @change="onTabChange">
+    <TabGroup :selected-index="selectedIndex" @change="onTabChange">
       <div
         class="flex-shrink-0 flex justify-between items-center px-4 h-12 bg-background sticky top-0 z-50 border-b border-border backdrop-blur-sm bg-opacity-90 select-none"
         style="--wails-draggable: drag">
         <div class="flex-1 overflow-x-auto no-scrollbar">
-          <TabList as="nav" ref="tabListRef" class="relative flex items-center">
+          <TabList ref="tabListRef" as="nav" class="relative flex items-center">
             <div ref="bgRef" class="tab-transition absolute h-[70%] pointer-events-none" style="width: 0; left: 0;">
             </div>
-            <div ref="lineRef" class="tab-transition absolute bottom-0 h-[2px] bg-primary rounded-full z-10"
+            <div
+ref="lineRef" class="tab-transition absolute bottom-0 h-[2px] bg-primary rounded-full z-10"
               style="width: 0; left: 0; opacity: 0;"></div>
 
-            <Tab as="template" v-slot="{ selected }" v-for="(key, index) in tabs" :key="key">
-              <button :ref="(el) => setBtnRef(el as any, index)"
+            <Tab v-for="(key, index) in tabs" v-slot="{ selected }" :key="key" as="template">
+              <button
+:ref="(el) => setBtnRef(el as any, index)"
                 class="tab-btn relative z-20 px-4 py-2 text-[12px] font-medium tracking-wide transition-all duration-500 cursor-pointer whitespace-nowrap outline-none"
                 :class="selected ? 'active text-primary' : 'text-muted-foreground hover:text-primary'"
                 style="--wails-draggable: no-drag">

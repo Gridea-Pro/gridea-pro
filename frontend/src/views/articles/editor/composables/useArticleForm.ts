@@ -18,7 +18,7 @@ import { useI18n } from 'vue-i18n'
 import { useSiteStore } from '@/stores/site'
 import { useArticleStats } from './useArticleStats'
 import { useArticleImageUrl } from '../../shared/useImageUrl'
-import shortid from 'shortid'
+import { generateId } from '@/utils/id'
 import dayjs from 'dayjs'
 import slug from '@/helpers/slug'
 import ga from '@/helpers/analytics'
@@ -42,12 +42,14 @@ export interface FeatureImageData {
 
 /** 表单 reactive 类型 */
 export interface ArticleFormState {
+    id: string
     title: string
     fileName: string
     tags: string[]
-    category: string
+    category: string     // 分类名称（显示用）
+    categoryId: string   // 分类 Slug（存储主键）
     categories: string[]
-    date: dayjs.Dayjs
+    createdAt: dayjs.Dayjs
     content: string
     published: boolean
     hideInList: boolean
@@ -65,12 +67,14 @@ export function useArticleForm(articleFileName: () => string) {
     // ── 表单数据模型 ──────────────────────────────────────
 
     const form = reactive<ArticleFormState>({
+        id: generateId(),
         title: '',
         fileName: '',
         tags: [],
         category: '',
+        categoryId: '',
         categories: [],
-        date: dayjs(),
+        createdAt: dayjs(),
         content: '',
         published: false,
         hideInList: false,
@@ -105,8 +109,13 @@ export function useArticleForm(articleFileName: () => string) {
         return siteStore.tags.map((tag) => tag.name)
     })
 
+    // 返回 {name, slug, id} 对象数组，供 UI 显示 name、存储 UUID
     const availableCategories = computed(() => {
-        return siteStore.categories.map((category) => category.name)
+        return siteStore.categories.map((category) => ({
+            name: category.name,
+            slug: category.slug,
+            id: category.id,
+        }))
     })
 
     // ── Tag 操作 ──────────────────────────────────────────
@@ -133,7 +142,7 @@ export function useArticleForm(articleFileName: () => string) {
 
     const dateValue = computed<DateValue>({
         get: () => {
-            let dVal = form.date
+            let dVal = form.createdAt
             if (!dayjs.isDayjs(dVal) || !dVal.isValid()) {
                 dVal = dayjs()
             }
@@ -149,19 +158,19 @@ export function useArticleForm(articleFileName: () => string) {
         },
         set: (val: DateValue) => {
             if (!val) return
-            const current = dayjs.isDayjs(form.date) && form.date.isValid() ? form.date : dayjs()
+            const current = dayjs.isDayjs(form.createdAt) && form.createdAt.isValid() ? form.createdAt : dayjs()
             const newDate = current
                 .year(val.year)
                 .month(val.month - 1)
                 .date(val.day)
-            form.date = newDate
+            form.createdAt = newDate
         },
     })
 
     const timeValue = computed({
         get: () => {
-            return form.date && dayjs.isDayjs(form.date) && form.date.isValid()
-                ? form.date.format('HH:mm:ss')
+            return form.createdAt && dayjs.isDayjs(form.createdAt) && form.createdAt.isValid()
+                ? form.createdAt.format('HH:mm:ss')
                 : '00:00:00'
         },
         set: (val: string) => {
@@ -169,11 +178,11 @@ export function useArticleForm(articleFileName: () => string) {
             const [hours, minutes, seconds] = val.split(':').map(Number)
             if (isNaN(hours) || isNaN(minutes)) return
 
-            let current = form.date
+            let current = form.createdAt
             if (!dayjs.isDayjs(current) || !current.isValid()) {
                 current = dayjs()
             }
-            form.date = current.hour(hours).minute(minutes).second(seconds || 0)
+            form.createdAt = current.hour(hours).minute(minutes).second(seconds || 0)
         },
     })
 
@@ -257,16 +266,38 @@ export function useArticleForm(articleFileName: () => string) {
                 const currentPost = siteStore.posts[currentPostIndex]
                 originalFileName = currentPost.fileName
 
+                form.id = currentPost.id || generateId()
                 form.title = currentPost.title
                 form.fileName = currentPost.fileName
                 form.tags = currentPost.tags || []
-                form.category =
-                    currentPost.categories && currentPost.categories.length > 0
-                        ? currentPost.categories[0]
+
+                // 优先用 categoryIds[0]（UUID）初始化，否则用分类名称和 availableCategories 反查
+                const firstCategoryId =
+                    currentPost.categoryIds && currentPost.categoryIds.length > 0
+                        ? currentPost.categoryIds[0]
                         : ''
+                if (firstCategoryId) {
+                    const matched = siteStore.categories.find(
+                        (c) => c.id === firstCategoryId,
+                    )
+                    form.category = matched ? matched.name : firstCategoryId
+                    form.categoryId = firstCategoryId
+                } else {
+                    form.category =
+                        currentPost.categories && currentPost.categories.length > 0
+                            ? currentPost.categories[0]
+                            : ''
+                    // 尝试通过名称查找对应 id
+                    const matchedByName = siteStore.categories.find(
+                        (c) => c.name === form.category,
+                    )
+                    form.categoryId = matchedByName ? matchedByName.id : ''
+                }
                 form.categories = currentPost.categories || []
-                form.date = dayjs(currentPost.date).isValid()
-                    ? dayjs(currentPost.date)
+                // 兼容：优先读取 createdAt，若无则读可能遗留的 date (为了前端类型兼容性判断)
+                const createTime = currentPost.createdAt || (currentPost as any).date
+                form.createdAt = dayjs(createTime).isValid()
+                    ? dayjs(createTime)
                     : dayjs()
                 form.content = currentPost.content
                 form.published = currentPost.published
@@ -293,7 +324,7 @@ export function useArticleForm(articleFileName: () => string) {
         } else if (
             siteStore.site.themeConfig.postUrlFormat === UrlFormats.ShortId
         ) {
-            form.fileName = shortid.generate()
+            form.fileName = generateId()
         }
     }
 
@@ -320,7 +351,7 @@ export function useArticleForm(articleFileName: () => string) {
         form.fileName =
             siteStore.site.themeConfig.postUrlFormat === UrlFormats.Slug
                 ? slug(form.title)
-                : shortid.generate()
+                : generateId()
     }
 
     const checkArticleUrlValid = (): boolean => {
@@ -370,6 +401,7 @@ export function useArticleForm(articleFileName: () => string) {
         const rawForm = toRaw(form)
 
         const formData = {
+            id: rawForm.id || generateId(),
             title: rawForm.title,
             fileName: rawForm.fileName,
             tags: [...rawForm.tags],
@@ -377,7 +409,12 @@ export function useArticleForm(articleFileName: () => string) {
                 rawForm.category && rawForm.category !== '_none_'
                     ? [rawForm.category]
                     : [],
-            date: rawForm.date.format('YYYY-MM-DD HH:mm:ss'),
+            // 将已选分类的 slug 传入后端
+            categoryIds:
+                rawForm.categoryId && rawForm.categoryId !== '_none_'
+                    ? [rawForm.categoryId]
+                    : [],
+            createdAt: rawForm.createdAt.format('YYYY-MM-DD HH:mm:ss'),
             content: rawForm.content,
             published:
                 typeof published === 'boolean' ? published : rawForm.published,

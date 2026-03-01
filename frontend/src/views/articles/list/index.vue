@@ -1,40 +1,45 @@
 <template>
     <div class="h-full flex flex-col bg-background text-foreground">
         <!-- Header Tools -->
-        <ListHeader :keyword="keyword" :selected-count="selectedPost.length" @update:keyword="keyword = $event"
+        <ListHeader
+:keyword="keyword" :selected-count="selectedPost.length" @update:keyword="keyword = $event"
             @delete-selected="deleteModalVisible = true" @new-article="$emit('newArticle')" />
 
         <!-- Content -->
         <div class="flex-1 overflow-y-auto px-4 py-6 pb-20">
             <div class="space-y-3">
-                <ArticleCard v-for="post in currentPostList" :key="post.fileName" :post="post"
+                <ArticleCard
+v-for="post in currentPostList" :key="post.fileName" :post="post"
                     :selected="selectedPost.some(p => p.fileName === post.fileName)" @edit="$emit('editPost', $event)"
                     @select="onSelectChange" @preview="previewPost" @delete="deleteSinglePost" />
             </div>
         </div>
 
         <!-- Pagination -->
-        <div class="h-12 py-3 px-4 border-t border-border flex justify-center bg-background" v-if="totalPages > 1">
+        <div v-if="totalPages > 1" class="h-12 py-3 px-4 border-t border-border flex justify-center bg-background">
             <Pagination :total="postList.length" :items-per-page="PAGE_SIZE" :page="currentPage" :sibling-count="2">
                 <PaginationContent>
                     <PaginationItem>
-                        <PaginationPrevious @click="currentPage > 1 && handlePageChanged(currentPage - 1)"
-                            :class="{ 'pointer-events-none opacity-50': currentPage === 1 }" />
+                        <PaginationPrevious
+:class="{ 'pointer-events-none opacity-50': currentPage === 1 }"
+                            @click="currentPage > 1 && handlePageChanged(currentPage - 1)" />
                     </PaginationItem>
 
                     <template v-for="page in visiblePages" :key="page">
                         <PaginationItem v-if="page === -1">
                             <PaginationEllipsis />
                         </PaginationItem>
-                        <PaginationLink v-else :value="page" :isActive="currentPage === page"
+                        <PaginationLink
+v-else :value="page" :is-active="currentPage === page"
                             @click="handlePageChanged(page)">
                             {{ page }}
                         </PaginationLink>
                     </template>
 
                     <PaginationItem>
-                        <PaginationNext @click="currentPage < totalPages && handlePageChanged(currentPage + 1)"
-                            :class="{ 'pointer-events-none opacity-50': currentPage === totalPages }" />
+                        <PaginationNext
+:class="{ 'pointer-events-none opacity-50': currentPage === totalPages }"
+                            @click="currentPage < totalPages && handlePageChanged(currentPage + 1)" />
                     </PaginationItem>
                 </PaginationContent>
             </Pagination>

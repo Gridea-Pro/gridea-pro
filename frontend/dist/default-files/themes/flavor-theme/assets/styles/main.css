@@ -191,7 +191,6 @@ body {
 .meta-text {
   font-family: var(--font-body);
   font-size: 11px;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
 }
@@ -567,7 +566,6 @@ body {
 .post-card--compact .post-card__meta {
   font-family: var(--font-body);
   font-size: 11px;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
   color: var(--color-text-muted);
@@ -637,7 +635,6 @@ body {
 .post-card--list .post-card__meta {
   font-family: var(--font-body);
   font-size: 11px;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
   color: var(--color-text-muted);
@@ -837,7 +834,6 @@ body {
 .article-byline__date {
   font-family: var(--font-body);
   font-size: 11px;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
   color: var(--color-text-secondary);

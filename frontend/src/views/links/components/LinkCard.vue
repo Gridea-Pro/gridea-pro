@@ -4,7 +4,8 @@
         <div class="flex items-start gap-3 mb-2 pr-2">
             <div
                 class="w-10 h-10 rounded-full flex-shrink-0 bg-primary/10 flex items-center justify-center overflow-hidden">
-                <img :src="link.avatar || generateAvatar(link.name || link.id)" :alt="link.name"
+                <img
+:src="link.avatar || generateAvatar(link.name || link.id)" :alt="link.name"
                     class="w-full h-full object-cover" />
             </div>
             <div class="flex-1 min-w-0">
@@ -31,17 +32,17 @@
             <div class="flex items-center gap-1">
                 <button
                     class="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="$emit('preview', link.url)" :title="t('nav.preview')">
+                    :title="t('nav.preview')" @click.stop="$emit('preview', link.url)">
                     <EyeIcon class="size-3" />
                 </button>
                 <button
                     class="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="$emit('edit', link, index)" :title="t('common.edit')">
+                    :title="t('common.edit')" @click.stop="$emit('edit', link, index)">
                     <PencilIcon class="size-3" />
                 </button>
                 <button
                     class="p-1.5 text-muted-foreground hover:text-destructive hover:bg-primary/10 rounded-md transition-colors"
-                    @click.stop="$emit('delete', link.id)" :title="t('common.delete')">
+                    :title="t('common.delete')" @click.stop="$emit('delete', link.id)">
                     <TrashIcon class="size-3" />
                 </button>
             </div>

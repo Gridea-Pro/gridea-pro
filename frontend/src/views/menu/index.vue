@@ -7,7 +7,7 @@
       <div class="flex-1"></div>
       <div
         class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-primary/10 cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
-        @click="newMenu" :title="t('siteMenu.new')" style="--wails-draggable: no-drag">
+        :title="t('siteMenu.new')" style="--wails-draggable: no-drag" @click="newMenu">
         <PlusIcon class="size-4" />
       </div>
     </div>
@@ -22,7 +22,8 @@
     </div>
 
     <!-- Edit/New Drawer -->
-    <MenuEditor v-model:open="visible" :form="form" :menu-types="menuTypes" :menu-links="menuLinks"
+    <MenuEditor
+v-model:open="visible" :form="form" :menu-types="menuTypes" :menu-links="menuLinks"
       :can-submit="canSubmit" @name-change="handleNameChange" @open-type-change="handleOpenTypeChange"
       @link-change="handleLinkChange" @close="closeSheet" @save="saveMenu" />
 

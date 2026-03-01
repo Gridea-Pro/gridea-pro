@@ -27,51 +27,29 @@ func (s *CategoryService) SaveCategories(ctx context.Context, categories []domai
 	return s.repo.SaveAll(ctx, categories)
 }
 
-func (s *CategoryService) SaveCategory(ctx context.Context, category domain.Category, originalSlug string) error {
+// SaveCategory 创建或更新分类
+// originalID: 若为空则创建新分类；若非空则按 ID 更新
+func (s *CategoryService) SaveCategory(ctx context.Context, category domain.Category, originalID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	categories, err := s.repo.List(ctx)
-	if err != nil {
-		return err
+	if originalID == "" {
+		// 新建：Create 会自动生成 UUID
+		return s.repo.Create(ctx, &category)
 	}
 
-	found := false
-	for i, c := range categories {
-		if c.Slug == originalSlug {
-			categories[i] = category
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		categories = append(categories, category)
-	}
-
-	return s.repo.SaveAll(ctx, categories)
+	// 更新：保持 ID 不变
+	category.ID = originalID
+	return s.repo.Update(ctx, originalID, &category)
 }
 
-func (s *CategoryService) DeleteCategory(ctx context.Context, slug string) error {
+func (s *CategoryService) DeleteCategory(ctx context.Context, id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	categories, err := s.repo.List(ctx)
-	if err != nil {
-		return err
-	}
-
-	var newCategories []domain.Category
-	for _, c := range categories {
-		if c.Slug != slug {
-			newCategories = append(newCategories, c)
-		}
-	}
-
-	return s.repo.SaveAll(ctx, newCategories)
+	return s.repo.Delete(ctx, id)
 }
 
-// GetOrCreateCategory gets an existing category by name or creates a new one
+// GetOrCreateCategory 按名称查找分类，不存在则创建（自动生成 UUID）
 func (s *CategoryService) GetOrCreateCategory(ctx context.Context, name string) (domain.Category, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -81,25 +59,28 @@ func (s *CategoryService) GetOrCreateCategory(ctx context.Context, name string) 
 		return domain.Category{}, err
 	}
 
-	// 1. Check if exists
+	// 1. 按名称查找（返回已有分类，包含其 ID）
 	for _, c := range categories {
 		if c.Name == name {
 			return c, nil
 		}
 	}
 
-	// 2. Create New Category
-	// Use name as slug for simplicity as per plan
+	// 2. 创建新分类（Create 自动生成 UUID）
 	newCategory := domain.Category{
 		Name: name,
 		Slug: name,
 	}
-
-	// 3. Save
-	categories = append(categories, newCategory)
-	if err := s.repo.SaveAll(ctx, categories); err != nil {
+	if err := s.repo.Create(ctx, &newCategory); err != nil {
 		return domain.Category{}, err
 	}
 
 	return newCategory, nil
+}
+
+// GetByID 按 ID 获取分类
+func (s *CategoryService) GetByID(ctx context.Context, id string) (*domain.Category, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.repo.GetByID(ctx, id)
 }

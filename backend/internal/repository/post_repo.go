@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	gonanoid "github.com/matoous/go-nanoid/v2"
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,15 +33,19 @@ func NewPostRepository(appDir string) domain.PostRepository {
 
 // local struct to handle YAML frontmatter parsing and marshalling
 type postYaml struct {
-	Title      string   `yaml:"title"`
-	Date       string   `yaml:"date"` // Used for marshalling/unmarshalling
-	Tags       []string `yaml:"tags"`
-	TagIDs     []string `yaml:"tag_ids"`
-	Categories []string `yaml:"categories"`
-	Published  bool     `yaml:"published"`
-	HideInList bool     `yaml:"hideInList"`
-	Feature    string   `yaml:"feature"`
-	IsTop      bool     `yaml:"isTop"`
+	ID          string   `yaml:"id"`
+	Title       string   `yaml:"title"`
+	CreatedAt   string   `yaml:"createdAt,omitempty"`
+	Date        string   `yaml:"date,omitempty"`    // 兼容老版本
+	UpdatedAt   string   `yaml:"updated,omitempty"` // 最后修改时间
+	Tags        []string `yaml:"tags"`
+	TagIDs      []string `yaml:"tag_ids"`
+	Categories  []string `yaml:"categories"`
+	CategoryIDs []string `yaml:"category_ids,omitempty"` // 分类 Slug
+	Published   bool     `yaml:"published"`
+	HideInList  bool     `yaml:"hideInList"`
+	Feature     string   `yaml:"feature"`
+	IsTop       bool     `yaml:"isTop"`
 }
 
 func (r *postRepository) Create(ctx context.Context, post *domain.Post) error {
@@ -87,9 +92,9 @@ func (r *postRepository) scanPosts() error {
 		allPosts = append(allPosts, post)
 	}
 
-	// Sort by date desc
+	// Sort by CreatedAt desc
 	sort.Slice(allPosts, func(i, j int) bool {
-		return allPosts[i].Date.After(allPosts[j].Date)
+		return allPosts[i].CreatedAt.After(allPosts[j].CreatedAt)
 	})
 
 	r.cache = allPosts
@@ -132,6 +137,13 @@ func (r *postRepository) save(ctx context.Context, post *domain.Post, isUpdate b
 		return err
 	}
 
+	// 强制补充唯一 ID
+	if post.ID == "" {
+		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		id, _ := gonanoid.Generate(alphabet, 6)
+		post.ID = id
+	}
+
 	feature := post.FeatureImagePath
 
 	// Handle Image Copy
@@ -152,16 +164,25 @@ func (r *postRepository) save(ctx context.Context, post *domain.Post, isUpdate b
 	post.Feature = feature
 
 	// Prepare YAML
+	// Update 时自动设置 UpdatedAt；保留原始 CreatedAt（Create 时两者相同）
+	updatedAt := post.CreatedAt
+	if isUpdate {
+		updatedAt = time.Now()
+	}
+
 	meta := postYaml{
-		Title:      post.Title,
-		Date:       post.Date.Format(domain.TimeLayout),
-		Tags:       post.Tags,
-		TagIDs:     post.TagIDs,
-		Categories: post.Categories,
-		Published:  post.Published,
-		HideInList: post.HideInList,
-		Feature:    post.Feature,
-		IsTop:      post.IsTop,
+		ID:          post.ID,
+		Title:       post.Title,
+		CreatedAt:   post.CreatedAt.Format(domain.TimeLayout),
+		UpdatedAt:   updatedAt.Format(domain.TimeLayout),
+		Tags:        post.Tags,
+		TagIDs:      post.TagIDs,
+		Categories:  post.Categories,
+		CategoryIDs: post.CategoryIDs,
+		Published:   post.Published,
+		HideInList:  post.HideInList,
+		Feature:     post.Feature,
+		IsTop:       post.IsTop,
 	}
 
 	yamlBytes, err := yaml.Marshal(&meta)
@@ -223,7 +244,7 @@ func (r *postRepository) save(ctx context.Context, post *domain.Post, isUpdate b
 
 	// Sort
 	sort.Slice(newCache, func(i, j int) bool {
-		return newCache[i].Date.After(newCache[j].Date)
+		return newCache[i].CreatedAt.After(newCache[j].CreatedAt)
 	})
 
 	r.cache = newCache
@@ -376,25 +397,39 @@ func (r *postRepository) parsePost(content string, filename string) (domain.Post
 	postContent := strings.TrimSpace(bodyPart)
 	abstract := r.extractAbstract(postContent)
 
-	parsedDate, err := time.Parse(domain.TimeLayout, meta.Date)
+	// 解析 CreatedAt (优先取 CreatedAt，若无则取老的 Date)
+	primaryDateStr := meta.CreatedAt
+	if primaryDateStr == "" {
+		primaryDateStr = meta.Date
+	}
+	parsedDate, err := time.Parse(domain.TimeLayout, primaryDateStr)
 	if err != nil {
 		parsedDate = time.Now()
 	}
 
+	// 解析 UpdatedAt；若 “updated” 字段缺失则降级为 CreatedAt
+	updatedAt, err := time.Parse(domain.TimeLayout, meta.UpdatedAt)
+	if err != nil || updatedAt.IsZero() {
+		updatedAt = parsedDate
+	}
+
 	// Update Post struct
 	post := domain.Post{
-		Title:      meta.Title,
-		Date:       parsedDate,
-		Tags:       meta.Tags,
-		TagIDs:     meta.TagIDs,
-		Categories: meta.Categories,
-		Published:  meta.Published,
-		HideInList: meta.HideInList,
-		Feature:    meta.Feature,
-		IsTop:      meta.IsTop,
-		Content:    postContent,
-		Abstract:   abstract,
-		FileName:   strings.TrimSuffix(filename, ".md"),
+		ID:          meta.ID,
+		Title:       meta.Title,
+		CreatedAt:   parsedDate,
+		UpdatedAt:   updatedAt,
+		Tags:        meta.Tags,
+		TagIDs:      meta.TagIDs,
+		Categories:  meta.Categories,
+		CategoryIDs: meta.CategoryIDs,
+		Published:   meta.Published,
+		HideInList:  meta.HideInList,
+		Feature:     meta.Feature,
+		IsTop:       meta.IsTop,
+		Content:     postContent,
+		Abstract:    abstract,
+		FileName:    strings.TrimSuffix(filename, ".md"),
 	}
 
 	return post, nil

@@ -4,13 +4,16 @@
         <!-- Top: User Info -->
         <div class="flex justify-between items-start mb-3">
             <div class="flex items-center gap-3">
-                <a :href="comment.url || 'javascript:void(0)'" class="flex items-center gap-3 group"
+                <a
+:href="comment.url || 'javascript:void(0)'" class="flex items-center gap-3 group"
                     :class="{ 'cursor-default': !comment.url, 'cursor-pointer': comment.url }"
                     @click="openLink($event, comment.url)">
-                    <img :src="comment.avatar || generateAvatar(comment.nickname || comment.id)"
+                    <img
+:src="comment.avatar || generateAvatar(comment.nickname || comment.id)"
                         class="w-10 h-10 rounded-full bg-secondary object-cover border border-border" alt="avatar" />
                     <div class="flex items-center gap-2 flex-wrap">
-                        <span class="font-semibold text-foreground"
+                        <span
+class="font-semibold text-foreground"
                             :class="{ 'group-hover:text-primary transition-colors': comment.url }">
                             {{ comment.nickname }}
                         </span>
@@ -36,7 +39,8 @@
 
         <!-- Middle: Content -->
         <div class="relative group/content">
-            <MarkdownContent ref="contentRef" :class="{ 'max-h-[240px] overflow-hidden': !isExpanded && isOverflowing }"
+            <MarkdownContent
+ref="contentRef" :class="{ 'max-h-[240px] overflow-hidden': !isExpanded && isOverflowing }"
                 @click="handleContentClick">
                 <span v-if="comment.parentNick" class="text-muted-foreground me-1">
                     {{ t('comment.reply') }} @{{ comment.parentNick }} :
@@ -45,7 +49,8 @@
             </MarkdownContent>
 
             <!-- Expand Button Overlay -->
-            <div v-if="isOverflowing && !isExpanded"
+            <div
+v-if="isOverflowing && !isExpanded"
                 class="absolute bottom-0 w-full h-16 bg-gradient-to-t from-background via-background/60 to-transparent flex justify-center items-end pb-0 cursor-pointer pl-[52px] rounded-b-xl"
                 @click.stop="toggleExpand">
                 <div class="text-primary/80 hover:text-primary transition-colors hover:scale-110 animate-bounce">
@@ -54,7 +59,8 @@
             </div>
 
             <!-- Collapse Button -->
-            <div v-if="isExpanded && isOverflowing"
+            <div
+v-if="isExpanded && isOverflowing"
                 class="w-full flex justify-center items-center -mt-2 mb-2 cursor-pointer" @click.stop="toggleExpand">
                 <div class="text-primary/80 hover:text-primary transition-colors hover:scale-110">
                     <ChevronDoubleUpIcon class="size-4" />
@@ -63,15 +69,19 @@
         </div>
 
         <!-- Reply Form -->
-        <div v-if="isReplying"
+        <div
+v-if="isReplying"
             class="ml-[52px] mb-4 bg-secondary/30 p-4 rounded-xl border border-border animate-fade-in-down">
-            <textarea v-model="replyContent" :placeholder="`${t('comment.reply')} @${comment.nickname}：`" rows="3"
+            <textarea
+v-model="replyContent" :placeholder="`${t('comment.reply')} @${comment.nickname}：`" rows="3"
                 class="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-y min-h-[80px]"></textarea>
             <div class="flex justify-end gap-2 mt-3">
-                <Button variant="outline"
+                <Button
+variant="outline"
                     class="text-primary/80 text-xs px-4 h-8 border border-primary/10 rounded-full cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors"
                     @click="cancelReply">{{ t('comment.cancel') }}</Button>
-                <Button variant="default" class="text-xs px-4 h-8 border border-primary/10 rounded-full cursor-pointer"
+                <Button
+variant="default" class="text-xs px-4 h-8 border border-primary/10 rounded-full cursor-pointer"
                     @click="submitReply">
                     {{ t('comment.reply') }}
                 </Button>
@@ -82,7 +92,8 @@
         <div
             class="ml-[52px] bg-secondary/50 rounded-lg px-3 py-2 text-xs text-muted-foreground flex items-center gap-2 border border-border/50 hover:text-primary">
             <DocumentTextIcon class="size-4 flex-shrink-0" />
-            <a :href="comment.articleUrl || comment.articleId || 'javascript:void(0)'"
+            <a
+:href="comment.articleUrl || comment.articleId || 'javascript:void(0)'"
                 class="truncate transition-colors cursor-pointer"
                 @click="openLink($event, comment.articleUrl || comment.articleId)">
                 <span>{{ comment.articleTitle }}</span>

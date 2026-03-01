@@ -1,5 +1,6 @@
 <template>
-    <div class="group relative flex rounded-xl relative cursor-pointer transition-all duration-200 bg-primary/2 border border-primary/10 hover:bg-primary/10 hover:shadow-xs hover:-translate-y-0.5"
+    <div
+class="group relative flex rounded-xl relative cursor-pointer transition-all duration-200 bg-primary/2 border border-primary/10 hover:bg-primary/10 hover:shadow-xs hover:-translate-y-0.5"
         @click="$emit('edit', category, index)">
         <div class="flex items-center pl-4 handle cursor-move">
             <Bars3Icon class="size-3 text-muted-foreground" />
@@ -8,10 +9,10 @@
             <div class="text-xs font-medium text-foreground mb-1 truncate group-hover:text-primary">
                 {{ category.name }}
             </div>
-            <div class="text-xs font-normal text-muted-foreground opacity-50 truncate" v-if="category.description">
+            <div v-if="category.description" class="text-xs font-normal text-muted-foreground opacity-50 truncate">
                 {{ category.description }}
             </div>
-            <div class="text-xs font-normal text-muted-foreground opacity-50 truncate" v-else>
+            <div v-else class="text-xs font-normal text-muted-foreground opacity-50 truncate">
                 /{{ category.slug }}
             </div>
         </div>
@@ -22,12 +23,12 @@
             <div class="hidden group-hover:flex items-center gap-2">
                 <button
                     class="p-2 text-muted-foreground hover:text-primary hover:bg-secondary rounded-lg transition-colors"
-                    @click.stop="$emit('edit', category, index)" :title="t('common.edit')">
+                    :title="t('common.edit')" @click.stop="$emit('edit', category, index)">
                     <PencilIcon class="size-3" />
                 </button>
                 <button
                     class="p-2 text-muted-foreground hover:text-destructive hover:bg-secondary rounded-lg transition-colors"
-                    @click.stop="$emit('delete', category.slug)" :title="t('common.delete')">
+                    :title="t('common.delete')" @click.stop="$emit('delete', category.id)">
                     <TrashIcon class="size-3" />
                 </button>
             </div>

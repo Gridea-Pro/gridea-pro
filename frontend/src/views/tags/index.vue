@@ -7,15 +7,16 @@
       <div class="flex-1"></div>
       <div
         class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-primary/10 cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
-        @click="openCreateSheet" :title="t('tag.new')" style="--wails-draggable: no-drag">
+        :title="t('tag.new')" style="--wails-draggable: no-drag" @click="openCreateSheet">
         <PlusIcon class="size-4" />
       </div>
     </div>
 
     <!-- Content -->
     <div class="flex-1 overflow-y-auto px-4 py-6">
-      <draggable v-model="tagList" handle=".handle" item-key="slug" @change="handleTagSort"
-        class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <draggable
+v-model="tagList" handle=".handle" item-key="slug" class="grid grid-cols-1 md:grid-cols-4 gap-4"
+        @change="handleTagSort">
         <template #item="{ element: tag, index }">
           <TagCard :tag="tag" :index="index" @edit="editTag" @delete="confirmDelete" />
         </template>
@@ -23,7 +24,8 @@
     </div>
 
     <!-- Edit/New Drawer -->
-    <TagEditor v-model:open="visible" :form="form" :preset-colors="presetColors" :can-submit="canSubmit"
+    <TagEditor
+v-model:open="visible" :form="form" :preset-colors="presetColors" :can-submit="canSubmit"
       @name-change="handleNameChange" @slug-change="handleSlugChange" @color-change="handleColorChange"
       @close="closeSheet" @save="saveTag" />
 

@@ -3,6 +3,7 @@ package facade
 import (
 	"context"
 	"embed"
+	"gridea-pro/backend/internal/domain"
 	"gridea-pro/backend/internal/repository"
 	"gridea-pro/backend/internal/service"
 	"path/filepath"
@@ -42,6 +43,14 @@ type AppServices struct {
 		Memo     *service.MemoService
 		Preview  *service.PreviewService
 	}
+	Repositories struct {
+		Category domain.CategoryRepository
+		Tag      domain.TagRepository
+		Post     domain.PostRepository
+		Menu     domain.MenuRepository
+		Link     domain.LinkRepository
+		Memo     domain.MemoRepository
+	}
 	assets embed.FS // Keep reference for UpdateAppDir
 }
 
@@ -78,6 +87,7 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	rendererService.SetLinkRepo(linkRepo)
 	rendererService.SetTagRepo(tagRepo)
 	rendererService.SetMemoRepo(memoRepo)
+	rendererService.SetCategoryRepo(categoryRepo)
 	settingService := service.NewSettingService(appDir, settingRepo)
 	scaffoldService := service.NewScaffoldService(assets)
 	// CommentService
@@ -130,6 +140,21 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 			Comment:  commentService,
 			Memo:     memoService,
 			Preview:  previewService,
+		},
+		Repositories: struct {
+			Category domain.CategoryRepository
+			Tag      domain.TagRepository
+			Post     domain.PostRepository
+			Menu     domain.MenuRepository
+			Link     domain.LinkRepository
+			Memo     domain.MemoRepository
+		}{
+			Category: categoryRepo,
+			Tag:      tagRepo,
+			Post:     postRepo,
+			Menu:     menuRepo,
+			Link:     linkRepo,
+			Memo:     memoRepo,
 		},
 		assets: assets,
 	}

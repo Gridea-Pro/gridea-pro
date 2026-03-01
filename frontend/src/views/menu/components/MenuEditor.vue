@@ -13,7 +13,8 @@
                     </div>
                     <div>
                         <Label class="mb-1 block">Open Type</Label>
-                        <Select :model-value="form.openType"
+                        <Select
+:model-value="form.openType"
                             @update:model-value="$emit('open-type-change', $event as string)">
                             <SelectTrigger>
                                 <SelectValue />
@@ -28,9 +29,11 @@
                     <div>
                         <Label class="mb-1 block">Link</Label>
                         <div class="space-y-2">
-                            <Input :model-value="form.link" @update:model-value="$emit('link-change', $event as string)"
-                                placeholder="输入或从下面选择" />
-                            <Select :model-value="form.link"
+                            <Input
+:model-value="form.link" placeholder="输入或从下面选择"
+                                @update:model-value="$emit('link-change', $event as string)" />
+                            <Select
+:model-value="form.link"
                                 @update:model-value="$emit('link-change', $event as string)">
                                 <SelectTrigger>
                                     <SelectValue placeholder="选择内部链接..." />
@@ -47,10 +50,12 @@
                 </div>
             </div>
             <SheetFooter class="flex-shrink-0 px-6 py-4 border-t gap-3">
-                <Button variant="outline"
+                <Button
+variant="outline"
                     class="w-18 h-8 text-xs justify-center rounded-full border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
                     @click="$emit('close')">{{ t('common.cancel') }}</Button>
-                <Button variant="default"
+                <Button
+variant="default"
                     class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
                     :disabled="!canSubmit" @click="$emit('save')">{{ t('common.save') }}</Button>
             </SheetFooter>

@@ -1,7 +1,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSiteStore, type ITag } from '@/stores/site'
-import shortid from 'shortid'
+import { generateId } from '@/utils/id'
 import slugFn from '@/helpers/slug'
 import { toast } from '@/helpers/toast'
 import { GetTagColors, SaveTagFromFrontend, DeleteTagFromFrontend } from '@/wailsjs/go/facade/TagFacade'
@@ -102,7 +102,7 @@ export function useTag() {
 
     const buildSlug = () => {
         if (form.slug === '') {
-            form.slug = slugFn(form.name) || shortid.generate()
+            form.slug = slugFn(form.name) || generateId()
         }
     }
 

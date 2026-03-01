@@ -30,7 +30,6 @@ type ThemeConfig struct {
 	SiteEmail        string                 `json:"siteEmail"`
 	SiteDescription  string                 `json:"siteDescription"`
 	FooterInfo       string                 `json:"footerInfo"`
-	ShowFeatureImage bool                   `json:"showFeatureImage"`
 	Domain           string                 `json:"domain"`
 	PostUrlFormat    string                 `json:"postUrlFormat"`
 	TagUrlFormat     string                 `json:"tagUrlFormat"`
@@ -38,7 +37,6 @@ type ThemeConfig struct {
 	Language         string                 `json:"language"`
 	FeedFullText     bool                   `json:"feedFullText"`
 	FeedCount        int                    `json:"feedCount"`
-	ArchivesPath     string                 `json:"archivesPath"`
 	PostPath         string                 `json:"postPath"`
 	TagPath          string                 `json:"tagPath"`
 	TagsPath         string                 `json:"tagsPath"`

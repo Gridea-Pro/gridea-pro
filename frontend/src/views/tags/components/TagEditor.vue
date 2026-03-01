@@ -15,37 +15,43 @@
                         <Label class="mb-1.5 block">{{ t('tag.slug') }} <span class="text-destructive">*</span></Label>
                         <div class="relative">
                             <span class="absolute left-3 top-2.5 text-muted-foreground text-sm">/tags/</span>
-                            <Input :model-value="form.slug" @update:model-value="$emit('slug-change', $event as string)"
-                                class="pl-14" />
+                            <Input
+:model-value="form.slug" class="pl-14"
+                                @update:model-value="$emit('slug-change', $event as string)" />
                         </div>
                     </div>
                     <div>
                         <Label class="mb-3 block">{{ t('tag.color') }}</Label>
                         <div class="flex flex-wrap gap-2">
-                            <div v-for="color in presetColors" :key="color"
+                            <div
+v-for="color in presetColors" :key="color"
                                 class="w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-110 border border-transparent"
                                 :class="{ 'ring-2 ring-primary ring-offset-2': form.color === color }"
                                 :style="{ backgroundColor: color }" @click="$emit('color-change', color)"></div>
                             <div
                                 class="relative w-6 h-6 rounded-full overflow-hidden border border-border cursor-pointer">
-                                <input type="color" :value="form.color" @input="handleColorEvent"
-                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    title="Custom Color" />
-                                <div class="absolute inset-0 bg-gradient-to-br from-red-500 via-green-500 to-blue-500 pointer-events-none"
-                                    v-if="!presetColors.includes(form.color || '')"></div>
-                                <div class="absolute inset-0" :style="{ backgroundColor: form.color }" v-else></div>
+                                <input
+type="color" :value="form.color" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    title="Custom Color"
+                                    @input="handleColorEvent" />
+                                <div
+v-if="!presetColors.includes(form.color || '')"
+                                    class="absolute inset-0 bg-gradient-to-br from-red-500 via-green-500 to-blue-500 pointer-events-none"></div>
+                                <div v-else class="absolute inset-0" :style="{ backgroundColor: form.color }"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <SheetFooter class="flex-shrink-0 px-6 py-4 border-t gap-3">
-                <Button variant="outline"
+                <Button
+variant="outline"
                     class="w-18 h-8 text-xs justify-center rounded-full border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
                     @click="$emit('close')">
                     {{ t('common.cancel') }}
                 </Button>
-                <Button variant="default"
+                <Button
+variant="default"
                     class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
                     :disabled="!canSubmit" @click="$emit('save')">
                     {{ t('common.save') }}

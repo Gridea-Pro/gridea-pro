@@ -3,7 +3,8 @@
         class="memo-item group p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-primary/5 hover:shadow-xs hover:-translate-y-0.5 transition-all duration-200">
         <!-- Viewing Mode -->
         <div v-if="!isEditing">
-            <div class="memo-content text-sm text-foreground leading-7 tracking-wider mb-3 whitespace-pre-wrap break-words max-h-[160px] overflow-y-auto"
+            <div
+class="memo-content text-sm text-foreground leading-7 tracking-wider mb-3 whitespace-pre-wrap break-words max-h-[160px] overflow-y-auto"
                 v-html="highlightedContent" />
 
             <!-- 底部：时间和操作 -->
@@ -36,7 +37,8 @@
 
         <!-- Editing Mode -->
         <div v-else>
-            <MemoInput ref="editorRef" :placeholder="t('memo.inputPlaceholder')" :submit-text="t('common.save')"
+            <MemoInput
+ref="editorRef" :placeholder="t('memo.inputPlaceholder')" :submit-text="t('common.save')"
                 :is-editing="true" @submit="handleSave" @cancel="cancelEdit" />
         </div>
     </div>

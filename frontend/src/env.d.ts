@@ -7,7 +7,6 @@ declare module '*.vue' {
   export default component
 }
 
-declare module 'shortid'
 declare module 'slug'
 
 // Markdown-it plugins

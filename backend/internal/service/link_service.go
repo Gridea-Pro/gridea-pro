@@ -5,13 +5,6 @@ import (
 	"fmt"
 	"gridea-pro/backend/internal/domain"
 	"sync"
-
-	gonanoid "github.com/matoous/go-nanoid/v2"
-)
-
-const (
-	nanoIDAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	nanoIDLength   = 6
 )
 
 type LinkService struct {
@@ -45,13 +38,6 @@ func (s *LinkService) CreateLink(ctx context.Context, link domain.Link) error {
 		return err
 	}
 
-	// Use explicit alphabet for consistency and error handling
-	id, err := gonanoid.Generate(nanoIDAlphabet, nanoIDLength)
-	if err != nil {
-		fmt.Printf("LinkService: Failed to generate ID: %v\n", err)
-		return err
-	}
-	link.ID = id
 	links = append(links, link)
 
 	if err := s.repo.SaveAll(ctx, links); err != nil {
@@ -110,37 +96,4 @@ func (s *LinkService) DeleteLink(ctx context.Context, id string) error {
 	}
 
 	return s.repo.SaveAll(ctx, newLinks)
-}
-
-// FixMissingIDs checks and repairs missing IDs in links.
-// Returns true if any changes were made.
-func (s *LinkService) FixMissingIDs(ctx context.Context) (bool, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	links, err := s.repo.List(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	hasMissingID := false
-	for i := range links {
-		if links[i].ID == "" {
-			id, err := gonanoid.Generate(nanoIDAlphabet, nanoIDLength)
-			if err == nil {
-				links[i].ID = id
-				hasMissingID = true
-				fmt.Printf("Service Patched missing ID for link: %s -> %s\n", links[i].Name, id)
-			}
-		}
-	}
-
-	if hasMissingID {
-		if err := s.repo.SaveAll(ctx, links); err != nil {
-			return false, err
-		}
-		return true, nil
-	}
-
-	return false, nil
 }

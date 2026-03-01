@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gridea-pro/backend/internal/comment"
 	"gridea-pro/backend/internal/domain"
+	"strings"
 	"sync"
 )
 
@@ -85,19 +86,24 @@ func (s *CommentService) FetchComments(ctx context.Context, page, pageSize int) 
 
 	// 填充文章标题 - 优化 O(1) 查找
 	posts, _, _ := s.postRepo.List(ctx, 1, 10000) // Revert to GetAll as PostRepository uses GetAll
-	postMap := make(map[string]string)            // Key: URL Path / ID, Value: Title
+	postMap := make(map[string]*domain.Post)      // Key: URL Path / ID, Value: Post Reference
 	if len(posts) > 0 {
-		for _, p := range posts {
-			// 匹配常见路径格式
+		for i := range posts {
+			p := &posts[i]
+			// 匹配新出的 ID 关联方式
+			if p.ID != "" {
+				postMap[p.ID] = p
+			}
+			// 匹配旧版常见路径格式 (向下兼容旧服务云端挂载的 path)
 			key1 := fmt.Sprintf("/post/%s/", p.FileName)
 			key2 := fmt.Sprintf("/post/%s", p.FileName)
-			postMap[key1] = p.Title
-			postMap[key2] = p.Title
+			postMap[key1] = p
+			postMap[key2] = p
 			// 兼容可能得根路径配置
 			key3 := fmt.Sprintf("/%s/", p.FileName)
 			key4 := fmt.Sprintf("/%s", p.FileName)
-			postMap[key3] = p.Title
-			postMap[key4] = p.Title
+			postMap[key3] = p
+			postMap[key4] = p
 		}
 	}
 
@@ -108,8 +114,15 @@ func (s *CommentService) FetchComments(ctx context.Context, page, pageSize int) 
 	for i := range result.Comments {
 		// 1. ArticleID (URL Path) -> Title
 		if len(postMap) > 0 {
-			if title, ok := postMap[result.Comments[i].ArticleID]; ok {
-				result.Comments[i].ArticleTitle = title
+			if postData, ok := postMap[result.Comments[i].ArticleID]; ok {
+				result.Comments[i].ArticleTitle = postData.Title
+				// result.Comments[i].ArticleID might be a URL or ID from the provider.
+				// ensure ArticleURL is populated correctly for frontend navigation regardless.
+				// For old provider comments, ArticleID IS the URL. We must preserve it as ArticleURL.
+				if strings.HasPrefix(result.Comments[i].ArticleID, "/") {
+					result.Comments[i].ArticleURL = result.Comments[i].ArticleID
+				}
+				result.Comments[i].ArticleID = postData.ID
 			}
 		}
 

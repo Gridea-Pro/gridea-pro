@@ -33,7 +33,7 @@ func listPostsHandler(s *service.PostService) server.ToolHandlerFunc {
 			simplified = append(simplified, map[string]interface{}{
 				"fileName":  p.FileName,
 				"title":     p.Title,
-				"date":      p.Date,
+				"date":      p.CreatedAt,
 				"tags":      p.Tags,
 				"published": p.Published,
 			})
@@ -104,9 +104,9 @@ func createPostHandler(s *service.PostService) server.ToolHandlerFunc {
 			if parsed.IsZero() {
 				parsed, _ = time.Parse(domain.DateLayout, dateStr)
 			}
-			post.Date = parsed
+			post.CreatedAt = parsed
 		} else {
-			post.Date = time.Now()
+			post.CreatedAt = time.Now()
 		}
 
 		post.FileName = request.GetString("fileName", "")
@@ -271,7 +271,8 @@ func generateSlug(title string) string {
 
 	// 如果 ASCII 内容太少（如纯中文标题），用时间戳 + 随机 ID
 	if len(result) < 3 {
-		id, _ := gonanoid.New(8)
+		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		id, _ := gonanoid.Generate(alphabet, 6)
 		result = fmt.Sprintf("post-%s-%s", time.Now().Format("20060102"), id)
 	}
 

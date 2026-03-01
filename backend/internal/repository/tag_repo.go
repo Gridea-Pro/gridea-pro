@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"gridea-pro/backend/internal/domain"
+
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 type tagRepository struct {
@@ -14,10 +16,26 @@ func NewTagRepository(appDir string) domain.TagRepository {
 	return &tagRepository{base}
 }
 
+func ensureTagID(tag *domain.Tag) {
+	if tag.ID == "" {
+		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		id, _ := gonanoid.Generate(alphabet, 6)
+		tag.ID = id
+	}
+}
+
 func (r *tagRepository) Create(ctx context.Context, tag *domain.Tag) error {
+	ensureTagID(tag)
 	return r.Add(ctx, *tag)
 }
 
 func (r *tagRepository) Update(ctx context.Context, tag *domain.Tag) error {
 	return r.BaseJSONRepository.Update(ctx, tag.ID, *tag)
+}
+
+func (r *tagRepository) SaveAll(ctx context.Context, tags []domain.Tag) error {
+	for i := range tags {
+		ensureTagID(&tags[i])
+	}
+	return r.BaseJSONRepository.SaveAll(ctx, tags)
 }

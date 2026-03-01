@@ -8,8 +8,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-
-	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 var (
@@ -43,15 +41,8 @@ func (s *MemoService) CreateMemo(ctx context.Context, content string) (*domain.M
 		return nil, fmt.Errorf("content is empty")
 	}
 
-	const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	id, err := gonanoid.Generate(alphabet, 6)
-	if err != nil {
-		return nil, err
-	}
-
 	now := time.Now()
 	newMemo := domain.Memo{
-		ID:        id,
 		Content:   content,
 		Tags:      extractTags(content),
 		Images:    []string{},
@@ -74,7 +65,7 @@ func (s *MemoService) CreateMemo(ctx context.Context, content string) (*domain.M
 		return nil, err
 	}
 
-	return &newMemo, nil
+	return &memos[0], nil
 }
 
 func (s *MemoService) UpdateMemo(ctx context.Context, memo domain.Memo) error {

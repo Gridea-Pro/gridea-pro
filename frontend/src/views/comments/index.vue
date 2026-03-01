@@ -7,7 +7,7 @@
       <div class="flex-1"></div>
       <div
         class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-primary/10 cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
-        @click="settingsVisible = true" :title="t('settings.comment.title')" style="--wails-draggable: no-drag">
+        :title="t('settings.comment.title')" style="--wails-draggable: no-drag" @click="settingsVisible = true">
         <Cog6ToothIcon class="size-4" />
       </div>
     </div>
@@ -15,10 +15,12 @@
     <!-- Comment List -->
     <div class="flex-1 w-full overflow-y-auto px-4 py-6">
       <div v-if="loading" class="flex justify-center py-10">
-        <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none"
+        <svg
+class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none"
           viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
+          <path
+class="opacity-75" fill="currentColor"
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
           </path>
         </svg>
@@ -27,32 +29,35 @@
         <div class="text-sm">{{ t('comment.empty') }}</div>
       </div>
       <div v-else class="flex flex-col gap-6">
-        <CommentItem v-for="comment in comments" :key="comment.id" :comment="comment" :preview-port="previewPort"
+        <CommentItem
+v-for="comment in comments" :key="comment.id" :comment="comment" :preview-port="previewPort"
           @reply="handleReply" @delete="confirmDelete" @preview-image="handlePreviewImage" />
       </div>
     </div>
 
     <!-- Pagination -->
-    <div class="h-12 py-3 px-4 border-t border-border flex justify-center bg-background" v-if="total > pageSize">
+    <div v-if="total > pageSize" class="h-12 py-3 px-4 border-t border-border flex justify-center bg-background">
       <Pagination :total="total" :items-per-page="pageSize" :page="page" :sibling-count="2">
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious @click="page > 1 && handlePageChange(page - 1)"
-              :class="{ 'pointer-events-none opacity-50': page === 1 }" />
+            <PaginationPrevious
+:class="{ 'pointer-events-none opacity-50': page === 1 }"
+              @click="page > 1 && handlePageChange(page - 1)" />
           </PaginationItem>
 
           <template v-for="p in visiblePages" :key="p">
             <PaginationItem v-if="p === -1">
               <PaginationEllipsis />
             </PaginationItem>
-            <PaginationLink v-else :value="p" :isActive="page === p" @click="handlePageChange(p)">
+            <PaginationLink v-else :value="p" :is-active="page === p" @click="handlePageChange(p)">
               {{ p }}
             </PaginationLink>
           </template>
 
           <PaginationItem>
-            <PaginationNext @click="page < totalPages && handlePageChange(page + 1)"
-              :class="{ 'pointer-events-none opacity-50': page === totalPages }" />
+            <PaginationNext
+:class="{ 'pointer-events-none opacity-50': page === totalPages }"
+              @click="page < totalPages && handlePageChange(page + 1)" />
           </PaginationItem>
         </PaginationContent>
       </Pagination>

@@ -1,7 +1,8 @@
 <template>
     <div class="h-full flex flex-col bg-background">
         <!-- Header Tools -->
-        <div class="flex-shrink-0 flex justify-between items-center px-4 h-12 bg-background sticky top-0 z-50 border-b border-border backdrop-blur-sm bg-opacity-90 select-none"
+        <div
+class="flex-shrink-0 flex justify-between items-center px-4 h-12 bg-background sticky top-0 z-50 border-b border-border backdrop-blur-sm bg-opacity-90 select-none"
             style="--wails-draggable: drag">
             <div class="flex-1"></div>
             <div class="flex items-center gap-2" style="--wails-draggable: no-drag">
@@ -19,12 +20,14 @@
             <aside class="w-68 flex-shrink-0 border-r border-border flex flex-col overflow-hidden">
                 <!-- Top Section: Stats & Graph -->
                 <div class="p-4 space-y-6 flex-shrink-0">
-                    <ContributionGraph :data="memoStore.heatmapData" :label="t('memo.heatmap')"
+                    <ContributionGraph
+:data="memoStore.heatmapData" :label="t('memo.heatmap')"
                         @day-click="handleDayClick" />
 
                     <!-- Stats -->
                     <div class="space-y-1">
-                        <div class="flex items-center justify-between text-sm cursor-pointer p-2 rounded-md transition-colors hover:bg-primary/15"
+                        <div
+class="flex items-center justify-between text-sm cursor-pointer p-2 rounded-md transition-colors hover:bg-primary/15"
                             :class="[
                                 memoStore.timeFilter === 'all'
                                     ? 'bg-primary/10 text-primary font-medium'
@@ -33,7 +36,8 @@
                             <span>{{ t('memo.totalMemos') }}</span>
                             <span class="text-xs font-medium opacity-80">{{ memoStore.totalMemos }}</span>
                         </div>
-                        <div class="flex items-center justify-between text-sm cursor-pointer p-2 rounded-md transition-colors hover:bg-primary/15"
+                        <div
+class="flex items-center justify-between text-sm cursor-pointer p-2 rounded-md transition-colors hover:bg-primary/15"
                             :class="[
                                 memoStore.timeFilter === 'today'
                                     ? 'bg-primary/10 text-primary font-medium'
@@ -42,7 +46,8 @@
                             <span>{{ t('memo.todayMemos') }}</span>
                             <span class="text-xs font-medium opacity-80">{{ memoStore.todayMemos }}</span>
                         </div>
-                        <div class="flex items-center justify-between text-sm cursor-pointer p-2 rounded-md transition-colors hover:bg-primary/15"
+                        <div
+class="flex items-center justify-between text-sm cursor-pointer p-2 rounded-md transition-colors hover:bg-primary/15"
                             :class="[
                                 memoStore.timeFilter === 'month'
                                     ? 'bg-primary/10 text-primary font-medium'
@@ -55,7 +60,8 @@
                 </div>
 
                 <!-- Tags Section (Scrollable) -->
-                <div v-if="memoStore.tagStats.length > 0"
+                <div
+v-if="memoStore.tagStats.length > 0"
                     class="flex-1 overflow-y-auto p-4 pt-0 min-h-0 overscroll-none">
                     <div class="space-y-1">
                         <div
@@ -73,7 +79,8 @@
                                 ]" @click="memoStore.setSelectedTag(null)">
                                 {{ t('memo.allTags') }}
                             </button>
-                            <button v-for="tag in memoStore.tagStats" :key="tag.name"
+                            <button
+v-for="tag in memoStore.tagStats" :key="tag.name"
                                 class="inline-flex items-center px-2.5 py-1 text-[11px] rounded-full transition-all duration-200 cursor-pointer border"
                                 :class="[
                                     memoStore.selectedTag === tag.name
@@ -92,7 +99,8 @@
                 <!-- Input Fixed Top -->
                 <div class="p-6 pb-0 z-10 bg-background">
                     <div class="max-w-2xl mx-auto mb-6">
-                        <MemoInput ref="memoInputRef" :placeholder="t('memo.inputPlaceholder')"
+                        <MemoInput
+ref="memoInputRef" :placeholder="t('memo.inputPlaceholder')"
                             @submit="handleSaveMemo" />
                     </div>
                 </div>
@@ -102,7 +110,8 @@
                     <div class="max-w-2xl mx-auto">
 
                         <!-- Date Header -->
-                        <div v-if="memoStore.selectedDate"
+                        <div
+v-if="memoStore.selectedDate"
                             class="mb-6 pb-4 border-b border-border flex items-center justify-between group">
                             <div class="flex items-center gap-2">
                                 <CalendarIcon class="size-4 text-primary" />
@@ -115,14 +124,16 @@
                         </div>
 
                         <!-- Tag Header -->
-                        <div v-if="memoStore.selectedTag"
+                        <div
+v-if="memoStore.selectedTag"
                             class="mb-6 pb-4 border-b border-border flex items-center justify-between group">
                             <div class="flex items-center gap-2">
                                 <template v-if="tagInputVisible">
                                     <span class="text-sm font-medium text-primary">#</span>
-                                    <input v-model="editingTagName"
-                                        class="text-sm font-medium bg-transparent border-b border-primary focus:outline-none min-w-[100px]"
-                                        @blur="handleRenameTag" @keydown.enter="handleRenameTag" ref="tagInputRef" />
+                                    <input
+ref="tagInputRef"
+                                        v-model="editingTagName"
+                                        class="text-sm font-medium bg-transparent border-b border-primary focus:outline-none min-w-[100px]" @blur="handleRenameTag" @keydown.enter="handleRenameTag" />
                                 </template>
                                 <template v-else>
                                     <span class="text-sm font-medium text-muted-foreground">
@@ -132,12 +143,12 @@
                                     <div class="hidden group-hover:flex items-center gap-1 ml-2">
                                         <button
                                             class="p-1 hover:bg-primary/10 rounded-md text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                                            @click="handleEditTag" :title="t('nativeMenu.edit')">
+                                            :title="t('nativeMenu.edit')" @click="handleEditTag">
                                             <PencilIcon class="size-3" />
                                         </button>
                                         <button
                                             class="p-1 hover:bg-destructive/10 rounded-md text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
-                                            @click="handleDeleteTag" :title="t('common.delete')">
+                                            :title="t('common.delete')" @click="handleDeleteTag">
                                             <TrashIcon class="size-3" />
                                         </button>
                                     </div>
@@ -148,7 +159,8 @@
                             </div>
                         </div>
 
-                        <MemoList :memos="memoStore.filteredMemos" :empty-text="t('memo.empty')"
+                        <MemoList
+:memos="memoStore.filteredMemos" :empty-text="t('memo.empty')"
                             @update="handleUpdateMemo" @delete="handleDeleteMemo"
                             @tag-click="memoStore.setSelectedTag" />
                     </div>

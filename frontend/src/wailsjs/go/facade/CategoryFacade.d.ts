@@ -4,8 +4,6 @@ import {domain} from '../models';
 import {context} from '../models';
 import {facade} from '../models';
 
-export function DeleteCategory(arg1:string):Promise<void>;
-
 export function DeleteCategoryFromFrontend(arg1:string):Promise<Array<domain.Category>>;
 
 export function LoadCategories():Promise<Array<domain.Category>>;
@@ -13,7 +11,5 @@ export function LoadCategories():Promise<Array<domain.Category>>;
 export function RegisterEvents(arg1:context.Context):Promise<void>;
 
 export function SaveCategories(arg1:Array<domain.Category>):Promise<void>;
-
-export function SaveCategory(arg1:domain.Category,arg2:string):Promise<void>;
 
 export function SaveCategoryFromFrontend(arg1:facade.CategoryForm):Promise<Array<domain.Category>>;

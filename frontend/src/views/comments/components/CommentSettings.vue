@@ -10,7 +10,8 @@
         <div class="space-y-6">
           <div class="flex items-center justify-between">
             <label class="text-sm font-medium text-[var(--text-primary)]">{{ t('settings.comment.enable') }}</label>
-            <Switch size="sm" class="focus-visible:ring-0 focus-visible:ring-offset-0" :checked="formState.enable"
+            <Switch
+size="sm" class="focus-visible:ring-0 focus-visible:ring-offset-0" :checked="formState.enable"
               @update:checked="val => formState.enable = val" />
           </div>
 
@@ -34,7 +35,8 @@
           <div v-if="formState.enable" class="space-y-4 pt-4 border-t border-[var(--color-border)]">
             <template v-if="['Valine', 'Waline'].includes(formState.platform)">
               <!-- Shared config interface for Valine/Waline -->
-              <ValineWalineConfig v-if="formState.platform === 'Valine'"
+              <ValineWalineConfig
+v-if="formState.platform === 'Valine'"
                 v-model:config="formState.platformConfigs['Valine']" />
               <ValineWalineConfig v-else v-model:config="formState.platformConfigs['Waline']" />
             </template>
@@ -62,10 +64,12 @@
         </div>
       </div>
       <SheetFooter class="flex-shrink-0 px-6 py-4 border-t gap-3">
-        <Button variant="outline"
+        <Button
+variant="outline"
           class="w-18 h-8 text-xs justify-center rounded-full border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
           @click="onClose">{{ t('common.cancel') }}</Button>
-        <Button variant="default"
+        <Button
+variant="default"
           class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
           @click="save">{{ t('common.save') }}</Button>
       </SheetFooter>

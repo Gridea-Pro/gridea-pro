@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -103,9 +104,44 @@ func (s *PreviewService) StartPreviewServer(ctx context.Context) (string, error)
 
 	// 3. 配置服务器
 	mux := http.NewServeMux()
-	fs := http.FileServer(http.Dir(s.buildDir))
+
+	// Create a custom handler that falls back to 404.html
+	fileServer := http.FileServer(http.Dir(s.buildDir))
+	customHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := filepath.Join(s.buildDir, filepath.Clean(r.URL.Path))
+
+		// Determine if the file or directory exists
+		info, err := os.Stat(path)
+		if os.IsNotExist(err) || (info != nil && info.IsDir() && r.URL.Path != "/") {
+			// If it's a directory other than root, let's see if index.html exists inside it
+			// http.FileServer auto-redirects or serves index.html if present.
+			// However, if we just want a simple fallback for completely missing routes:
+			if info != nil && info.IsDir() {
+				indexPath := filepath.Join(path, "index.html")
+				if _, err := os.Stat(indexPath); err == nil {
+					fileServer.ServeHTTP(w, r)
+					return
+				}
+			}
+
+			// If file doesn't exist, serve 404.html
+			notFoundPath := filepath.Join(s.buildDir, "404.html")
+			if content, err := os.ReadFile(notFoundPath); err == nil {
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = w.Write(content)
+				return
+			}
+
+			// If even 404.html doesn't exist, just let the original fileServer handle (and fail)
+		}
+
+		// Serve standard files
+		fileServer.ServeHTTP(w, r)
+	})
+
 	// 禁用浏览器缓存，确保主题切换后立即加载最新的 CSS/JS
-	mux.Handle("/", noCacheMiddleware(fs))
+	mux.Handle("/", noCacheMiddleware(customHandler))
 
 	s.server = &http.Server{
 		Handler:           mux,

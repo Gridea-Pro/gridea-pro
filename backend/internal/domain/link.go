@@ -8,7 +8,7 @@ import (
 // Link 友链实体 (Pure Entity)
 // Added json tags for frontend compatibility.
 type Link struct {
-	ID          string `json:"id"` // NanoID or UUID
+	ID          string `json:"_id"` // NanoID or UUID
 	Name        string `json:"name"`
 	Url         string `json:"url"`
 	Description string `json:"description"`

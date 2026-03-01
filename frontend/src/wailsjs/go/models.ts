@@ -1,6 +1,7 @@
 export namespace domain {
 	
 	export class Category {
+	    _id: string;
 	    name: string;
 	    slug: string;
 	    description: string;
@@ -11,6 +12,7 @@ export namespace domain {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this._id = source["_id"];
 	        this.name = source["name"];
 	        this.slug = source["slug"];
 	        this.description = source["description"];
@@ -83,7 +85,7 @@ export namespace domain {
 	    }
 	}
 	export class Link {
-	    id: string;
+	    _id: string;
 	    name: string;
 	    url: string;
 	    description: string;
@@ -95,7 +97,7 @@ export namespace domain {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
+	        this._id = source["_id"];
 	        this.name = source["name"];
 	        this.url = source["url"];
 	        this.description = source["description"];
@@ -103,7 +105,7 @@ export namespace domain {
 	    }
 	}
 	export class Memo {
-	    id: string;
+	    _id: string;
 	    content: string;
 	    tags: string[];
 	    images: string[];
@@ -116,7 +118,7 @@ export namespace domain {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
+	        this._id = source["_id"];
 	        this.content = source["content"];
 	        this.tags = source["tags"];
 	        this.images = source["images"];
@@ -206,7 +208,7 @@ export namespace domain {
 	}
 	
 	export class Menu {
-	    id: string;
+	    _id: string;
 	    name: string;
 	    link: string;
 	    openType: string;
@@ -217,7 +219,7 @@ export namespace domain {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
+	        this._id = source["_id"];
 	        this.name = source["name"];
 	        this.link = source["link"];
 	        this.openType = source["openType"];
@@ -262,11 +264,14 @@ export namespace domain {
 		}
 	}
 	export class Post {
+	    id: string;
 	    title: string;
-	    date: string;
+	    createdAt: string;
+	    updatedAt: string;
 	    tags: string[];
 	    tagIds: string[];
 	    categories: string[];
+	    categoryIds: string[];
 	    published: boolean;
 	    hideInList: boolean;
 	    isTop: boolean;
@@ -284,11 +289,14 @@ export namespace domain {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
 	        this.title = source["title"];
-	        this.date = source["date"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
 	        this.tags = source["tags"];
 	        this.tagIds = source["tagIds"];
 	        this.categories = source["categories"];
+	        this.categoryIds = source["categoryIds"];
 	        this.published = source["published"];
 	        this.hideInList = source["hideInList"];
 	        this.isTop = source["isTop"];
@@ -368,7 +376,7 @@ export namespace domain {
 	    }
 	}
 	export class Tag {
-	    id: string;
+	    _id: string;
 	    name: string;
 	    slug: string;
 	    used: boolean;
@@ -380,7 +388,7 @@ export namespace domain {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
+	        this._id = source["_id"];
 	        this.name = source["name"];
 	        this.slug = source["slug"];
 	        this.used = source["used"];
@@ -423,7 +431,6 @@ export namespace domain {
 	    siteEmail: string;
 	    siteDescription: string;
 	    footerInfo: string;
-	    showFeatureImage: boolean;
 	    domain: string;
 	    postUrlFormat: string;
 	    tagUrlFormat: string;
@@ -431,7 +438,6 @@ export namespace domain {
 	    language: string;
 	    feedFullText: boolean;
 	    feedCount: number;
-	    archivesPath: string;
 	    postPath: string;
 	    tagPath: string;
 	    tagsPath: string;
@@ -453,7 +459,6 @@ export namespace domain {
 	        this.siteEmail = source["siteEmail"];
 	        this.siteDescription = source["siteDescription"];
 	        this.footerInfo = source["footerInfo"];
-	        this.showFeatureImage = source["showFeatureImage"];
 	        this.domain = source["domain"];
 	        this.postUrlFormat = source["postUrlFormat"];
 	        this.tagUrlFormat = source["tagUrlFormat"];
@@ -461,7 +466,6 @@ export namespace domain {
 	        this.language = source["language"];
 	        this.feedFullText = source["feedFullText"];
 	        this.feedCount = source["feedCount"];
-	        this.archivesPath = source["archivesPath"];
 	        this.postPath = source["postPath"];
 	        this.tagPath = source["tagPath"];
 	        this.tagsPath = source["tagsPath"];
@@ -490,6 +494,7 @@ export namespace domain {
 export namespace facade {
 	
 	export class CategoryForm {
+	    id: string;
 	    name: string;
 	    slug: string;
 	    description: string;
@@ -501,6 +506,7 @@ export namespace facade {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.slug = source["slug"];
 	        this.description = source["description"];
@@ -578,11 +584,13 @@ export namespace facade {
 		}
 	}
 	export class PostForm {
+	    id: string;
 	    title: string;
-	    date: string;
+	    createdAt: string;
 	    tags: string[];
 	    tagIds: string[];
 	    categories: string[];
+	    categoryIds: string[];
 	    published: boolean;
 	    hideInList: boolean;
 	    isTop: boolean;
@@ -598,11 +606,13 @@ export namespace facade {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
 	        this.title = source["title"];
-	        this.date = source["date"];
+	        this.createdAt = source["createdAt"];
 	        this.tags = source["tags"];
 	        this.tagIds = source["tagIds"];
 	        this.categories = source["categories"];
+	        this.categoryIds = source["categoryIds"];
 	        this.published = source["published"];
 	        this.hideInList = source["hideInList"];
 	        this.isTop = source["isTop"];

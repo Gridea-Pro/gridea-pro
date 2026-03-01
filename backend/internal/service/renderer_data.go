@@ -27,6 +27,19 @@ func (s *RendererService) buildTemplateData(ctx context.Context, posts []domain.
 		}
 	}
 
+	// 2. 预加载分类映射（单索引）：
+	//    - categoryByID: id → Category（主键，新老数据均已被洗净）
+	categoryByID := make(map[string]domain.Category)
+	if s.categoryRepo != nil {
+		if cats, err := s.categoryRepo.List(ctx); err == nil {
+			for _, c := range cats {
+				if c.ID != "" {
+					categoryByID[c.ID] = c
+				}
+			}
+		}
+	}
+
 	postViews := make([]template.PostView, len(publishedPosts))
 	var wg sync.WaitGroup
 	// Limit concurrency to number of CPUs
@@ -39,7 +52,7 @@ func (s *RendererService) buildTemplateData(ctx context.Context, posts []domain.
 			sem <- struct{}{}        // Acquire
 			defer func() { <-sem }() // Release
 
-			postViews[idx] = s.convertPost(p, config)
+			postViews[idx] = s.convertPost(p, config, categoryByID)
 		}(i, post)
 	}
 	wg.Wait()
@@ -129,7 +142,6 @@ func (s *RendererService) buildTemplateData(ctx context.Context, posts []domain.
 			SiteName:         config.SiteName,
 			SiteDescription:  config.SiteDescription,
 			FooterInfo:       config.FooterInfo,
-			ShowFeatureImage: config.ShowFeatureImage,
 			Domain:           globalDomain,
 			PostPageSize:     config.PostPageSize,
 			ArchivesPageSize: config.ArchivesPageSize,
@@ -139,7 +151,6 @@ func (s *RendererService) buildTemplateData(ctx context.Context, posts []domain.
 			Language:         config.Language,
 			FeedFullText:     config.FeedFullText,
 			FeedCount:        config.FeedCount,
-			ArchivesPath:     config.ArchivesPath,
 			PostPath:         config.PostPath,
 			TagPath:          config.TagPath,
 			TagsPath:         config.TagsPath,
@@ -156,8 +167,8 @@ func (s *RendererService) buildTemplateData(ctx context.Context, posts []domain.
 		Menus:          menuViews,
 		CommentSetting: commentSettingView,
 		Pagination: template.PaginationView{
-			Current: 1,
-			Total:   1,
+			CurrentPage: 1,
+			TotalPages:  1,
 		},
 	}
 
@@ -264,7 +275,8 @@ func (s *RendererService) buildCommentSettingView(ctx context.Context) template.
 }
 
 // convertPost 将 domain.Post 转换为 template.PostView
-func (s *RendererService) convertPost(post domain.Post, config domain.ThemeConfig) template.PostView {
+// categoryByID: ID(NanoID) → domain.Category
+func (s *RendererService) convertPost(post domain.Post, config domain.ThemeConfig, categoryByID map[string]domain.Category) template.PostView {
 	postPath := config.PostPath
 	if postPath == "" {
 		postPath = DefaultPostPath
@@ -286,15 +298,34 @@ func (s *RendererService) convertPost(post domain.Post, config domain.ThemeConfi
 		tagNames = append(tagNames, tag)
 	}
 
-	// 转换分类
+	// 转换分类：严格基于 CategoryIDs 查找
 	var categories []template.CategoryView
-	for _, category := range post.Categories {
-		categoryView := template.CategoryView{
-			Name: category,
-			Slug: category,                                    // 简单起见，暂用 name 作为 slug
-			Link: "/" + config.TagPath + "/" + category + "/", // TODO: 后续应有单独的 categoryPath
+	if len(post.CategoryIDs) > 0 && categoryByID != nil {
+		for _, catID := range post.CategoryIDs {
+			if cat, ok := categoryByID[catID]; ok {
+				categories = append(categories, template.CategoryView{
+					Name: cat.Name,
+					Slug: cat.Slug,
+					Link: "/" + config.TagPath + "/" + cat.Slug + "/",
+				})
+			} else {
+				// ID 未命中（说明分类已删除被置空等）
+				categories = append(categories, template.CategoryView{
+					Name: catID,
+					Slug: catID,
+					Link: "/" + config.TagPath + "/" + catID + "/",
+				})
+			}
 		}
-		categories = append(categories, categoryView)
+	} else {
+		// 向后兼容：老文章无 CategoryIDs，回退使用名称字符串
+		for _, category := range post.Categories {
+			categories = append(categories, template.CategoryView{
+				Name: category,
+				Slug: category,
+				Link: "/" + config.TagPath + "/" + category + "/",
+			})
+		}
 	}
 
 	// 计算阅读统计
@@ -305,7 +336,7 @@ func (s *RendererService) convertPost(post domain.Post, config domain.ThemeConfi
 	}
 
 	// 解析日期 - 已经是 time.Time
-	postDate := post.Date
+	postDate := post.CreatedAt
 
 	// 格式化日期
 	dateFormat := config.DateFormat
@@ -313,6 +344,13 @@ func (s *RendererService) convertPost(post domain.Post, config domain.ThemeConfi
 		dateFormat = "YYYY-MM-DD"
 	}
 	formattedDate := formatDate(postDate, dateFormat)
+
+	// 格式化更新时间（若与创建时间相同则复用）
+	updatedAt := post.UpdatedAt
+	if updatedAt.IsZero() {
+		updatedAt = postDate
+	}
+	formattedUpdatedAt := formatDate(updatedAt, dateFormat)
 
 	// 生成摘要
 	abstract := post.Abstract
@@ -325,21 +363,25 @@ func (s *RendererService) convertPost(post domain.Post, config domain.ThemeConfi
 	abstractHTML := utils.ToHTML(abstract)
 
 	return template.PostView{
-		Title:       post.Title,
-		FileName:    post.FileName,
-		Content:     htmlTemplate.HTML(contentHTML),  // 转换为 template.HTML 类型
-		Abstract:    htmlTemplate.HTML(abstractHTML), // 转换为 template.HTML 类型
-		Description: "",                              // TODO: 从文章 frontmatter 读取
-		Link:        link,
-		Feature:     post.Feature,
-		Date:        postDate,
-		DateFormat:  formattedDate,
-		Published:   post.Published,
-		HideInList:  post.HideInList,
-		IsTop:       post.IsTop,
-		Tags:        tags,
-		Categories:  categories,
-		TagsString:  strings.Join(tagNames, ","),
+		ID:              post.ID,
+		Title:           post.Title,
+		FileName:        post.FileName,
+		Content:         htmlTemplate.HTML(contentHTML),
+		Abstract:        htmlTemplate.HTML(abstractHTML),
+		Description:     "",
+		Link:            link,
+		Feature:         post.Feature,
+		CreatedAt:       postDate,
+		Date:            postDate, // 为老主题保留 date 字典
+		DateFormat:      formattedDate,
+		UpdatedAt:       updatedAt,
+		UpdatedAtFormat: formattedUpdatedAt,
+		Published:       post.Published,
+		HideInList:      post.HideInList,
+		IsTop:           post.IsTop,
+		Tags:            tags,
+		Categories:      categories,
+		TagsString:      strings.Join(tagNames, ","),
 		Stats: template.PostStats{
 			Words:   wordCount,
 			Minutes: readingTime,
@@ -354,15 +396,37 @@ func formatDate(t time.Time, format string) string {
 		return ""
 	}
 
-	// 转换格式
-	format = strings.ReplaceAll(format, "YYYY", "2006")
-	format = strings.ReplaceAll(format, "MM", "01")
-	format = strings.ReplaceAll(format, "DD", "02")
-	format = strings.ReplaceAll(format, "HH", "15")
-	format = strings.ReplaceAll(format, "mm", "04")
-	format = strings.ReplaceAll(format, "ss", "05")
+	// 转换格式: 从 Moment.js 格式转换为 Go 的 time.Format 格式
+	replacer := strings.NewReplacer(
+		// Year
+		"YYYY", "2006",
+		"YY", "06",
+		// Month
+		"MMMM", "January",
+		"MMM", "Jan",
+		"MM", "01",
+		"M", "1",
+		// Day of month
+		"DD", "02",
+		"D", "2",
+		// Day of week
+		"dddd", "Monday",
+		"ddd", "Mon",
+		// Time (24h / 12h)
+		"HH", "15",
+		"hh", "03",
+		"h", "3",
+		"mm", "04",
+		"m", "4",
+		"ss", "05",
+		"s", "5",
+		"A", "PM",
+		"a", "pm",
+	)
 
-	return t.Format(format)
+	goFormat := replacer.Replace(format)
+
+	return t.Format(goFormat)
 }
 
 // buildMemoViews 构建闪念视图数据

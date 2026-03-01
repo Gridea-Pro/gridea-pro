@@ -1,7 +1,8 @@
 <template>
     <div class="memo-list space-y-3">
         <template v-if="memos.length > 0">
-            <MemoItem v-for="memo in memos" :key="memo.id" :memo="memo" @update="$emit('update', $event)"
+            <MemoItem
+v-for="memo in memos" :key="memo.id" :memo="memo" @update="$emit('update', $event)"
                 @delete="$emit('delete', $event)" @tag-click="$emit('tagClick', $event)" />
         </template>
         <div v-else class="text-center py-12 text-muted-foreground">

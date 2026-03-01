@@ -14,15 +14,16 @@ import (
 )
 
 type RendererService struct {
-	postRepo    domain.PostRepository
-	themeRepo   domain.ThemeRepository
-	settingRepo domain.SettingRepository
-	menuRepo    domain.MenuRepository
-	commentRepo domain.CommentRepository
-	linkRepo    domain.LinkRepository
-	tagRepo     domain.TagRepository
-	memoRepo    domain.MemoRepository
-	appDir      string
+	postRepo     domain.PostRepository
+	themeRepo    domain.ThemeRepository
+	settingRepo  domain.SettingRepository
+	menuRepo     domain.MenuRepository
+	commentRepo  domain.CommentRepository
+	linkRepo     domain.LinkRepository
+	tagRepo      domain.TagRepository
+	memoRepo     domain.MemoRepository
+	categoryRepo domain.CategoryRepository // 用于渲染时查询分类信息
+	appDir       string
 
 	// 主题配置服务
 	themeConfigService *ThemeConfigService
@@ -75,6 +76,11 @@ func (s *RendererService) SetTagRepo(tagRepo domain.TagRepository) {
 // SetMemoRepo 设置闪念仓库（用于渲染闪念页）
 func (s *RendererService) SetMemoRepo(memoRepo domain.MemoRepository) {
 	s.memoRepo = memoRepo
+}
+
+// SetCategoryRepo 设置分类仓库（用于渲染时解析分类信息）
+func (s *RendererService) SetCategoryRepo(categoryRepo domain.CategoryRepository) {
+	s.categoryRepo = categoryRepo
 }
 
 // SetTheme 设置主题并初始化渲染器
@@ -140,7 +146,7 @@ func (s *RendererService) RenderAll(ctx context.Context) error {
 	}
 
 	// 4. 渲染首页
-	if err := s.renderIndex(buildDir, templateData); err != nil {
+	if err := s.renderIndex(ctx, buildDir, templateData); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("渲染首页失败: %w", err))
 	}
 
@@ -174,60 +180,66 @@ func (s *RendererService) RenderAll(ctx context.Context) error {
 	wg.Wait()
 
 	// 6. 渲染博客列表页
-	if err := s.renderBlog(buildDir, templateData); err != nil {
+	if err := s.renderBlog(ctx, buildDir, templateData); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("渲染博客列表页失败: %w", err))
 		_, _ = fmt.Fprintf(os.Stderr, "警告：渲染博客列表页失败: %v\n", err)
 	}
 
 	// 7. 渲染标签列表页
-	if err := s.renderTags(buildDir, ctx, templateData, themeConfig); err != nil {
+	if err := s.renderTags(ctx, buildDir, templateData, themeConfig); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("渲染标签页失败: %w", err))
 		_, _ = fmt.Fprintf(os.Stderr, "警告：渲染标签页失败: %v\n", err)
 	}
 
 	// 8. 渲染每个标签的文章列表页
-	if err := s.renderTagPages(buildDir, ctx, templateData, themeConfig); err != nil {
+	if err := s.renderTagPages(ctx, buildDir, templateData, themeConfig); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("渲染标签文章页失败: %w", err))
 		_, _ = fmt.Fprintf(os.Stderr, "警告：渲染标签文章页失败: %v\n", err)
 	}
 
 	// 9. 渲染归档页
-	if err := s.renderArchives(buildDir, templateData); err != nil {
+	if err := s.renderArchives(ctx, buildDir, templateData); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("渲染归档页失败: %w", err))
 		_, _ = fmt.Fprintf(os.Stderr, "警告：渲染归档页失败: %v\n", err)
 	}
 
 	// 10. 渲染友链页
-	if err := s.renderFriends(buildDir, ctx, templateData); err != nil {
+	if err := s.renderFriends(ctx, buildDir, templateData); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("渲染友链页失败: %w", err))
 		_, _ = fmt.Fprintf(os.Stderr, "警告：渲染友链页失败: %v\n", err)
 	}
 
 	// 11. 渲染闪念页
-	if err := s.renderMemos(buildDir, ctx, templateData); err != nil {
+	if err := s.renderMemos(ctx, buildDir, templateData); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("渲染闪念页失败: %w", err))
 		_, _ = fmt.Fprintf(os.Stderr, "警告：渲染闪念页失败: %v\n", err)
 	}
 
-	// 12. 生成搜索数据 (api/search.json)
+	// 12. 渲染 404 页
+	if err := s.render404(buildDir, templateData); err != nil {
+		errs = errors.Join(errs, fmt.Errorf("渲染 404 页面失败: %w", err))
+		_, _ = fmt.Fprintf(os.Stderr, "警告：渲染 404 页面失败: %v\n", err)
+	}
+
+	// 13. 生成搜索数据 (api/search.json)
 	if err := s.renderSearchJSON(buildDir, templateData); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("生成搜索数据失败: %w", err))
 		_, _ = fmt.Fprintf(os.Stderr, "警告：生成搜索数据失败: %v\n", err)
 	}
 
-	// 13. 生成 RSS 订阅 (feed.xml)
+	// 14. 生成 RSS 订阅 (feed.xml)
 	if err := s.renderRSS(buildDir, templateData); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("生成 RSS 失败: %w", err))
 		_, _ = fmt.Fprintf(os.Stderr, "警告：生成 RSS 失败: %v\n", err)
 	}
 
-	// 14. 生成 Sitemap (sitemap.xml)
+	// 15. 生成 Sitemap (sitemap.xml)
 	if err := s.renderSitemap(buildDir, templateData); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("生成 Sitemap 失败: %w", err))
 		_, _ = fmt.Fprintf(os.Stderr, "警告：生成 Sitemap 失败: %v\n", err)
 	}
 
-	// 15. 生成 Robots.txt
+	// 16. 生成 Robots.txt
 	if err := s.renderRobotsTxt(buildDir, templateData); err != nil {
 		errs = errors.Join(errs, fmt.Errorf("生成 robots.txt 失败: %w", err))
 		_, _ = fmt.Fprintf(os.Stderr, "警告：生成 robots.txt 失败: %v\n", err)

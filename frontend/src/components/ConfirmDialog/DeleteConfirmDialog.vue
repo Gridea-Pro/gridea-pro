@@ -10,7 +10,8 @@
         <!-- // TODO: Check i18n key -->
       </div>
       <DialogFooter>
-        <Button variant="outline" class="border border-primary/10 hover:bg-primary/10 cursor-pointer"
+        <Button
+variant="outline" class="border border-primary/10 hover:bg-primary/10 cursor-pointer"
           @click="handleCancel">{{ cancelText || t('common.cancel') }}</Button>
         <Button variant="destructive" class="hover:bg-destructive cursor-pointer" @click="handleConfirm">{{ confirmText
           || t('common.delete') }}</Button>

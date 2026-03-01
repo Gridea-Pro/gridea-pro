@@ -47,24 +47,25 @@ export function useMenu() {
 
     const menuLinks = computed(() => {
         const { setting, themeConfig } = siteStore.site
+        const domain = setting.domain || ''
         const posts = siteStore.posts.map((item: IPost) => {
             return {
                 text: `📄 ${item.title}`,
-                value: urlJoin(setting.domain, themeConfig.postPath, item.fileName),
+                value: urlJoin(domain, themeConfig.postPath || 'post', item.fileName || ''),
             }
         })
         return [
             {
                 text: '🏠 Homepage',
-                value: setting.domain,
+                value: domain,
             },
             {
                 text: '📚 Archives',
-                value: urlJoin(setting.domain, themeConfig.archivesPath),
+                value: urlJoin(domain, 'archives'),
             },
             {
                 text: '🏷️ Tags',
-                value: urlJoin(setting.domain, themeConfig.tagPath || 'tags'),
+                value: urlJoin(domain, themeConfig.tagPath || 'tags'),
             },
             ...posts,
         ].filter((item) => typeof item.value === 'string' && item.value.trim() !== '')

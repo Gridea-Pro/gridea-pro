@@ -48,12 +48,9 @@ func (f *SettingFacade) SaveSettingFromFrontend(setting domain.Setting) error {
 }
 
 func (f *SettingFacade) RemoteDetectFromFrontend(setting domain.Setting) (map[string]interface{}, error) {
-	// TODO: Implement actual remote detection logic
-	// This was previously handled by an event 'remote-detect' whose handler I could not find.
-	// For now, we return a success mock to prevent frontend errors.
-	// You might want to implement actual connection testing here (SSH/Git/API check).
-	return map[string]interface{}{
-		"success": true,
-		"message": "Connection test passed (Mock)",
-	}, nil
+	ctx := WailsContext
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	return f.internal.RemoteDetect(ctx, setting)
 }

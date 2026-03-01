@@ -1,5 +1,5 @@
 <template>
-    <div class="article-update-page" :class="{ 'is-entering': entering }" v-if="visible"
+    <div v-if="visible" class="article-update-page" :class="{ 'is-entering': entering }"
         @mousemove="handlePageMousemove">
         <!-- Header & Tools -->
         <EditorHeader :can-submit="canSubmit" :article-stats="articleStats" @close="close" @save-draft="saveDraft"
@@ -9,25 +9,24 @@
         <!-- Content -->
         <div class="page-content">
             <div class="editor-wrapper">
-                <input
+                <input v-model="form.title"
                     class="post-title py-2 border-none mt-4 mb-4 bg-transparent text-2xl focus:outline-none focus:ring-0 text-foreground placeholder:text-muted-foreground font-bold"
-                    :placeholder="$t('article.title')" v-model="form.title" @change="handleTitleChange"
+                    :placeholder="$t('article.title')" @change="handleTitleChange"
                     @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)" />
 
-                <monaco-markdown-editor ref="monacoMarkdownEditor" v-model:value="form.content"
-                    @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)" :isPostPage="true"
-                    class="post-editor"></monaco-markdown-editor>
+                <monaco-markdown-editor ref="monacoMarkdownEditor" v-model:value="form.content" :is-post-page="true"
+                    class="post-editor"
+                    @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)"></monaco-markdown-editor>
 
                 <div class="footer-info">
-                    {{ $t('article.writingIn') }} <a @click.prevent="openPage('https://gridea.pro')"
-                        class="link cursor-pointer">Gridea Pro</a>
+                    {{ $t('article.writingIn') }} <a class="link cursor-pointer"
+                        @click.prevent="openPage('https://gridea.pro')">Gridea Pro</a>
                 </div>
             </div>
 
             <!-- Preview Sheet -->
-            <PreviewDialog v-model:open="previewVisible" :title="form.title"
-                :date-formatted="form.date.format(siteStore.site.themeConfig.dateFormat)" :tags="form.tags"
-                ref="previewDialogRef" />
+            <PreviewDialog ref="previewDialogRef" v-model:open="previewVisible" :title="form.title"
+                :date-formatted="form.createdAt.format(siteStore.site.themeConfig.dateFormat)" :tags="form.tags" />
 
             <!-- Settings Drawer -->
             <ArticleSettingsDrawer v-model:open="articleSettingsVisible" :form="form" :tag-input="tagInput"

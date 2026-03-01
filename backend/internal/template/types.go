@@ -47,7 +47,6 @@ type ThemeConfigView struct {
 	SiteName         string `json:"siteName"`
 	SiteDescription  string `json:"siteDescription"`
 	FooterInfo       string `json:"footerInfo"`
-	ShowFeatureImage bool   `json:"showFeatureImage"`
 	Domain           string `json:"domain"`
 	PostPageSize     int    `json:"postPageSize"`
 	ArchivesPageSize int    `json:"archivesPageSize"`
@@ -57,7 +56,6 @@ type ThemeConfigView struct {
 	Language         string `json:"language"`
 	FeedFullText     bool   `json:"feedFullText"`
 	FeedCount        int    `json:"feedCount"`
-	ArchivesPath     string `json:"archivesPath"`
 	PostPath         string `json:"postPath"`
 	TagPath          string `json:"tagPath"`
 	TagsPath         string `json:"tagsPath"`
@@ -89,25 +87,29 @@ type SimplePostView struct {
 
 // PostView 文章视图
 type PostView struct {
-	Title       string          `json:"title"`
-	FileName    string          `json:"fileName"`
-	Content     template.HTML   `json:"content"`  // HTML 内容，不会被转义
-	Abstract    template.HTML   `json:"abstract"` // HTML 摘要，不会被转义
-	Description string          `json:"description"`
-	Link        string          `json:"link"`
-	Feature     string          `json:"feature"`
-	Date        time.Time       `json:"date"`
-	DateFormat  string          `json:"dateFormat"`
-	Published   bool            `json:"published"`
-	HideInList  bool            `json:"hideInList"`
-	IsTop       bool            `json:"isTop"`
-	Tags        []TagView       `json:"tags"`
-	Categories  []CategoryView  `json:"categories"`
-	TagsString  string          `json:"tagsString"` // 标签逗号分隔字符串
-	Stats       PostStats       `json:"stats"`
-	Toc         template.HTML   `json:"toc"` // 目录 HTML，不会被转义
-	NextPost    *SimplePostView `json:"nextPost"`
-	PrevPost    *SimplePostView `json:"prevPost"`
+	ID              string          `json:"id"`
+	Title           string          `json:"title"`
+	FileName        string          `json:"fileName"`
+	Content         template.HTML   `json:"content"`  // HTML 内容，不会被转义
+	Abstract        template.HTML   `json:"abstract"` // HTML 摘要，不会被转义
+	Description     string          `json:"description"`
+	Link            string          `json:"link"`
+	Feature         string          `json:"feature"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	Date            time.Time       `json:"date"` // 永远为老主题保留 date 字段
+	DateFormat      string          `json:"dateFormat"`
+	UpdatedAt       time.Time       `json:"updatedAt"`       // 最后修改时间
+	UpdatedAtFormat string          `json:"updatedAtFormat"` // 格式化后的修改时间
+	Published       bool            `json:"published"`
+	HideInList      bool            `json:"hideInList"`
+	IsTop           bool            `json:"isTop"`
+	Tags            []TagView       `json:"tags"`
+	Categories      []CategoryView  `json:"categories"`
+	TagsString      string          `json:"tagsString"` // 标签逗号分隔字符串
+	Stats           PostStats       `json:"stats"`
+	Toc             template.HTML   `json:"toc"` // 目录 HTML，不会被转义
+	NextPost        *SimplePostView `json:"nextPost"`
+	PrevPost        *SimplePostView `json:"prevPost"`
 }
 
 // PostStats 文章统计
@@ -151,10 +153,13 @@ type MenuView struct {
 
 // PaginationView 分页视图
 type PaginationView struct {
-	Prev    string `json:"prev"`
-	Next    string `json:"next"`
-	Current int    `json:"current"`
-	Total   int    `json:"total"`
+	CurrentPage int    `json:"currentPage"` // 当前页码（从 1 开始）
+	TotalPages  int    `json:"totalPages"`  // 总页数
+	TotalPosts  int    `json:"totalPosts"`  // 文章总数
+	HasPrev     bool   `json:"hasPrev"`     // 是否有上一页
+	HasNext     bool   `json:"hasNext"`     // 是否有下一页
+	PrevURL     string `json:"prevURL"`     // 上一页 URL
+	NextURL     string `json:"nextURL"`     // 下一页 URL
 }
 
 // CommentSettingView 评论设置视图（用于模板渲染）

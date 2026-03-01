@@ -1,22 +1,25 @@
 <template>
     <!-- Top Header Bar -->
-    <div class="page-title" ref="pageTitle">
+    <div ref="pageTitle" class="page-title">
         <div class="flex justify-end gap-2">
-            <Button variant="ghost" size="sm"
+            <Button
+variant="ghost" size="sm"
                 class="rounded-full text-muted-foreground hover:bg-primary/10 hover:text-foreground h-8 w-12 p-0"
-                @click="$emit('close')" :title="$t('common.back')">
+                :title="$t('common.back')" @click="$emit('close')">
                 <ArrowLeftIcon class="size-3" />
             </Button>
 
-            <Button variant="ghost" size="sm"
+            <Button
+variant="ghost" size="sm"
                 class="rounded-full text-muted-foreground hover:bg-primary/10 hover:text-foreground h-8 w-12 p-0"
-                :disabled="!canSubmit" @click="$emit('saveDraft')" :title="$t('article.saveDraft')">
+                :disabled="!canSubmit" :title="$t('article.saveDraft')" @click="$emit('saveDraft')">
                 <CheckIcon class="size-3" />
             </Button>
 
-            <Button variant="ghost" size="sm"
+            <Button
+variant="ghost" size="sm"
                 class="rounded-full text-primary hover:bg-primary/10 hover:text-primary h-8 w-12 p-0"
-                @click="$emit('publish')" :title="$t('article.publish')">
+                :title="$t('article.publish')" @click="$emit('publish')">
                 <PaperAirplaneIcon class="size-3 -rotate-45" />
             </Button>
         </div>
@@ -27,7 +30,8 @@
         <!-- Info Popover -->
         <Popover>
             <PopoverTrigger as-child>
-                <Button variant="ghost" size="sm"
+                <Button
+variant="ghost" size="sm"
                     class="rounded-full text-muted-foreground hover:text-foreground hover:bg-primary/10 h-8 w-8 p-0">
                     <InformationCircleIcon class="size-4" />
                 </Button>
@@ -49,7 +53,8 @@
         <!-- Emoji Popover -->
         <Popover>
             <PopoverTrigger as-child>
-                <Button variant="ghost" size="sm"
+                <Button
+variant="ghost" size="sm"
                     class="rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary h-8 w-8 p-0">
                     <FaceSmileIcon class="size-4" />
                 </Button>
@@ -59,27 +64,31 @@
             </PopoverContent>
         </Popover>
 
-        <Button variant="ghost" size="sm"
+        <Button
+variant="ghost" size="sm"
             class="rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary h-8 w-8 p-0"
-            @click="$emit('insertImage')" :title="$t('article.insertImage')">
+            :title="$t('article.insertImage')" @click="$emit('insertImage')">
             <PhotoIcon class="size-4" />
         </Button>
 
-        <Button variant="ghost" size="sm"
+        <Button
+variant="ghost" size="sm"
             class="rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary h-8 w-8 p-0"
-            @click="$emit('insertMore')" :title="$t('article.insertMore')">
+            :title="$t('article.insertMore')" @click="$emit('insertMore')">
             <EllipsisHorizontalIcon class="size-4" />
         </Button>
 
-        <Button variant="ghost" size="sm"
+        <Button
+variant="ghost" size="sm"
             class="rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary h-8 w-8 p-0"
-            @click="$emit('openSettings')" :title="$t('article.settings')">
+            :title="$t('article.settings')" @click="$emit('openSettings')">
             <Cog6ToothIcon class="size-4" />
         </Button>
 
-        <Button variant="ghost" size="sm"
+        <Button
+variant="ghost" size="sm"
             class="rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary h-8 w-8 p-0"
-            @click="$emit('preview')" :title="`${$t('nav.preview')} [Ctrl + P]`">
+            :title="`${$t('nav.preview')} [Ctrl + P]`" @click="$emit('preview')">
             <EyeIcon class="size-4" />
         </Button>
     </div>
@@ -88,7 +97,8 @@
     <div class="right-bottom-tool-container">
         <Popover>
             <PopoverTrigger as-child>
-                <Button variant="ghost" size="sm"
+                <Button
+variant="ghost" size="sm"
                     class="rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary h-8 w-8 p-0">
                     <i class="ri-keyboard-line"></i>
                 </Button>
@@ -98,11 +108,11 @@
                     💁‍♂️ 编辑区域右键能弹出快捷菜单哦
                 </div>
                 <div class="keyboard-container w-full">
-                    <div class="item" v-for="(item, index) in shortcutKeys" :key="index">
+                    <div v-for="(item, index) in shortcutKeys" :key="index" class="item">
                         <div class="keyboard-group-title text-xs font-bold text-muted-foreground my-2 border-b pb-1">{{
                             item.name }}</div>
                         <div class="list">
-                            <div class="list-item" v-for="(listItem, listIndex) in item.list" :key="listIndex">
+                            <div v-for="(listItem, listIndex) in item.list" :key="listIndex" class="list-item">
                                 <div class="list-item-title text-foreground">{{ listItem.title }}</div>
                                 <div class="text-muted-foreground">
                                     <span v-for="(keyCode, keyIndex) in listItem.keyboard" :key="keyIndex">

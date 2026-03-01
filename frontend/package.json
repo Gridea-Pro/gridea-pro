@@ -39,13 +39,11 @@
     "nanoid": "^5.1.6",
     "normalize-path": "^3.0.0",
     "radix-vue": "^1.9.17",
-    "shortid": "^2.2.17",
     "slug": "^11.0.1",
     "striptags": "^3.2.0",
     "tailwind-merge": "^3.4.0",
     "transliteration": "^2.3.5",
     "url-join": "^5.0.0",
-    "uuid": "^13.0.0",
     "vue-sonner": "^2.0.9"
   },
   "devDependencies": {

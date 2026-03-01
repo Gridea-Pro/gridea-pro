@@ -31,31 +31,18 @@ func (f *CategoryFacade) SaveCategories(categories []domain.Category) error {
 	return f.internal.SaveCategories(ctx, categories)
 }
 
-func (f *CategoryFacade) SaveCategory(category domain.Category, originalSlug string) error {
-	ctx := WailsContext
-	if ctx == nil {
-		ctx = context.TODO()
-	}
-	return f.internal.SaveCategory(ctx, category, originalSlug)
-}
-
-func (f *CategoryFacade) DeleteCategory(slug string) error {
-	ctx := WailsContext
-	if ctx == nil {
-		ctx = context.TODO()
-	}
-	return f.internal.DeleteCategory(ctx, slug)
-}
-
-// CategoryForm for frontend usage
+// CategoryForm 前端提交的分类表单
 type CategoryForm struct {
-	Name         string `json:"name"`
-	Slug         string `json:"slug"`
-	Description  string `json:"description"`
+	ID          string `json:"id"` // 分类 UUID（新建时为空，更新时必填）
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Description string `json:"description"`
+	// 已废弃：OriginalSlug 保留字段以防老版前端调用，逻辑忽略
 	OriginalSlug string `json:"originalSlug"`
 }
 
-// SaveCategoryFromFrontend accepts a CategoryForm directly from frontend
+// SaveCategoryFromFrontend 创建或更新分类
+// 若 form.ID 为空则创建新分类；否则按 ID 更新
 func (f *CategoryFacade) SaveCategoryFromFrontend(form CategoryForm) ([]domain.Category, error) {
 	ctx := WailsContext
 	if ctx == nil {
@@ -63,28 +50,28 @@ func (f *CategoryFacade) SaveCategoryFromFrontend(form CategoryForm) ([]domain.C
 	}
 
 	newCategory := domain.Category{
+		ID:          form.ID,
 		Name:        form.Name,
 		Slug:        form.Slug,
 		Description: form.Description,
 	}
 
-	// 调用 Service 方法
-	if err := f.internal.SaveCategory(ctx, newCategory, form.OriginalSlug); err != nil {
+	// originalID 为空 → 新建；非空 → 更新（保持 ID 不变）
+	if err := f.internal.SaveCategory(ctx, newCategory, form.ID); err != nil {
 		return nil, err
 	}
 
-	// 重新加载分类列表
 	return f.internal.LoadCategories(ctx)
 }
 
-// DeleteCategoryFromFrontend accepts a slug and returns updated list
-func (f *CategoryFacade) DeleteCategoryFromFrontend(slug string) ([]domain.Category, error) {
+// DeleteCategoryFromFrontend 按 ID 删除分类，返回更新后的列表
+func (f *CategoryFacade) DeleteCategoryFromFrontend(id string) ([]domain.Category, error) {
 	ctx := WailsContext
 	if ctx == nil {
 		ctx = context.TODO()
 	}
 
-	if err := f.internal.DeleteCategory(ctx, slug); err != nil {
+	if err := f.internal.DeleteCategory(ctx, id); err != nil {
 		return nil, err
 	}
 

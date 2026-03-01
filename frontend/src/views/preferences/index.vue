@@ -3,7 +3,8 @@
     <!-- 左侧导航 -->
     <div class="w-[200px] bg-secondary/20 py-4 px-2 border-r border-border">
       <div class="flex flex-col gap-1">
-        <div v-for="item in navItems" :key="item.key"
+        <div
+v-for="item in navItems" :key="item.key"
           class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg cursor-pointer transition-all duration-200 text-sm text-muted-foreground hover:bg-secondary/50"
           :class="{ 'bg-secondary text-foreground font-medium': activeTab === item.key }" @click="activeTab = item.key">
           <component :is="item.icon" class="size-5" />
@@ -56,7 +57,7 @@
               <FolderOpenIcon class="size-5" />
             </Button>
           </div>
-          <Button @click="saveFolder" class="mt-2 self-start">
+          <Button class="mt-2 self-start" @click="saveFolder">
             {{ t('common.save') }}
           </Button>
         </div>

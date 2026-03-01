@@ -2,14 +2,6 @@
   <div class="pb-20 max-w-4xl mx-auto pt-4">
 
     <div class="space-y-6">
-      <!-- Show Feature Image -->
-      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground">{{ $t('settings.basic.showFeatureImage')
-          }}</label>
-        <div>
-          <Switch size="sm" v-model:checked="form.showFeatureImage" />
-        </div>
-      </div>
 
       <!-- Articles Per Page -->
       <div class="grid grid-cols-[180px_1fr] items-center gap-4">
@@ -35,7 +27,8 @@
       <div class="grid grid-cols-[180px_1fr] items-start gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('article.defaultUrl') }}</label>
         <div class="w-full max-w-sm">
-          <Select :model-value="String(form.postUrlFormat || '')"
+          <Select
+:model-value="String(form.postUrlFormat || '')"
             @update:model-value="(v: string) => form.postUrlFormat = v">
             <SelectTrigger>
               <SelectValue />
@@ -52,7 +45,8 @@
       <div class="grid grid-cols-[180px_1fr] items-start gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('tag.defaultUrl') }}</label>
         <div class="w-full max-w-sm">
-          <Select :model-value="String(form.tagUrlFormat || '')"
+          <Select
+:model-value="String(form.tagUrlFormat || '')"
             @update:model-value="(v: string) => form.tagUrlFormat = v">
             <SelectTrigger>
               <SelectValue />
@@ -99,28 +93,30 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground">{{ $t('settings.basic.archivesPathPrefix')
-          }}</label> <!-- // TODO: Check key -->
-        <div class="max-w-sm">
-          <Input v-model="form.archivesPath" :class="{ 'border-destructive': !form.archivesPath }" />
-          <div v-if="!form.archivesPath" class="text-xs text-destructive mt-1">Required</div>
-        </div>
-      </div>
 
       <div class="grid grid-cols-[180px_1fr] items-start gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('settings.basic.dateFormat')
           }}</label>
-        <div class="max-w-sm">
-          <Input v-model="form.dateFormat" />
-          <div class="text-xs mt-1"><a href="#"
-              @click.prevent="openPage('http://momentjs.cn/docs/#/displaying/format/')"
-              class="text-primary hover:underline">Momentjs Format</a></div>
+        <div class="w-full max-w-sm">
+          <Select :model-value="String(form.dateFormat || '')" @update:model-value="(v: string) => form.dateFormat = v">
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="YYYY-MM-DD">2026-02-28 (YYYY-MM-DD)</SelectItem>
+              <SelectItem value="YYYY/MM/DD">2026/02/28 (YYYY/MM/DD)</SelectItem>
+              <SelectItem value="YYYY.MM.DD">2026.02.28 (YYYY.MM.DD)</SelectItem>
+              <SelectItem value="YYYY年MM月DD日">2026年2月28日 (YYYY年MM月DD日)</SelectItem>
+              <SelectItem value="MM/DD/YYYY">02/28/2026 (MM/DD/YYYY)</SelectItem>
+              <SelectItem value="MMM DD, YYYY">Feb 28, 2026 (MMM DD, YYYY)</SelectItem>
+              <SelectItem value="DD MMM YYYY">28 Feb 2026 (DD MMM YYYY)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div class="grid grid-cols-[180px_1fr] items-start gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground pt-2">RSS/Feed</label>
+        <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('article.feedFormat') }}</label>
         <div class="w-full max-w-sm">
           <Select :model-value="String(feedFullTextStr || '')" @update:model-value="(v: string) => feedFullTextStr = v">
             <SelectTrigger>
@@ -147,9 +143,10 @@
 
     <footer-box>
       <div class="flex justify-end w-full">
-        <Button variant="default"
+        <Button
+variant="default"
           class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
-          @click="saveTheme" :disabled="!form.archivesPath">
+          @click="saveTheme">
           {{ $t('common.save') }}
         </Button>
       </div>
@@ -175,7 +172,6 @@ import {
   DEFAULT_POST_PAGE_SIZE,
   DEFAULT_ARCHIVES_PAGE_SIZE,
   DEFAULT_FEED_COUNT,
-  DEFAULT_ARCHIVES_PATH,
   DEFAULT_POST_PATH,
   DEFAULT_TAG_PATH,
 } from '@/helpers/constants'
@@ -192,13 +188,11 @@ const form = reactive({
   themeName: '',
   postPageSize: DEFAULT_POST_PAGE_SIZE,
   archivesPageSize: DEFAULT_ARCHIVES_PAGE_SIZE,
-  showFeatureImage: true,
   postUrlFormat: 'SLUG',
   tagUrlFormat: 'SLUG',
   dateFormat: 'YYYY-MM-DD',
   feedFullText: true,
   feedCount: DEFAULT_FEED_COUNT,
-  archivesPath: DEFAULT_ARCHIVES_PATH,
   postPath: DEFAULT_POST_PATH,
   tagPath: DEFAULT_TAG_PATH,
 })
@@ -276,13 +270,11 @@ onMounted(() => {
   form.themeName = config.themeName
   form.postPageSize = config.postPageSize || DEFAULT_POST_PAGE_SIZE
   form.archivesPageSize = config.archivesPageSize || DEFAULT_ARCHIVES_PAGE_SIZE
-  form.showFeatureImage = config.showFeatureImage
   form.postUrlFormat = config.postUrlFormat
   form.tagUrlFormat = config.tagUrlFormat
   form.dateFormat = config.dateFormat
   form.feedFullText = config.feedFullText
   form.feedCount = config.feedCount || DEFAULT_FEED_COUNT
-  form.archivesPath = config.archivesPath || DEFAULT_ARCHIVES_PATH
   form.postPath = config.postPath || DEFAULT_POST_PATH
   form.tagPath = config.tagPath || DEFAULT_TAG_PATH
 })

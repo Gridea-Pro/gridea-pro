@@ -1,6 +1,7 @@
 <template>
   <div id="app">
-    <Toaster position="top-center" :expand="false" richColors :duration="2000" :closeButton="false" :toastOptions="{
+    <Toaster
+position="top-center" :expand="false" rich-colors :duration="2000" :close-button="false" :toast-options="{
       unstyled: false,
       classes: {
         toast: 'transform scale-75 !min-w-[160px] !max-w-[280px] !px-4 !py-2.5 !gap-2 !text-xs !shadow-lg !rounded-full !flex !flex-row !items-center',

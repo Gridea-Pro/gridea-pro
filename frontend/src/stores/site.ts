@@ -36,6 +36,7 @@ export interface ThemeCustomConfig {
 }
 
 export interface ICategory {
+  id: string       // 不可变 UUID
   name: string
   slug: string
   description: string
@@ -67,14 +68,12 @@ const defaultThemeConfig: ITheme = {
   siteEmail: '',
   siteDescription: '',
   footerInfo: 'Powered by Gridea Pro',
-  showFeatureImage: true,
   postUrlFormat: 'SLUG',
   tagUrlFormat: 'SLUG',
   dateFormat: 'YYYY-MM-DD',
   language: 'zh-cn',
   feedCount: DEFAULT_FEED_COUNT,
   feedFullText: true,
-  archivesPath: DEFAULT_ARCHIVES_PATH,
   postPath: DEFAULT_POST_PATH,
   tagPath: DEFAULT_TAG_PATH,
 }
@@ -206,7 +205,6 @@ export const useSiteStore = defineStore('site', () => {
           postPageSize: siteData.themeConfig?.postPageSize || DEFAULT_POST_PAGE_SIZE,
           archivesPageSize: siteData.themeConfig?.archivesPageSize || DEFAULT_ARCHIVES_PAGE_SIZE,
           feedCount: siteData.themeConfig?.feedCount || DEFAULT_FEED_COUNT,
-          archivesPath: siteData.themeConfig?.archivesPath || DEFAULT_ARCHIVES_PATH,
           postPath: siteData.themeConfig?.postPath || DEFAULT_POST_PATH,
           tagPath: siteData.themeConfig?.tagPath || DEFAULT_TAG_PATH,
           feedFullText: typeof siteData.themeConfig?.feedFullText === 'boolean'

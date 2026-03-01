@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 type memoRepository struct {
@@ -125,9 +127,21 @@ func parseTime(v interface{}) time.Time {
 	}
 }
 
+func ensureMemoID(memo *domain.Memo) {
+	if memo.ID == "" {
+		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		id, _ := gonanoid.Generate(alphabet, 6)
+		memo.ID = id
+	}
+}
+
 func (r *memoRepository) SaveAll(ctx context.Context, memos []domain.Memo) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	for i := range memos {
+		ensureMemoID(&memos[i])
+	}
 
 	originalCache := r.cache
 	originalLoaded := r.loaded
@@ -144,6 +158,8 @@ func (r *memoRepository) SaveAll(ctx context.Context, memos []domain.Memo) error
 }
 
 func (r *memoRepository) Create(ctx context.Context, memo *domain.Memo) error {
+	ensureMemoID(memo)
+
 	if err := r.loadIfNeeded(); err != nil {
 		return err
 	}

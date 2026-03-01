@@ -11,7 +11,8 @@
               <SelectValue :placeholder="t('settings.network.platform')" /> <!-- // TODO: Check i18n key -->
             </SelectTrigger>
             <SelectContent>
-              <SelectItem v-for="p in ['github', 'netlify', 'vercel', 'coding', 'gitee', 'sftp']" :key="String(p)"
+              <SelectItem
+v-for="p in ['github', 'netlify', 'vercel', 'coding', 'gitee', 'sftp']" :key="String(p)"
                 :value="String(p)">
                 {{ getPlatformLabel(p) }}
               </SelectItem>
@@ -47,11 +48,12 @@
             <Input v-model="form.netlifySiteId" class="" />
           </div>
         </div>
-        <div class="grid grid-cols-[180px_1fr] items-center gap-4" v-if="remoteType === 'password'">
+        <div v-if="remoteType === 'password'" class="grid grid-cols-[180px_1fr] items-center gap-4">
           <label class="text-sm font-medium text-right text-muted-foreground">Access Token</label>
           <div class="relative max-w-sm">
             <Input v-model="form.netlifyAccessToken" :type="passVisible ? 'text' : 'password'" class="pr-8" />
-            <component :is="passVisible ? EyeIcon : EyeSlashIcon"
+            <component
+:is="passVisible ? EyeIcon : EyeSlashIcon"
               class="absolute right-2.5 top-3 w-4 h-4 cursor-pointer text-muted-foreground/70 hover:text-foreground transition-colors"
               @click="passVisible = !passVisible" />
           </div>
@@ -59,7 +61,8 @@
         <div class="grid grid-cols-[180px_1fr] items-center gap-4">
           <div></div>
           <div>
-            <a href="https://gridea.dev/netlify" target="_blank"
+            <a
+href="https://gridea.dev/netlify" target="_blank"
               class="text-primary hover:underline text-sm opacity-80 decoration-primary/50 underline-offset-4">如何配置？</a>
           </div>
         </div>
@@ -78,7 +81,8 @@
           <label class="text-sm font-medium text-right text-muted-foreground">Access Token</label>
           <div class="relative max-w-sm">
             <Input v-model="form.token" :type="passVisible ? 'text' : 'password'" class="pr-8" />
-            <component :is="passVisible ? EyeIcon : EyeSlashIcon"
+            <component
+:is="passVisible ? EyeIcon : EyeSlashIcon"
               class="absolute right-2.5 top-3 w-4 h-4 cursor-pointer text-muted-foreground/70 hover:text-foreground transition-colors"
               @click="passVisible = !passVisible" />
             <div class="text-xs text-muted-foreground mt-1.5">从 Account Settings -> Tokens 生成</div>
@@ -114,7 +118,7 @@
             <Input v-model="form.email" class="" />
           </div>
         </div>
-        <div class="grid grid-cols-[180px_1fr] items-center gap-4" v-if="form.platform === 'coding'">
+        <div v-if="form.platform === 'coding'" class="grid grid-cols-[180px_1fr] items-center gap-4">
           <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.tokenUsername')
           }}</label>
           <div class="max-w-sm">
@@ -125,7 +129,8 @@
           <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.token') }}</label>
           <div class="relative max-w-sm">
             <Input v-model="form.token" :type="passVisible ? 'text' : 'password'" class="pr-8" />
-            <component :is="passVisible ? EyeIcon : EyeSlashIcon"
+            <component
+:is="passVisible ? EyeIcon : EyeSlashIcon"
               class="absolute right-2.5 top-3 w-4 h-4 cursor-pointer text-muted-foreground/70 hover:text-foreground transition-colors"
               @click="passVisible = !passVisible" />
           </div>
@@ -172,16 +177,17 @@
             </Select>
           </div>
         </div>
-        <div class="grid grid-cols-[180px_1fr] items-center gap-4" v-if="remoteType === 'password'">
+        <div v-if="remoteType === 'password'" class="grid grid-cols-[180px_1fr] items-center gap-4">
           <label class="text-sm font-medium text-right text-muted-foreground">Password</label>
           <div class="relative max-w-sm">
             <Input v-model="form.password" :type="passVisible ? 'text' : 'password'" class="pr-8" />
-            <component :is="passVisible ? EyeIcon : EyeSlashIcon"
+            <component
+:is="passVisible ? EyeIcon : EyeSlashIcon"
               class="absolute right-2.5 top-3 w-4 h-4 cursor-pointer text-muted-foreground/70 hover:text-foreground transition-colors"
               @click="passVisible = !passVisible" />
           </div>
         </div>
-        <div class="grid grid-cols-[180px_1fr] items-center gap-4" v-else>
+        <div v-else class="grid grid-cols-[180px_1fr] items-center gap-4">
           <label class="text-sm font-medium text-right text-muted-foreground">Private Key Path</label>
           <div class="max-w-sm">
             <Input v-model="form.privateKey" class="" />
@@ -202,7 +208,8 @@
         <div class="grid grid-cols-[180px_1fr] items-center gap-4">
           <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.proxy') }}</label>
           <div class="w-full max-w-sm">
-            <Select :model-value="String(form.enabledProxy || '')"
+            <Select
+:model-value="String(form.enabledProxy || '')"
               @update:model-value="(v) => form.enabledProxy = v as any">
               <SelectTrigger>
                 <SelectValue :placeholder="t('settings.network.proxy')" />
@@ -238,13 +245,15 @@
       <div class="flex justify-between items-center w-full">
         <div><!-- Optional left content --></div>
         <div class="flex gap-4">
-          <Button variant="secondary" :disabled="detectLoading || !canSubmit"
+          <Button
+variant="secondary" :disabled="detectLoading || !canSubmit"
             class="w-auto h-8 text-xs justify-center rounded-full border-primary/20 hover:bg-primary/5 cursor-pointer"
             @click="remoteDetect">
             <span v-if="detectLoading" class="mr-2">Checking...</span>
             {{ t('settings.network.testConnection') }}
           </Button>
-          <Button variant="default" :disabled="!canSubmit"
+          <Button
+variant="default" :disabled="!canSubmit"
             class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
             @click="submit">
             {{ t('common.save') }}

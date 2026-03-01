@@ -85,11 +85,18 @@ func (s *PostService) SavePost(ctx context.Context, post *domain.Post) error {
 	}
 	post.TagIDs = ids
 
-	// 2. Ensure Categories Exist
+	// 2. Ensure Categories Exist & Resolve CategoryIDs (UUID)
+	var catIDs []string
 	for _, catName := range post.Categories {
-		if _, err := s.categoryService.GetOrCreateCategory(ctx, catName); err != nil {
+		cat, err := s.categoryService.GetOrCreateCategory(ctx, catName)
+		if err != nil {
 			return err
 		}
+		catIDs = append(catIDs, cat.ID) // 存储不可变 UUID
+	}
+	// 若前端已直接传入 CategoryIDs（UUID），优先使用；否则用上面解析的结果
+	if len(post.CategoryIDs) == 0 {
+		post.CategoryIDs = catIDs
 	}
 
 	// Check if update or create by trying to get by filename

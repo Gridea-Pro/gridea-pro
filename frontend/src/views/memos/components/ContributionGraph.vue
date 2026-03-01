@@ -9,7 +9,7 @@
                 </button>
                 <div class="text-xs font-medium text-muted-foreground min-w-[32px] text-center select-none">{{
                     currentMonth }}</div>
-                <button class="p-1 hover:bg-muted rounded-md transition-colors" @click="nextMonth" :disabled="isFuture">
+                <button class="p-1 hover:bg-muted rounded-md transition-colors" :disabled="isFuture" @click="nextMonth">
                     <ChevronRightIcon class="w-4 h-4 text-muted-foreground" :class="{ 'opacity-30': isFuture }" />
                 </button>
             </div>
@@ -22,7 +22,8 @@
                 <!-- Empty corner cell -->
                 <div class="w-full"></div>
                 <!-- Weekday Headers -->
-                <div v-for="day in weekDays" :key="day"
+                <div
+v-for="day in weekDays" :key="day"
                     class="text-[10px] text-muted-foreground text-center font-medium">
                     {{ day }}
                 </div>
@@ -30,7 +31,8 @@
 
             <!-- Weeks -->
             <div class="flex flex-col gap-1.5">
-                <div v-for="(week, wIndex) in calendarWeeks" :key="wIndex"
+                <div
+v-for="(week, wIndex) in calendarWeeks" :key="wIndex"
                     class="grid grid-cols-8 gap-1.5 items-center">
                     <!-- Week Number -->
                     <div class="text-[10px] text-muted-foreground text-center font-mono">
@@ -38,9 +40,11 @@
                     </div>
 
                     <!-- Days -->
-                    <div v-for="(day, dIndex) in week.days" :key="dIndex"
+                    <div
+v-for="(day, dIndex) in week.days" :key="dIndex"
                         class="aspect-square w-full flex items-center justify-center">
-                        <div v-if="day.isCurrentMonth" class="w-3 h-3 rounded-[2px] transition-all" :class="[
+                        <div
+v-if="day.isCurrentMonth" class="w-3 h-3 rounded-[2px] transition-all" :class="[
                             getCellClass(day.count),
                             { 'ring-1 ring-primary/50 ring-offset-1 ring-offset-background': isToday(day.date) },
                             day.count > 0 ? 'cursor-pointer hover:opacity-80' : 'cursor-default'

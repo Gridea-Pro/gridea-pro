@@ -1,7 +1,8 @@
 <template>
     <ArticleList @new-article="newArticle" @edit-post="editPost" />
 
-    <ArticleEditor v-if="editorVisible" :visible="editorVisible" :article-file-name="currentArticleFileName"
+    <ArticleEditor
+v-if="editorVisible" :visible="editorVisible" :article-file-name="currentArticleFileName"
         @close="closeEditor" @fetch-data="reloadSite" />
 </template>
 

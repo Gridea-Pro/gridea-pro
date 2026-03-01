@@ -1,7 +1,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSiteStore, type ICategory } from '@/stores/site'
-import shortid from 'shortid'
+import { generateId } from '@/utils/id'
 import slug from '@/helpers/slug'
 import { toast } from '@/helpers/toast'
 import { SaveCategoryFromFrontend, DeleteCategoryFromFrontend, SaveCategories } from '@/wailsjs/go/facade/CategoryFacade'
@@ -20,19 +20,19 @@ export function useCategory() {
     const categoryList = ref<ICategory[]>([])
 
     interface IForm {
+        id: string         // 不可变 UUID（新建时为空）
         name: string
         slug: string
         description: string
         index: number
-        originalSlug?: string
     }
 
     const form = reactive<IForm>({
+        id: '',
         name: '',
         slug: '',
         description: '',
         index: -1,
-        originalSlug: '',
     })
 
     const canSubmit = computed(() => {
@@ -63,7 +63,7 @@ export function useCategory() {
 
     const buildSlug = () => {
         if (form.slug === '') {
-            form.slug = slug(form.name) || shortid.generate()
+            form.slug = slug(form.name) || generateId()
         }
     }
 
@@ -77,11 +77,11 @@ export function useCategory() {
     }
 
     const openCreateSheet = () => {
+        form.id = ''
         form.name = ''
         form.slug = ''
         form.description = ''
         form.index = -1
-        form.originalSlug = ''
         slugChanged.value = false
         visible.value = true
         isUpdate.value = false
@@ -90,11 +90,11 @@ export function useCategory() {
     const openEditSheet = (category: ICategory, index: number) => {
         visible.value = true
         isUpdate.value = true
+        form.id = category.id || ''  // 加载不可变 UUID
         form.name = category.name
         form.slug = category.slug
         form.description = category.description || ''
         form.index = index
-        form.originalSlug = category.slug
         slugChanged.value = true
     }
 
@@ -113,10 +113,11 @@ export function useCategory() {
 
         try {
             const categories = await SaveCategoryFromFrontend({
+                id: form.id,        // 空则新建，非空则按 ID 更新
                 name: form.name,
                 slug: form.slug,
                 description: form.description,
-                originalSlug: form.originalSlug || '',
+                originalSlug: '',   // 已废弃，保留防能老客户端
             })
 
             if (categories) {
@@ -130,8 +131,8 @@ export function useCategory() {
         }
     }
 
-    const confirmDelete = (slug: string) => {
-        categoryToDelete.value = slug
+    const confirmDelete = (id: string) => {
+        categoryToDelete.value = id
         deleteModalVisible.value = true
     }
 

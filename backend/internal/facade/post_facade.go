@@ -26,11 +26,13 @@ type PostDashboardDTO struct {
 
 // PostForm DTO for frontend input
 type PostForm struct {
+	ID               string          `json:"id"`
 	Title            string          `json:"title"`
-	Date             string          `json:"date"`
+	CreatedAt        string          `json:"createdAt"`
 	Tags             []string        `json:"tags"`
 	TagIDs           []string        `json:"tagIds"`
 	Categories       []string        `json:"categories"`
+	CategoryIDs      []string        `json:"categoryIds"` // 分类 Slug 列表
 	Published        bool            `json:"published"`
 	HideInList       bool            `json:"hideInList"`
 	IsTop            bool            `json:"isTop"`
@@ -141,22 +143,24 @@ func (f *PostFacade) UploadImagesFromFrontend(files []domain.UploadedFile) ([]st
 func (f *PostFacade) mapFormToPost(form PostForm) (*domain.Post, error) {
 	// Time Parsing with proper error handling
 	var parsedDate time.Time
-	if form.Date == "" {
+	if form.CreatedAt == "" {
 		parsedDate = time.Now()
 	} else {
 		var err error
-		parsedDate, err = utils.ParseTime(form.Date, time.Local)
+		parsedDate, err = utils.ParseTime(form.CreatedAt, time.Local)
 		if err != nil {
 			return nil, fmt.Errorf("invalid date format: %w", err)
 		}
 	}
 
 	return &domain.Post{
+		ID:               form.ID,
 		Title:            form.Title,
-		Date:             parsedDate,
+		CreatedAt:        parsedDate,
 		Tags:             form.Tags,
 		TagIDs:           form.TagIDs,
 		Categories:       form.Categories,
+		CategoryIDs:      form.CategoryIDs,
 		Published:        form.Published,
 		HideInList:       form.HideInList,
 		IsTop:            form.IsTop,
