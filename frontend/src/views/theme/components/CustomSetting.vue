@@ -5,12 +5,11 @@
         <!-- Sidebar -->
         <aside v-if="groups.length > 0" class="w-full md:w-48 flex-shrink-0 md:border-r md:border-border md:pr-6">
           <nav class="space-y-1 sticky top-0">
-            <button
-v-for="group in groups" :key="group" :class="[
-              'w-full text-left px-3 py-2 text-sm rounded-md transition-colors',
+            <button v-for="group in groups" :key="group" :class="[
+              'w-full h-12 text-left px-3 py-2 text-sm rounded-md transition-colors',
               activeGroup === group
-                ? 'bg-primary text-primary-foreground font-medium'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                ? 'text-primary bg-primary/10 font-medium cursor-pointer'
+                : 'text-muted-foreground hover:bg-primary/10 hover:text-foreground cursor-pointer'
             ]" @click="activeGroup = group">
               {{ group }}
             </button>
@@ -22,8 +21,7 @@ v-for="group in groups" :key="group" :class="[
           <div class="space-y-6 m-0">
             <div v-for="(item, index1) in currentThemeConfig" :key="index1">
               <div v-if="item && item.group === activeGroup" class="space-y-2">
-                <div
-class="flex justify-between items-center"
+                <div class="flex justify-between items-center"
                   :class="{ 'max-w-sm': item.type === 'switch' || item.type === 'toggle' }">
                   <label class="text-sm font-medium text-foreground">{{ item.label }}</label>
                   <div v-if="item.type === 'switch' || item.type === 'toggle'">
@@ -44,8 +42,7 @@ class="flex justify-between items-center"
                     <PopoverTrigger as-child>
                       <button
                         class="flex items-center w-full px-3 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring text-left">
-                        <div
-v-if="form[item.name]" class="w-4 h-4 rounded-full mr-2 border border-border"
+                        <div v-if="form[item.name]" class="w-4 h-4 rounded-full mr-2 border border-border"
                           :style="{ backgroundColor: form[item.name] }"></div>
                         <span v-else class="text-muted-foreground">Select color</span>
                         <span class="flex-1">{{ form[item.name] }}</span>
@@ -68,8 +65,7 @@ v-if="form[item.name]" class="w-4 h-4 rounded-full mr-2 border border-border"
                     </PopoverTrigger>
                     <PopoverContent class="w-80 p-0">
                       <div class="max-h-96 overflow-auto">
-                        <article-select-card
-:posts="postsWithLink"
+                        <article-select-card :posts="postsWithLink"
                           @select="handlePostSelected($event, item.name);"></article-select-card>
                       </div>
                     </PopoverContent>
@@ -85,8 +81,7 @@ v-if="form[item.name]" class="w-4 h-4 rounded-full mr-2 border border-border"
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem
-v-for="(option, index2) in item.options" :key="String(option.value)"
+                      <SelectItem v-for="(option, index2) in item.options" :key="String(option.value)"
                         :value="String(option.value)">
                         {{ option.label }}
                       </SelectItem>
@@ -97,15 +92,13 @@ v-for="(option, index2) in item.options" :key="String(option.value)"
                 <!-- Select (was Radio) -->
                 <div v-if="item.type === 'radio' && item.options">
                   <div class="w-full max-w-sm">
-                    <Select
-:model-value="String(form[item.name] || '')"
+                    <Select :model-value="String(form[item.name] || '')"
                       @update:model-value="(v) => form[item.name] = v">
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem
-v-for="(option, index2) in item.options" :key="String(option.value)"
+                        <SelectItem v-for="(option, index2) in item.options" :key="String(option.value)"
                           :value="String(option.value)">
                           {{ option.label }}
                         </SelectItem>
@@ -128,19 +121,16 @@ v-for="(option, index2) in item.options" :key="String(option.value)"
                       @mouseenter="($event.currentTarget as HTMLElement).querySelector('.delete-btn')?.classList.remove('hidden')"
                       @mouseleave="($event.currentTarget as HTMLElement).querySelector('.delete-btn')?.classList.add('hidden')"
                       @click="handleImageUpload(item.name)">
-                      <img
-v-if="form[item.name]" :src="getImageUrl(form[item.name])"
+                      <img v-if="form[item.name]" :src="getImageUrl(form[item.name])"
                         class="w-full h-full object-cover" />
                       <div v-else class="flex flex-col items-center text-muted-foreground">
                         <i class="ri-upload-2-line text-2xl mb-1"></i>
                       </div>
                       <!-- 悬浮删除/重置按钮 -->
-                      <div
-v-if="form[item.name]"
+                      <div v-if="form[item.name]"
                         class="delete-btn hidden absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
                         title="移除图片" @click.stop="resetFormItem(item.name)">
-                        <svg
-xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
                           class="w-3.5 h-3.5">
                           <path
                             d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
@@ -152,25 +142,21 @@ xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
 
                 <!-- Markdown -->
                 <div v-if="item.type === 'markdown'" class="border border-input rounded-lg overflow-hidden shadow-sm">
-                  <monaco-markdown-editor
-ref="monacoMarkdownEditor"
+                  <monaco-markdown-editor ref="monacoMarkdownEditor"
                     v-model:value="form[item.name]"></monaco-markdown-editor>
                 </div>
 
                 <!-- Array -->
                 <div v-if="item.type === 'array'" class="space-y-4">
-                  <div
-v-for="(configItem, configItemIndex) in form[item.name]" :key="configItemIndex"
+                  <div v-for="(configItem, configItemIndex) in form[item.name]" :key="configItemIndex"
                     class="p-4 border border-input rounded-lg bg-card relative group">
                     <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-size="icon" variant="ghost"
+                      <Button size="icon" variant="ghost"
                         class="h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
                         @click="addConfigItem(item.name, Number(configItemIndex), item.arrayItems)">
                         <i class="ri-add-line"></i>
                       </Button>
-                      <Button
-size="icon" variant="ghost"
+                      <Button size="icon" variant="ghost"
                         class="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
                         @click="deleteConfigItem(form[item.name], Number(configItemIndex))">
                         <i class="ri-subtract-line"></i>
@@ -179,15 +165,14 @@ size="icon" variant="ghost"
 
                     <div v-for="(field, fieldIndex) in item.arrayItems" :key="fieldIndex" class="mb-4 last:mb-0">
                       <!-- Array Item Switch -->
-                      <div
-v-if="field.type === 'switch' || field.type === 'toggle'"
+                      <div v-if="field.type === 'switch' || field.type === 'toggle'"
                         class="flex items-center justify-between max-w-sm">
                         <Label class="text-xs font-medium text-foreground">{{ field.label }}</Label>
                         <Switch v-model:checked="configItem[field.name]" size="sm" />
                       </div>
 
                       <Label v-else class="block text-xs font-medium text-muted-foreground mb-1">{{ field.label
-                        }}</Label>
+                      }}</Label>
 
                       <!-- Array Item Input -->
                       <div v-if="field.type === 'input' && !field.card" class="max-w-sm">
@@ -196,15 +181,13 @@ v-if="field.type === 'switch' || field.type === 'toggle'"
 
                       <!-- Array Item Select -->
                       <div v-if="field.type === 'select'" class="max-w-sm">
-                        <Select
-:model-value="String(configItem[field.name] || '')"
+                        <Select :model-value="String(configItem[field.name] || '')"
                           @update:model-value="(v) => configItem[field.name] = v">
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem
-v-for="opt in field.options" :key="String(opt.value)"
+                            <SelectItem v-for="opt in field.options" :key="String(opt.value)"
                               :value="String(opt.value)">
                               {{ opt.label }}
                             </SelectItem>
@@ -221,18 +204,15 @@ v-for="opt in field.options" :key="String(opt.value)"
                             @mouseenter="($event.currentTarget as HTMLElement).querySelector('.delete-btn')?.classList.remove('hidden')"
                             @mouseleave="($event.currentTarget as HTMLElement).querySelector('.delete-btn')?.classList.add('hidden')"
                             @click="handleImageUpload(item.name, field.name, Number(configItemIndex))">
-                            <img
-v-if="configItem[field.name]" :src="getImageUrl(configItem[field.name])"
+                            <img v-if="configItem[field.name]" :src="getImageUrl(configItem[field.name])"
                               class="w-full h-full object-cover" />
                             <i v-else class="ri-add-line text-muted-foreground"></i>
 
                             <!-- 悬浮删除/重置按钮 -->
-                            <div
-v-if="configItem[field.name]"
+                            <div v-if="configItem[field.name]"
                               class="delete-btn hidden absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
                               title="移除图片" @click.stop="resetFormItem(item.name, field.name, Number(configItemIndex))">
-                              <svg
-xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
                                 class="w-3.5 h-3.5">
                                 <path
                                   d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
@@ -244,10 +224,8 @@ xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
 
                     </div>
                   </div>
-                  <Button
-v-if="!form[item.name] || form[item.name].length === 0" variant="outline"
-                    class="w-full border-dashed"
-                    @click="addConfigItem(item.name, -1, item.arrayItems)">
+                  <Button v-if="!form[item.name] || form[item.name].length === 0" variant="outline"
+                    class="w-full border-dashed" @click="addConfigItem(item.name, -1, item.arrayItems)">
                     <i class="ri-add-line mr-2"></i> Add Item
                   </Button>
                 </div>
@@ -263,8 +241,7 @@ v-if="!form[item.name] || form[item.name].length === 0" variant="outline"
           <Button variant="ghost" size="icon" title="Reset to defaults" @click="resetThemeCustomConfig">
             <i class="ri-arrow-go-back-line text-lg"></i>
           </Button>
-          <Button
-variant="default"
+          <Button variant="default"
             class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
             @click="saveThemeCustomConfig">
             {{ t('common.save') }}

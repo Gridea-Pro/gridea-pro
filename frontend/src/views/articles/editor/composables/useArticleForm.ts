@@ -13,7 +13,7 @@
  * 从 ArticleUpdate.vue 精确迁移，零回归。
  */
 
-import { ref, reactive, computed, toRaw } from 'vue'
+import { ref, reactive, computed, toRaw, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSiteStore } from '@/stores/site'
 import { useArticleStats } from './useArticleStats'
@@ -300,6 +300,11 @@ export function useArticleForm(articleFileName: () => string) {
                     ? dayjs(createTime)
                     : dayjs()
                 form.content = currentPost.content
+                console.log('[useArticleForm] Form populated:', {
+                    title: form.title,
+                    contentLength: form.content?.length || 0,
+                    fileName: form.fileName
+                })
                 form.published = currentPost.published
                 form.hideInList = currentPost.hideInList
                 form.isTop = currentPost.isTop
@@ -444,6 +449,23 @@ export function useArticleForm(articleFileName: () => string) {
         articleStatusTip.value = `${t('savedIn')} ${dayjs().format('HH:mm:ss')}`
         changedAfterLastSave.value = false
     }
+
+    // 监听 posts 变化，防止进入编辑器时数据还没从后端推送过来（Wails 异步推送）
+    watch(() => siteStore.posts, () => {
+        const fileName = articleFileName()
+        if (fileName && !form.title) {
+            console.log('[useArticleForm] Posts updated, re-building form for:', fileName)
+            buildCurrentForm()
+        }
+    }, { deep: true })
+
+    // 监听文件名参数变化（虽然主组件通常会销毁重挂，但保留此 watch 以防万一）
+    watch(articleFileName, (newFileName) => {
+        if (newFileName) {
+            console.log('[useArticleForm] Filename changed to:', newFileName)
+            buildCurrentForm()
+        }
+    })
 
     return {
         // 表单数据

@@ -12,7 +12,7 @@
  * 从 ArticleUpdate.vue 精确迁移，零回归。
  */
 
-import { ref, type Ref } from 'vue'
+import { ref, type ShallowRef } from 'vue'
 import * as monaco from 'monaco-editor'
 import Prism from 'prismjs'
 import markdown from '@/helpers/markdown'
@@ -22,9 +22,9 @@ import { BrowserOpenURL } from '@/wailsjs/runtime'
 import { UploadImagesFromFrontend } from '@/wailsjs/go/facade/PostFacade'
 import { domain } from '@/wailsjs/go/models'
 
-/** Monaco 编辑器组件 ref 类型 */
+/** Monaco 编辑器组件 ref 类型（editor 为 shallowRef 包装） */
 export type MonacoEditorRef = {
-    editor: monaco.editor.IStandaloneCodeEditor | null
+    editor: ShallowRef<monaco.editor.IStandaloneCodeEditor | null>
 } | null
 
 export function useEditorHelper() {
@@ -42,11 +42,13 @@ export function useEditorHelper() {
     // ── 获取 Monaco Editor 实例的安全方法 ──────────────────
 
     const getEditor = (): monaco.editor.IStandaloneCodeEditor | null => {
-        if (!monacoMarkdownEditor.value?.editor) {
+        // Vue ref 嵌套 ShallowRef 时会自动解包，editor 已是裸值
+        const editorInstance = monacoMarkdownEditor.value?.editor as monaco.editor.IStandaloneCodeEditor | null
+        if (!editorInstance) {
             console.error('Monaco editor is not ready')
             return null
         }
-        return monacoMarkdownEditor.value.editor
+        return editorInstance
     }
 
     // ── 在编辑器光标处插入文本 ─────────────────────────────

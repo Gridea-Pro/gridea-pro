@@ -9,13 +9,13 @@
         <!-- Content -->
         <div class="page-content">
             <div class="editor-wrapper">
-                <input v-model="form.title"
-                    class="post-title py-2 border-none mt-4 mb-4 bg-transparent text-2xl focus:outline-none focus:ring-0 text-foreground placeholder:text-muted-foreground font-bold"
-                    :placeholder="$t('article.title')" @change="handleTitleChange"
+                <input ref="titleInputRef" v-model="form.title"
+                    class="post-title py-4 border-none pt-10 pb-10 bg-transparent text-xl focus:outline-none focus:ring-0 text-foreground placeholder:text-muted-foreground/50 font-bold"
+                    :placeholder="$t('article.title')" @change="handleTitleChange" @focus="handleTitleFocus"
                     @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)" />
 
                 <monaco-markdown-editor ref="monacoMarkdownEditor" v-model:value="form.content" :is-post-page="true"
-                    class="post-editor"
+                    class="post-editor" @focus="handleEditorFocus"
                     @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)"></monaco-markdown-editor>
 
                 <div class="footer-info">
@@ -52,7 +52,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useSiteStore } from '@/stores/site'
 import MonacoMarkdownEditor from '@/components/MonacoMarkdownEditor/index.vue'
 
@@ -140,7 +140,33 @@ const {
     openPage,
 } = useEditorHelper()
 
+const titleInputRef = ref<HTMLInputElement | null>(null)
+
+// 焦点互斥逻辑：修复标题和正文同时出现光标
+const handleTitleFocus = () => {
+    // 当点击标题时，确保 monaco 失去焦点
+    const editor = monacoMarkdownEditor.value?.editor
+    if (editor && (editor as any)._focusTracker) {
+        // 让编辑器失去焦点，使用更安全的方式
+        try {
+            (editor as any)._focusTracker.onBlur()
+        } catch (e) {
+            console.warn('[Focus] Failed to blur monaco editor', e)
+        }
+    }
+}
+
+const handleEditorFocus = () => {
+    // 当编辑器获得焦点时，确保标题 input 失去焦点
+    titleInputRef.value?.blur()
+}
+
 const previewDialogRef = ref<InstanceType<typeof PreviewDialog> | null>(null)
+
+// 调试内容流转
+watch(() => form.content, (newVal) => {
+    console.log('[Editor View] form.content changed, length:', newVal?.length)
+}, { immediate: true })
 
 // ── 关闭逻辑 ────────────────────────────────────────────
 
@@ -237,51 +263,19 @@ onUnmounted(() => {
             width: 728px;
         }
 
-        :deep(.monaco-editor) {
-            .scrollbar {
-                position: fixed !important;
-                top: 110px !important;
-            }
-        }
-
         :deep(.monaco-editor),
         :deep(.monaco-editor-background) {
             background-color: transparent !important;
-        }
-
-        :deep(.monaco-editor .selected-text) {
-            background-color: var(--primary) !important;
-            opacity: 0.2;
-        }
-
-        :deep(.monaco-editor .view-lines) {
-            user-select: text;
-        }
-
-        :deep(.monaco-editor .cursor) {
-            visibility: inherit !important;
         }
 
         :deep(.monaco-editor .inputarea.ime-input) {
             z-index: 100 !important;
         }
 
-        :deep(.monaco-editor .monaco-scrollable-element > .scrollbar > .slider) {
-            background: rgba(121, 121, 121, 0.4) !important;
-
-            &:hover {
-                background: rgba(121, 121, 121, 0.6) !important;
-            }
-        }
-
-        :deep(.monaco-editor .monaco-scrollable-element > .scrollbar.invisible.fade) {
-            transition: opacity 0.3s cubic-bezier(0.3, 0.5, 0.5, 1);
+        :deep(.monaco-editor .view-lines) {
+            user-select: none !important;
         }
     }
-}
-
-.page-content {
-    cursor: text;
 }
 
 .save-tip {

@@ -365,7 +365,7 @@ func (s *RendererService) renderTagPages(ctx context.Context, buildDir string, d
 	}
 
 	if len(data.Tags) > 0 {
-		s.logger.Info(fmt.Sprintf("✅ %d 个标签页渲染成功", len(data.Tags)))
+		s.logger.Info(fmt.Sprintf("✅ 标签页渲染成功（共 %d 个）", len(data.Tags)))
 	}
 	return nil
 }

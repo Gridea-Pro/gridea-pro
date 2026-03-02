@@ -75,6 +75,7 @@
     "markdown-it-sup": "^2.0.0",
     "markdown-it-task-lists": "^2.1.1",
     "markdown-it-toc-and-anchor": "^4.2.0",
+    "monaco-editor": "^0.55.1",
     "monaco-markdown": "^0.0.12",
     "pinia": "^3.0.4",
     "postcss-import": "^16.1.0",

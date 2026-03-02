@@ -4,7 +4,7 @@
 import type { editor as MonacoEditor } from 'monaco-editor'
 
 /**
- * MonacoMarkdownEditor 组件暴露的实例接口
+ * MonacoMarkdownEditor 组件通过 defineExpose 暴露的实例接口
  */
 export interface MonacoMarkdownEditorExposed {
     editor: MonacoEditor.IStandaloneCodeEditor | null
