@@ -32,7 +32,7 @@ export function useEditorHelper() {
 
     const uploadInputRef = ref<HTMLInputElement | null>(null)
     const monacoMarkdownEditor = ref<MonacoEditorRef>(null)
-    const previewContainerRef = ref<HTMLElement | null>(null)
+    const previewHtml = ref('')
 
     // ── UI 状态 ───────────────────────────────────────────
 
@@ -136,14 +136,7 @@ export function useEditorHelper() {
     const previewPost = (content: string) => {
         console.log('Preview post clicked')
         previewVisible.value = true
-
-        setTimeout(() => {
-            if (previewContainerRef.value) {
-                previewContainerRef.value.innerHTML = markdown.render(content)
-                Prism.highlightAll()
-            }
-        }, 1)
-
+        previewHtml.value = markdown.render(content)
         ga('Post', 'Post - click-preview-post', '')
     }
 
@@ -181,7 +174,7 @@ export function useEditorHelper() {
         // DOM Refs
         uploadInputRef,
         monacoMarkdownEditor,
-        previewContainerRef,
+        previewHtml,
         // UI 状态
         previewVisible,
         entering,

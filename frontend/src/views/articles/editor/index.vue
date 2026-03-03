@@ -17,16 +17,17 @@
                 <monaco-markdown-editor ref="monacoMarkdownEditor" v-model:value="form.content" :is-post-page="true"
                     class="post-editor" @focus="handleEditorFocus"
                     @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)"></monaco-markdown-editor>
+            </div>
 
-                <div class="footer-info">
-                    {{ $t('article.writingIn') }} <a class="link cursor-pointer"
-                        @click.prevent="openPage('https://gridea.pro')">Gridea Pro</a>
-                </div>
+            <div class="footer-info">
+                {{ $t('article.writingIn') }} <a class="link hover:text-primary cursor-pointer"
+                    @click.prevent="openPage('https://gridea.pro')">Gridea Pro</a>
             </div>
 
             <!-- Preview Sheet -->
             <PreviewDialog ref="previewDialogRef" v-model:open="previewVisible" :title="form.title"
-                :date-formatted="form.createdAt.format(siteStore.site.themeConfig.dateFormat)" :tags="form.tags" />
+                :date-formatted="form.createdAt.format(siteStore.site.themeConfig.dateFormat)" :tags="form.tags"
+                :html-content="previewHtml" />
 
             <!-- Settings Drawer -->
             <ArticleSettingsDrawer v-model:open="articleSettingsVisible" :form="form" :tag-input="tagInput"
@@ -138,6 +139,7 @@ const {
     handleInputKeydown,
     handlePageMousemove,
     openPage,
+    previewHtml,
 } = useEditorHelper()
 
 const titleInputRef = ref<HTMLInputElement | null>(null)
@@ -211,7 +213,8 @@ onUnmounted(() => {
         background: var(--background);
         flex: 1;
         display: flex;
-        overflow: scroll;
+        flex-direction: column;
+        overflow: hidden;
     }
 
     &.is-entering {
@@ -230,9 +233,9 @@ onUnmounted(() => {
     font-size: 12px;
     font-weight: lighter;
     -webkit-font-smoothing: antialiased;
-    padding-top: 6px;
-    margin-top: 8px;
+    padding: 4px 0;
     border-top: 1px solid var(--border);
+    flex-shrink: 0;
 
     .link {
         color: var(--muted-foreground);
@@ -249,6 +252,9 @@ onUnmounted(() => {
     position: relative;
     display: flex;
     flex-direction: column;
+    flex: 1;
+    overflow-y: hidden;
+    overflow-x: hidden;
 
     .post-title {
         width: 728px;

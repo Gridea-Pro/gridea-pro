@@ -48,6 +48,15 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
-    include: ['vue', 'vue-router', 'pinia'],
+    include: [
+      'vue',
+      'vue-router',
+      'pinia',
+      'monaco-editor',
+      'monaco-markdown'
+    ],
   },
+  worker: {
+    format: 'es'
+  }
 })

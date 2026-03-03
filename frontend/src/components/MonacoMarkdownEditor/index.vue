@@ -1,16 +1,15 @@
 <template>
-  <div class="monaco-editor-wrapper" :style="{
-    maxWidth: '728px',
+  <div class="monaco-editor-wrapper flex flex-col h-full w-full" :style="{
+    maxWidth: props.isPostPage ? '728px' : 'none',
     margin: '0 auto',
-    width: props.isPostPage ? '728px' : 'auto',
-    position: 'relative'
+    width: props.isPostPage ? '728px' : '100%',
+    position: 'relative',
+    overflow: 'hidden'
   }">
-    <div ref="elRef" class="monaco-editor-container" :style="{
-      minHeight: 'calc(100vh - 120px)',
-      width: '100%'
-    }" />
+    <div ref="elRef" class="monaco-editor-container w-full h-full" style="flex: 1;" />
     <!-- 模板级占位符，比 CSS 方案更可靠 -->
-    <div v-if="isEmpty && props.placeholder" class="monaco-placeholder">
+    <div v-if="isEmpty && props.placeholder" class="monaco-placeholder"
+      :style="{ transform: `translateY(-${editorScrollTop}px)` }">
       {{ props.placeholder }}
     </div>
   </div>
@@ -20,24 +19,69 @@
 import { ref, shallowRef, onMounted, watch, onUnmounted, computed } from 'vue'
 import * as monaco from 'monaco-editor'
 import * as MonacoMarkdown from 'monaco-markdown'
-import theme from './theme'
 import { useThemeStore } from '@/stores/theme'
 
-// ─── 全局副作用 ───────────────────────────────────────────────
+import editorWorkerUrl from 'monaco-editor/esm/vs/editor/editor.worker?url'
 
-// 仅保留 editorWorker，Markdown 不需要其他语言 Worker
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
-
-if (!self.MonacoEnvironment) {
-  self.MonacoEnvironment = {
-    getWorker() {
-      return new editorWorker()
-    },
-  }
+self.MonacoEnvironment = {
+  getWorker(_, label) {
+    return new Worker(editorWorkerUrl, {
+      type: 'module'
+    })
+  },
 }
 
-// 自定义亮色主题，在模块顶层注册，避免多次挂载时重复注册
-monaco.editor.defineTheme('GrideaLight', theme as monaco.editor.IStandaloneThemeData)
+// 重新定义自定义亮色主题，不再依赖外部废弃文件，保留原来精心设计的橙灰配色和选中高亮
+monaco.editor.defineTheme('GrideaLight', {
+  base: 'vs',
+  inherit: true,
+  rules: [
+    { foreground: '999999', token: 'comment' },
+    { foreground: 'e88501', token: 'string' },
+    { foreground: '999999', token: 'string.link' },
+    { foreground: '999999', token: 'variable.source' },
+    { foreground: '4C51BF', token: 'variable' },
+    { foreground: '2B6CB0', token: 'markup.list' },
+    { foreground: '2B6CB0', token: 'markup.underline.link' },
+    { foreground: '46a609', token: 'constant.numeric' },
+    { foreground: '39946a', token: 'constant.language' },
+    { foreground: 'b7791f', token: 'keyword' },
+    { fontStyle: 'bold', token: 'markup.heading' },
+    { fontStyle: 'bold', token: 'markup.bold' },
+    { fontStyle: 'italic', token: 'markup.italic' },
+    { foreground: '999999', token: 'punctuation.definition.constant.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.bold.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.italic.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.heading.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.heading.begin.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.heading.end.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.heading.setext.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.list_item.markdown' },
+    { foreground: '999999', token: 'markup.list.numbered.bullet.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.bold.begin.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.bold.end.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.italic.begin.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.italic.end.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.variable.begin.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.variable.end.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.link.begin.markdown' },
+    { foreground: '999999', token: 'punctuation.definition.link.end.markdown' },
+  ],
+  colors: {
+    'editor.foreground': '#333333',
+    'editor.background': '#FFFFFF',
+    'editor.selectionBackground': '#FFEBB7',
+    'editor.inactiveSelectionBackground': '#FFEBB7',
+    'editor.selectionHighlightBackground': '#FFEBB7',
+    'editor.wordHighlightBackground': '#FFEBB7',
+    'editor.wordHighlightStrongBackground': '#FFEBB7',
+    'editor.findMatchHighlightBackground': '#FFEBB7',
+    'editor.lineHighlightBackground': '#ff9e74ff',
+    'editorCursor.foreground': '#000000',
+    'editorWhitespace.foreground': '#BFBFBF',
+    'textLink.foreground': '#666',
+  }
+})
 
 // ─── Props / Model ────────────────────────────────────────────
 
@@ -48,7 +92,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   isPostPage: false,
-  placeholder: '开始写作...'
+  placeholder: '随便写点什么...'
 })
 
 // 恢复为 explicit 'value' 名称以确保最大兼容性，解决父组件类型报错
@@ -73,6 +117,8 @@ const isEmpty = computed(() => !modelValue.value || modelValue.value.trim() === 
 
 const themeStore = useThemeStore()
 
+const editorScrollTop = ref(0) // Track Monaco's internal scroll position
+
 // ─── 初始化逻辑 ───────────────────────────────────────────────
 
 const initEditor = () => {
@@ -85,15 +131,19 @@ const initEditor = () => {
 
   console.log('[Monaco] Initializing with value length:', modelValue.value?.length || 0)
   const editorInstance = monaco.editor.create(elRef.value, {
-    language: 'markdown-math', // 恢复 markdown-math 语言模式
+    language: 'markdown', // 恢复标准 markdown 语言模式，兼容 monaco-markdown 插件高亮
     value: modelValue.value || '',
     fontSize: 16,
     theme: themeStore.isDark ? 'vs-dark' : 'GrideaLight',
     lineNumbers: 'off',
     minimap: { enabled: false },
-    wordWrap: 'on',
+    wordWrap: 'bounded',
+    wordWrapColumn: 80,
     cursorWidth: 2,
-    cursorSmoothCaretAnimation: 'on',
+    cursorStyle: 'line',
+    smoothScrolling: true,
+    fontLigatures: true,
+    cursorSmoothCaretAnimation: 'off',
     cursorBlinking: 'smooth',
     colorDecorators: true,
     extraEditorClassName: 'gridea-editor',
@@ -107,7 +157,7 @@ const initEditor = () => {
     },
     lineHeight: 28,
     letterSpacing: 0.2,
-    scrollBeyondLastLine: true,
+    scrollBeyondLastLine: !isEmpty.value,
     wordBasedSuggestions: 'off',
     snippetSuggestions: 'none',
     lineDecorationsWidth: 0,
@@ -118,7 +168,11 @@ const initEditor = () => {
     automaticLayout: true,
     padding: { top: 24, bottom: 64 },
     fontFamily:
-      'Inter, PingFang SC, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+      '"Fira Code", Inter, PingFang SC, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    unicodeHighlight: {
+      ambiguousCharacters: false,
+      invisibleCharacters: false,
+    },
   })
 
   // 强制同步初始值，确保通过 create 注入失败时有兜底
@@ -138,13 +192,23 @@ const initEditor = () => {
     if (isSettingValue.value) return
     const value = editorInstance.getValue()
     if (modelValue.value !== value) {
-      // defineModel 内部会自动触发 update:value，无需手动 emit('change')
       modelValue.value = value
     }
   })
 
+  // 监听滚动事件，同步给 Placeholder
+  editorInstance.onDidScrollChange((e) => {
+    editorScrollTop.value = e.scrollTop
+  })
+
   editorInstance.onKeyDown((e: monaco.IKeyboardEvent) => {
     emit('keydown', e.browserEvent)
+  })
+
+  // 快捷键拦截 Cmd/Ctrl + S
+  editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+    // 触发父组件的保存逻辑
+    emit('keydown', new KeyboardEvent('keydown', { ctrlKey: true, key: 's' } as any))
   })
 }
 
@@ -201,6 +265,12 @@ watch(
   },
 )
 
+watch(isEmpty, (val) => {
+  if (editorRef.value) {
+    editorRef.value.updateOptions({ scrollBeyondLastLine: !val })
+  }
+})
+
 // ─── 暴露给父组件 ─────────────────────────────────────────────────────────────
 
 // 暴露 shallowRef，父组件可通过 watch 响应式监听编辑器实例变化
@@ -210,6 +280,8 @@ defineExpose({
 </script>
 
 <style lang="less" scoped>
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
+
 .monaco-editor-wrapper {
   position: relative;
 }
@@ -265,6 +337,32 @@ defineExpose({
 
   .scroll-decoration {
     box-shadow: #efefef 0 2px 2px -2px inset;
+  }
+}
+
+/* 覆盖原生或默认的系统/主题 IME 输入框背景及文本颜色 */
+:deep(.monaco-editor .ime-input) {
+  background-color: transparent !important;
+  color: transparent !important;
+}
+
+:deep(.monaco-editor .ime-input::selection) {
+  background-color: transparent !important;
+}
+
+/* 增加光标与文字的距离，提升输入体验 */
+:deep(.monaco-editor .cursor) {
+  margin-left: 2px !important;
+}
+
+/* 覆盖亮色模式下的原生选中和 Monaco DOM 选中颜色为此前设定的橙黄色 */
+:deep(.monaco-editor.vs) {
+  .view-lines ::selection {
+    background-color: #FFEBB7 !important;
+  }
+
+  .selected-text {
+    background-color: #FFEBB7 !important;
   }
 }
 </style>

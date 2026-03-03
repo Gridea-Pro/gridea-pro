@@ -15,7 +15,7 @@
                             {{ tag }}
                         </span>
                     </div>
-                    <div ref="containerRef" class="preview-container"></div>
+                    <div class="preview-container" v-html="htmlContent"></div>
                 </div>
             </div>
         </SheetContent>
@@ -23,28 +23,42 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, watch, nextTick } from 'vue'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
+import Prism from 'prismjs'
 
 const props = defineProps<{
     open: boolean
     title: string
     dateFormatted: string
     tags: string[]
+    htmlContent?: string
 }>()
 
 const emit = defineEmits<{
     'update:open': [value: boolean]
 }>()
 
-const containerRef = ref<HTMLElement | null>(null)
-
 const openModel = computed({
     get: () => props.open,
     set: (val: boolean) => emit('update:open', val),
 })
 
-defineExpose({ containerRef })
+watch(() => props.htmlContent, () => {
+    if (props.open) {
+        nextTick(() => {
+            Prism.highlightAll()
+        })
+    }
+})
+
+watch(() => props.open, (isOpen) => {
+    if (isOpen) {
+        nextTick(() => {
+            Prism.highlightAll()
+        })
+    }
+})
 </script>
 
 <style lang="less" scoped>
