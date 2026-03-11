@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
@@ -38,6 +39,18 @@ var (
 func NewFileServerMiddleware(rootPath string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// 处理 /post-images/ 请求：从 appDir 提供文章内容图片
+			if strings.HasPrefix(r.URL.Path, "/post-images/") {
+				filePath := filepath.Join(rootPath, r.URL.Path)
+				absPath, err := filepath.Abs(filePath)
+				if err != nil || !strings.HasPrefix(absPath, rootPath) {
+					http.Error(w, "Invalid path", http.StatusBadRequest)
+					return
+				}
+				http.ServeFile(w, r, absPath)
+				return
+			}
+
 			// Only handle /local-file requests
 			if r.URL.Path != "/local-file" {
 				next.ServeHTTP(w, r)

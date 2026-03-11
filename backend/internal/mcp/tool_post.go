@@ -100,9 +100,9 @@ func createPostHandler(s *service.PostService) server.ToolHandlerFunc {
 
 		dateStr := request.GetString("date", "")
 		if dateStr != "" {
-			parsed, _ := time.Parse(domain.TimeLayout, dateStr)
+			parsed, _ := time.ParseInLocation(domain.TimeLayout, dateStr, time.Local)
 			if parsed.IsZero() {
-				parsed, _ = time.Parse(domain.DateLayout, dateStr)
+				parsed, _ = time.ParseInLocation(domain.DateLayout, dateStr, time.Local)
 			}
 			post.CreatedAt = parsed
 		} else {

@@ -169,9 +169,6 @@ func (f *PostFacade) mapFormToPost(form PostForm) (*domain.Post, error) {
 		DeleteFileName:   form.DeleteFileName,
 		FeatureImage:     form.FeatureImage,
 		FeatureImagePath: form.FeatureImagePath,
-		// Feature field might need logic if it comes from FeatureImagePath or FeatureImage?
-		// In previous logic, Feature was derived.
-		// Here we map Feature from FeatureImagePath as default if Feature is empty in form (Form doesn't have Feature field, relying on Path)
-		Feature: form.FeatureImagePath,
+		// Feature 由 Repository 层根据 FeatureImage / FeatureImagePath 综合推导，此处不强制覆盖
 	}, nil
 }

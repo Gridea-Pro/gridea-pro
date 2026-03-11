@@ -150,9 +150,12 @@ func (r *postRepository) save(ctx context.Context, post *domain.Post, isUpdate b
 	if post.FeatureImage.Name != "" && post.FeatureImage.Path != "" {
 		ext := filepath.Ext(post.FeatureImage.Name)
 		newPath := filepath.Join(postImageDir, post.FileName+ext)
-		if err := CopyFile(post.FeatureImage.Path, newPath); err == nil {
+		// 源路径与目标路径相同时跳过复制，避免 CopyFile 将文件截断为 0 字节
+		if post.FeatureImage.Path == newPath {
 			feature = "/post-images/" + post.FileName + ext
-			if post.FeatureImage.Path != newPath && strings.Contains(post.FeatureImage.Path, postImageDir) {
+		} else if err := CopyFile(post.FeatureImage.Path, newPath); err == nil {
+			feature = "/post-images/" + post.FileName + ext
+			if strings.Contains(post.FeatureImage.Path, postImageDir) {
 				_ = os.Remove(post.FeatureImage.Path)
 			}
 		}
@@ -402,13 +405,14 @@ func (r *postRepository) parsePost(content string, filename string) (domain.Post
 	if primaryDateStr == "" {
 		primaryDateStr = meta.Date
 	}
-	parsedDate, err := time.Parse(domain.TimeLayout, primaryDateStr)
+	// YAML 中存储的是不带时区的本地时间字符串，必须用 ParseInLocation 按本地时区解析
+	parsedDate, err := time.ParseInLocation(domain.TimeLayout, primaryDateStr, time.Local)
 	if err != nil {
 		parsedDate = time.Now()
 	}
 
 	// 解析 UpdatedAt；若 “updated” 字段缺失则降级为 CreatedAt
-	updatedAt, err := time.Parse(domain.TimeLayout, meta.UpdatedAt)
+	updatedAt, err := time.ParseInLocation(domain.TimeLayout, meta.UpdatedAt, time.Local)
 	if err != nil || updatedAt.IsZero() {
 		updatedAt = parsedDate
 	}

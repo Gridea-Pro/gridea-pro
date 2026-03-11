@@ -43,10 +43,6 @@
             <!-- Unsaved Dialog -->
             <UnsavedDialog v-model:open="showUnsavedDialog" @confirm-close="confirmClose" />
 
-            <!-- Hidden file input for image upload -->
-            <input ref="uploadInputRef" class="upload-input hidden" type="file" accept="image/*"
-                @change="fileChangeHandler">
-
             <span class="save-tip">{{ articleStatusTip }}</span>
         </div>
     </div>
@@ -127,14 +123,12 @@ const {
 })
 
 const {
-    uploadInputRef,
     monacoMarkdownEditor,
     previewVisible,
     entering,
     insertImage,
     insertMore,
     handleEmojiSelect,
-    fileChangeHandler,
     previewPost,
     handleInputKeydown,
     handlePageMousemove,

@@ -20,6 +20,7 @@ import ga from '@/helpers/analytics'
 import { toast } from '@/helpers/toast'
 import { BrowserOpenURL } from '@/wailsjs/runtime'
 import { UploadImagesFromFrontend } from '@/wailsjs/go/facade/PostFacade'
+import { OpenImageDialog } from '@/wailsjs/go/app/App'
 import { domain } from '@/wailsjs/go/models'
 
 /** Monaco 编辑器组件 ref 类型（editor 为 shallowRef 包装） */
@@ -30,7 +31,6 @@ export type MonacoEditorRef = {
 export function useEditorHelper() {
     // ── DOM Refs ──────────────────────────────────────────
 
-    const uploadInputRef = ref<HTMLInputElement | null>(null)
     const monacoMarkdownEditor = ref<MonacoEditorRef>(null)
     const previewHtml = ref('')
 
@@ -72,9 +72,22 @@ export function useEditorHelper() {
 
     // ── 插入图片 ──────────────────────────────────────────
 
-    const insertImage = () => {
-        uploadInputRef.value?.click()
+    const insertImage = async () => {
         ga('Post', 'Post - click-insert-image', '')
+        try {
+            const filePath = await OpenImageDialog()
+            if (!filePath) return
+
+            const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || 'image'
+            const uploadedFile = new domain.UploadedFile({
+                name: fileName,
+                path: filePath,
+            })
+            await uploadImageFiles([uploadedFile])
+        } catch (e) {
+            console.error(e)
+            toast.error('上传图片失败')
+        }
     }
 
     const uploadImageFiles = async (files: domain.UploadedFile[]) => {
@@ -84,7 +97,7 @@ export function useEditorHelper() {
             if (!editor) return
 
             for (const path of data) {
-                const url = `![](/local-file?path=${encodeURIComponent(path)})`
+                const url = `![](${path})`
                 const position = editor.getPosition()
                 if (!position) return
                 editor.executeEdits('', [
@@ -99,22 +112,6 @@ export function useEditorHelper() {
         } catch (e) {
             console.error(e)
             toast.error('上传图片失败')
-        }
-    }
-
-    const fileChangeHandler = (e: any) => {
-        const file = (e.target.files || e.dataTransfer)[0]
-        if (!file) return
-
-        const isImage = file.type.indexOf('image') !== -1
-        if (!isImage) return
-
-        if (file && isImage) {
-            const uploadedFile = new domain.UploadedFile({
-                name: file.name,
-                path: file.path,
-            })
-            uploadImageFiles([uploadedFile])
         }
     }
 
@@ -172,7 +169,6 @@ export function useEditorHelper() {
 
     return {
         // DOM Refs
-        uploadInputRef,
         monacoMarkdownEditor,
         previewHtml,
         // UI 状态
@@ -182,7 +178,6 @@ export function useEditorHelper() {
         insertImage,
         insertMore,
         handleEmojiSelect,
-        fileChangeHandler,
         // 预览
         previewPost,
         // 快捷键
