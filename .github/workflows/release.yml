@@ -1,0 +1,322 @@
+# =============================================================================
+# Gridea Pro — Cross-Platform Release Build
+# =============================================================================
+# 触发方式：推送 v 开头的 tag（如 v0.1.0、v1.0.0-beta.1）
+# 构建产物：
+#   macOS   → .dmg (Universal: Intel + Apple Silicon)
+#   Windows → NSIS 安装包 (.exe installer)
+#   Linux   → .deb 包 + .AppImage
+#
+# 用法：
+#   git tag v0.1.0
+#   git push origin v0.1.0
+#
+# 构建完成后自动创建 GitHub Release 并上传所有安装包。
+# =============================================================================
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# 防止前端构建 OOM
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+  # ⬇️ 改成你项目 wails.json 里的 "name" 值
+  APP_NAME: "Gridea Pro"
+  # ⬇️ 改成 wails build 后在 build/bin/ 下生成的二进制文件名（不含扩展名）
+  BIN_NAME: "Gridea Pro"
+
+permissions:
+  contents: write  # 需要写权限来创建 Release
+
+jobs:
+  # ===========================================================================
+  # macOS Build — Universal Binary (amd64 + arm64)
+  # ===========================================================================
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.5"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build macOS Universal App
+        run: wails build -platform darwin/universal -clean -trimpath
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create DMG
+        run: |
+          # 使用 macOS 原生 hdiutil 创建 DMG
+          # 如果你想要更精美的 DMG（带背景图、图标布局），可以改用 create-dmg
+          cd build/bin
+          hdiutil create -volname "${{ env.APP_NAME }}" \
+            -srcfolder "${{ env.BIN_NAME }}.app" \
+            -ov -format UDZO \
+            "${{ env.BIN_NAME }}_macos_universal_${{ steps.version.outputs.VERSION }}.dmg"
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: |
+            build/bin/*.dmg
+          if-no-files-found: error
+
+  # ===========================================================================
+  # Windows Build — NSIS Installer
+  # ===========================================================================
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.5"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Build Windows with NSIS
+        run: wails build -platform windows/amd64 -nsis -clean -trimpath
+
+      - name: Get version from tag
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Rename artifacts
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $binDir = "build/bin"
+
+          # 重命名 NSIS 安装包（Wails 生成的安装包名通常是 {AppName}-amd64-installer.exe）
+          $installer = Get-ChildItem "$binDir/*installer*" -ErrorAction SilentlyContinue
+          if ($installer) {
+            $newName = "${{ env.BIN_NAME }}_windows_amd64_${version}_setup.exe"
+            Move-Item $installer.FullName "$binDir/$newName"
+          }
+
+          # 重命名原始 exe
+          $exe = Get-ChildItem "$binDir/${{ env.BIN_NAME }}.exe" -ErrorAction SilentlyContinue
+          if ($exe) {
+            $newName = "${{ env.BIN_NAME }}_windows_amd64_${version}.exe"
+            Move-Item $exe.FullName "$binDir/$newName"
+          }
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: |
+            build/bin/*.exe
+          if-no-files-found: error
+
+  # ===========================================================================
+  # Linux Build — .deb + AppImage
+  # ===========================================================================
+  build-linux:
+    runs-on: ubuntu-22.04  # 用 22.04 保证 WebKitGTK 4.0 兼容性
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.5"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.0-dev \
+            build-essential \
+            pkg-config
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build Linux binary
+        run: wails build -platform linux/amd64 -clean -trimpath
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      # ----- .deb 包 -----
+      - name: Build .deb package
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          # 去掉 v 前缀用于 deb 版本号（deb 版本号不能以字母开头）
+          DEB_VERSION="${VERSION#v}"
+          PKG_DIR="deb-pkg"
+
+          mkdir -p ${PKG_DIR}/DEBIAN
+          mkdir -p ${PKG_DIR}/usr/bin
+          mkdir -p ${PKG_DIR}/usr/share/applications
+          mkdir -p ${PKG_DIR}/usr/share/icons/hicolor/256x256/apps
+
+          # 复制二进制
+          cp build/bin/${{ env.BIN_NAME }} ${PKG_DIR}/usr/bin/${{ env.BIN_NAME }}
+          chmod 755 ${PKG_DIR}/usr/bin/${{ env.BIN_NAME }}
+
+          # 复制图标
+          cp build/appicon.png ${PKG_DIR}/usr/share/icons/hicolor/256x256/apps/${{ env.BIN_NAME }}.png
+
+          # 创建 control 文件
+          cat > ${PKG_DIR}/DEBIAN/control << EOF
+          Package: ${{ env.BIN_NAME }}
+          Version: ${DEB_VERSION}
+          Section: editors
+          Priority: optional
+          Architecture: amd64
+          Depends: libwebkit2gtk-4.0-37, libgtk-3-0
+          Maintainer: Gridea Pro Contributors <hello@gridea.pro>
+          Homepage: https://gridea.pro
+          Description: ${{ env.APP_NAME }} - A modern static blog client
+           A cross-platform desktop static blog client with built-in editor,
+           theme system, and one-click deployment. The spiritual successor
+           to Gridea, rebuilt from the ground up.
+          EOF
+
+          # 创建 .desktop 文件
+          cat > ${PKG_DIR}/usr/share/applications/${{ env.BIN_NAME }}.desktop << EOF
+          [Desktop Entry]
+          Name=${{ env.APP_NAME }}
+          Comment=A modern static blog client
+          Exec=${{ env.BIN_NAME }}
+          Icon=${{ env.BIN_NAME }}
+          Type=Application
+          Categories=Development;TextEditor;
+          Keywords=blog;markdown;static;
+          EOF
+
+          # 构建 deb
+          dpkg-deb --build ${PKG_DIR} \
+            build/bin/${{ env.BIN_NAME }}_linux_amd64_${VERSION}.deb
+
+      # ----- AppImage -----
+      - name: Build AppImage
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+
+          # 创建 AppDir 结构
+          mkdir -p AppDir/usr/bin
+          mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+
+          cp build/bin/${{ env.BIN_NAME }} AppDir/usr/bin/${{ env.BIN_NAME }}
+          chmod 755 AppDir/usr/bin/${{ env.BIN_NAME }}
+          cp build/appicon.png AppDir/${{ env.BIN_NAME }}.png
+          cp build/appicon.png AppDir/usr/share/icons/hicolor/256x256/apps/${{ env.BIN_NAME }}.png
+
+          # .desktop 文件（AppImage 要求放在 AppDir 根目录）
+          cat > AppDir/${{ env.BIN_NAME }}.desktop << EOF
+          [Desktop Entry]
+          Name=${{ env.APP_NAME }}
+          Comment=A modern static blog client
+          Exec=${{ env.BIN_NAME }}
+          Icon=${{ env.BIN_NAME }}
+          Type=Application
+          Categories=Development;TextEditor;
+          EOF
+          cp AppDir/${{ env.BIN_NAME }}.desktop AppDir/usr/share/applications/
+
+          # AppRun 入口脚本
+          cat > AppDir/AppRun << 'APPRUN'
+          #!/bin/bash
+          SELF=$(readlink -f "$0")
+          HERE=${SELF%/*}
+          export PATH="${HERE}/usr/bin:${PATH}"
+          exec "${HERE}/usr/bin/PLACEHOLDER_BIN" "$@"
+          APPRUN
+          sed -i "s/PLACEHOLDER_BIN/${{ env.BIN_NAME }}/" AppDir/AppRun
+          chmod +x AppDir/AppRun
+
+          # 下载 appimagetool
+          wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool-x86_64.AppImage
+
+          # 构建 AppImage
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir \
+            "build/bin/${{ env.BIN_NAME }}_linux_amd64_${VERSION}.AppImage"
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: |
+            build/bin/*.deb
+            build/bin/*.AppImage
+          if-no-files-found: error
+
+  # ===========================================================================
+  # 创建 GitHub Release — 汇总所有平台的构建产物
+  # ===========================================================================
+  create-release:
+    needs: [build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: true
+
+      - name: List release files
+        run: |
+          echo "=== Release artifacts ==="
+          ls -lh artifacts/
+          echo "========================="
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+          draft: true  # 先创建草稿，你审查后再手动发布
+          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') || contains(github.ref, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
