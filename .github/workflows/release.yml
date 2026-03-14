@@ -2,13 +2,16 @@
 # Gridea Pro — Cross-Platform Release Build
 # =============================================================================
 # 触发方式：
-#   1. 推送 v 开头的 tag → 构建 + 创建 GitHub Release
+#   1. 推送 v 开头的 tag → 构建 + 创建 GitHub Release（草稿）
 #   2. 手动触发（workflow_dispatch）→ 仅测试构建，不创建 Release
 #
-# 构建产物：
-#   macOS   → .dmg (Universal: Intel + Apple Silicon)
-#   Windows → NSIS 安装包 (.exe installer)
-#   Linux   → .deb 包 + .AppImage
+# 构建产物（统一命名：Gridea.Pro_{version}_{os}_{arch}.{ext}）：
+#   macOS   → Gridea.Pro_v1.0.0_macos_universal.dmg
+#   Windows → Gridea.Pro_v1.0.0_windows_amd64.exe
+#             Gridea.Pro_v1.0.0_windows_arm64.exe
+#   Linux   → Gridea.Pro_v1.0.0_linux_amd64.deb
+#             Gridea.Pro_v1.0.0_linux_amd64.rpm
+#             Gridea.Pro_v1.0.0_linux_amd64.AppImage
 #
 # 发版用法：
 #   git tag -a v1.0.0 -m "Gridea Pro v1.0.0 — 发布说明"
@@ -27,35 +30,36 @@ on:
 env:
   NODE_OPTIONS: "--max-old-space-size=4096"
   APP_NAME: "Gridea Pro"
+  # Wails 生成的二进制文件名（含空格，与 wails.json 里的 name 一致）
   BIN_NAME: "Gridea Pro"
+  # 文件系统友好名称（用于 Linux 路径、包名等）
   BIN_SLUG: "gridea-pro"
+  # Release 文件名前缀
+  RELEASE_PREFIX: "Gridea.Pro"
 
 permissions:
   contents: write
 
 jobs:
   # ===========================================================================
-  # 统一提取版本号，供所有 job 使用
+  # 统一提取版本号
   # ===========================================================================
   prepare:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.VERSION }}
-      is_release: ${{ steps.version.outputs.IS_RELEASE }}
     steps:
       - name: Determine version
         id: version
         run: |
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-            echo "IS_RELEASE=true" >> $GITHUB_OUTPUT
           else
             echo "VERSION=v0.0.0-dev" >> $GITHUB_OUTPUT
-            echo "IS_RELEASE=false" >> $GITHUB_OUTPUT
           fi
 
   # ===========================================================================
-  # macOS Build — Universal Binary (amd64 + arm64)
+  # macOS — Universal Binary (Intel + Apple Silicon)
   # ===========================================================================
   build-macos:
     needs: prepare
@@ -63,8 +67,7 @@ jobs:
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -79,13 +82,11 @@ jobs:
           echo "=== After cleanup ==="
           df -h /
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
@@ -96,10 +97,7 @@ jobs:
         run: wails build -platform darwin/universal -clean -trimpath
 
       - name: List build output
-        run: |
-          echo "=== build/bin contents ==="
-          ls -la build/bin/
-          echo "=========================="
+        run: ls -la build/bin/
 
       - name: Create DMG
         run: |
@@ -107,85 +105,65 @@ jobs:
           hdiutil create -volname "${{ env.APP_NAME }}" \
             -srcfolder "${{ env.BIN_NAME }}.app" \
             -ov -format UDZO \
-            "${{ env.BIN_SLUG }}_macos_universal_${VERSION}.dmg"
+            "${{ env.RELEASE_PREFIX }}_${VERSION}_macos_universal.dmg"
 
-      - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: macos-build
           path: build/bin/*.dmg
           if-no-files-found: error
 
   # ===========================================================================
-  # Windows Build — NSIS Installer
+  # Windows — amd64 + arm64 便携版 exe
   # ===========================================================================
   build-windows:
     needs: prepare
     runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      - name: Install NSIS
-        run: choco install nsis -y
-
-      - name: Build Windows with NSIS
-        run: wails build -platform windows/amd64 -nsis -clean -trimpath
+      - name: Build Windows ${{ matrix.arch }}
+        run: wails build -platform windows/${{ matrix.arch }} -clean -trimpath
 
       - name: List build output
         shell: bash
-        run: |
-          echo "=== build/bin contents ==="
-          ls -la build/bin/
-          echo "=========================="
+        run: ls -la build/bin/
 
-      - name: Rename artifacts
+      - name: Rename artifact
         shell: pwsh
         run: |
-          $version = "${{ env.VERSION }}"
-          $binDir = "build/bin"
-          $slug = "${{ env.BIN_SLUG }}"
-
-          # 重命名 NSIS 安装包
-          $installer = Get-ChildItem "$binDir/*installer*" -ErrorAction SilentlyContinue
-          if ($installer) {
-            $newName = "${slug}_windows_amd64_${version}_setup.exe"
-            Move-Item $installer.FullName "$binDir\$newName"
-          }
-
-          # 重命名原始 exe
-          $exe = Get-ChildItem "$binDir\${{ env.BIN_NAME }}.exe" -ErrorAction SilentlyContinue
+          $exe = Get-ChildItem "build\bin\${{ env.BIN_NAME }}.exe" -ErrorAction SilentlyContinue
           if ($exe) {
-            $newName = "${slug}_windows_amd64_${version}.exe"
-            Move-Item $exe.FullName "$binDir\$newName"
+            $newName = "${{ env.RELEASE_PREFIX }}_${{ env.VERSION }}_windows_${{ matrix.arch }}.exe"
+            Move-Item $exe.FullName "build\bin\$newName"
           }
 
-      - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: windows-build
+          name: windows-build-${{ matrix.arch }}
           path: build/bin/*.exe
           if-no-files-found: error
 
   # ===========================================================================
-  # Linux Build — .deb + AppImage
+  # Linux — .deb + .rpm + .AppImage (amd64)
   # ===========================================================================
   build-linux:
     needs: prepare
@@ -193,18 +171,15 @@ jobs:
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
@@ -216,52 +191,29 @@ jobs:
             libwebkit2gtk-4.0-dev \
             build-essential \
             pkg-config \
-            libfuse2
+            libfuse2 \
+            rpm
 
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install nfpm
+        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
 
       - name: Build Linux binary
         run: wails build -platform linux/amd64 -clean -trimpath
 
       - name: List build output
-        run: |
-          echo "=== build/bin contents ==="
-          ls -la build/bin/
-          echo "=========================="
+        run: ls -la build/bin/
 
-      # ----- .deb 包 -----
-      - name: Build .deb package
+      # ----- .deb + .rpm（使用 nfpm 统一构建）-----
+      - name: Prepare packaging files
         run: |
-          DEB_VERSION="${VERSION#v}"
           SLUG="${{ env.BIN_SLUG }}"
-          PKG_DIR="deb-pkg"
+          DEB_VERSION="${VERSION#v}"
 
-          mkdir -p ${PKG_DIR}/DEBIAN
-          mkdir -p ${PKG_DIR}/usr/bin
-          mkdir -p ${PKG_DIR}/usr/share/applications
-          mkdir -p ${PKG_DIR}/usr/share/icons/hicolor/256x256/apps
-
-          cp "build/bin/${{ env.BIN_NAME }}" "${PKG_DIR}/usr/bin/${SLUG}"
-          chmod 755 "${PKG_DIR}/usr/bin/${SLUG}"
-          cp build/appicon.png "${PKG_DIR}/usr/share/icons/hicolor/256x256/apps/${SLUG}.png"
-
-          cat > ${PKG_DIR}/DEBIAN/control << EOF
-          Package: ${SLUG}
-          Version: ${DEB_VERSION}
-          Section: editors
-          Priority: optional
-          Architecture: amd64
-          Depends: libwebkit2gtk-4.0-37, libgtk-3-0
-          Maintainer: Gridea Pro Contributors <hello@gridea.pro>
-          Homepage: https://gridea.pro
-          Description: ${{ env.APP_NAME }} - A modern static blog client
-           A cross-platform desktop static blog client with built-in editor,
-           theme system, and one-click deployment. The spiritual successor
-           to Gridea, rebuilt from the ground up.
-          EOF
-
-          cat > ${PKG_DIR}/usr/share/applications/${SLUG}.desktop << EOF
+          # .desktop 文件
+          cat > ${SLUG}.desktop << EOF
           [Desktop Entry]
           Name=${{ env.APP_NAME }}
           Comment=A modern static blog client
@@ -272,8 +224,39 @@ jobs:
           Keywords=blog;markdown;static;
           EOF
 
-          dpkg-deb --build ${PKG_DIR} \
-            "build/bin/${SLUG}_linux_amd64_${VERSION}.deb"
+          # nfpm 配置（同时用于 .deb 和 .rpm）
+          cat > nfpm.yaml << NFPM
+          name: "${SLUG}"
+          arch: "amd64"
+          platform: "linux"
+          version: "${DEB_VERSION}"
+          maintainer: "Gridea Pro Contributors <hello@gridea.pro>"
+          description: "A cross-platform desktop static blog client with built-in editor, theme system, and one-click deployment."
+          homepage: "https://gridea.pro"
+          license: "GPL-3.0"
+          depends:
+            - libwebkit2gtk-4.0-37
+            - libgtk-3-0
+          contents:
+            - src: "build/bin/${{ env.BIN_NAME }}"
+              dst: "/usr/bin/${SLUG}"
+              file_info:
+                mode: 0755
+            - src: "build/appicon.png"
+              dst: "/usr/share/icons/hicolor/256x256/apps/${SLUG}.png"
+            - src: "${SLUG}.desktop"
+              dst: "/usr/share/applications/${SLUG}.desktop"
+          NFPM
+
+      - name: Build .deb package
+        run: |
+          nfpm pkg -p deb -f nfpm.yaml \
+            -t "build/bin/${{ env.RELEASE_PREFIX }}_${VERSION}_linux_amd64.deb"
+
+      - name: Build .rpm package
+        run: |
+          nfpm pkg -p rpm -f nfpm.yaml \
+            -t "build/bin/${{ env.RELEASE_PREFIX }}_${VERSION}_linux_amd64.rpm"
 
       # ----- AppImage -----
       - name: Build AppImage
@@ -288,17 +271,8 @@ jobs:
           chmod 755 "AppDir/usr/bin/${SLUG}"
           cp build/appicon.png "AppDir/${SLUG}.png"
           cp build/appicon.png "AppDir/usr/share/icons/hicolor/256x256/apps/${SLUG}.png"
-
-          cat > "AppDir/${SLUG}.desktop" << EOF
-          [Desktop Entry]
-          Name=${{ env.APP_NAME }}
-          Comment=A modern static blog client
-          Exec=${SLUG}
-          Icon=${SLUG}
-          Type=Application
-          Categories=Development;TextEditor;
-          EOF
-          cp "AppDir/${SLUG}.desktop" AppDir/usr/share/applications/
+          cp "${{ env.BIN_SLUG }}.desktop" "AppDir/${SLUG}.desktop"
+          cp "${{ env.BIN_SLUG }}.desktop" AppDir/usr/share/applications/
 
           cat > AppDir/AppRun << EOF
           #!/bin/bash
@@ -313,14 +287,14 @@ jobs:
           chmod +x appimagetool-x86_64.AppImage
 
           ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir \
-            "build/bin/${SLUG}_linux_amd64_${VERSION}.AppImage"
+            "build/bin/${{ env.RELEASE_PREFIX }}_${VERSION}_linux_amd64.AppImage"
 
-      - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: linux-build
           path: |
             build/bin/*.deb
+            build/bin/*.rpm
             build/bin/*.AppImage
           if-no-files-found: error
 
