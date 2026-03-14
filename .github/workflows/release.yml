@@ -56,6 +56,18 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Free disk space
+        run: |
+          echo "=== Before cleanup ==="
+          df -h /
+          # 删除不需要的大体积组件
+          sudo rm -rf /Users/runner/Library/Android 2>/dev/null || true
+          sudo rm -rf /Applications/Xcode_*.app 2>/dev/null || true
+          sudo rm -rf /usr/local/share/powershell 2>/dev/null || true
+          sudo rm -rf /usr/local/lib/node_modules 2>/dev/null || true
+          echo "=== After cleanup ==="
+          df -h /
+
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
