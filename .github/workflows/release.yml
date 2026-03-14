@@ -144,7 +144,13 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Install Inno Setup
-        run: choco install innosetup -y
+        shell: pwsh
+        run: |
+          choco install innosetup -y
+          # 下载中文语言文件（chocolatey 安装不含非英语语言包）
+          $langDir = "C:\Program Files (x86)\Inno Setup 6\Languages"
+          $langUrl = "https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/ChineseSimplified.isl"
+          Invoke-WebRequest -Uri $langUrl -OutFile "$langDir\ChineseSimplified.isl"
 
       - name: Build Windows ${{ matrix.arch }}
         run: wails build -platform windows/${{ matrix.arch }} -clean -trimpath
