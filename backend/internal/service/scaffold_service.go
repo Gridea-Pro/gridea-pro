@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"sync"
 )
@@ -89,7 +90,8 @@ func (s *ScaffoldService) copyDirFromEmbed(src string, dst string) error {
 	}
 
 	for _, entry := range entries {
-		srcPath := filepath.Join(src, entry.Name())
+		// embed.FS always uses forward slashes, even on Windows
+		srcPath := path.Join(src, entry.Name())
 		dstPath := filepath.Join(dst, entry.Name())
 
 		if entry.IsDir() {
