@@ -14,7 +14,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3.0-blue.svg" alt="License"></a>
   <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Go-1.21+-00ADD8.svg?logo=go&logoColor=white" alt="Go">
+  <img src="https://img.shields.io/badge/Go-1.25+-00ADD8.svg?logo=go&logoColor=white" alt="Go">
   <img src="https://img.shields.io/badge/Vue-3.x-4FC08D.svg?logo=vue.js&logoColor=white" alt="Vue 3">
   <a href="README.md"><img src="https://img.shields.io/badge/English-README-orange.svg" alt="English"></a>
 </p>
