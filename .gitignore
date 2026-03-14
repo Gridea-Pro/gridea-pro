@@ -28,14 +28,12 @@ pnpm-debug.log*
 
 # Editor directories and files
 .idea
-.vscode/*
-.agent/*
-.agents/*
-.claude/*
-.github/*
-.trae/*
-.vite/*
-!.vscode/settings.json
+.vscode/
+.agent/
+.agents/
+.claude/
+.trae/
+.vite/
 *.suo
 *.ntvs*
 *.njsproj
@@ -65,7 +63,12 @@ coverage
 .temp
 tmp
 temp
+*.repomix-output.xml
 Gridea Pro-repomix-output.xml
+
+# Project-specific ignores
+files/
+CLAUDE.md
 
 # OS generated files
 Thumbs.db
