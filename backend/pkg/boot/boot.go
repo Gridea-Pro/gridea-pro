@@ -21,6 +21,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -251,6 +252,27 @@ func Run(assets embed.FS) {
 			services.SeoSetting,
 			services.CdnSetting,
 			services.CdnUpload,
+		},
+		Windows: &windows.Options{
+			WebviewIsTransparent: false,
+			WindowIsTranslucent:  false,
+			Theme:                windows.SystemDefault,
+			CustomTheme: &windows.ThemeSettings{
+				// Light mode: warm beige tones matching default warm theme
+				LightModeTitleBar:          windows.RGB(245, 242, 232), // #F5F2E8
+				LightModeTitleBarInactive:  windows.RGB(248, 246, 240), // #F8F6F0
+				LightModeTitleText:         windows.RGB(51, 51, 51),    // #333333
+				LightModeTitleTextInactive: windows.RGB(153, 153, 153), // #999999
+				LightModeBorder:            windows.RGB(230, 225, 215), // #E6E1D7
+				LightModeBorderInactive:    windows.RGB(238, 235, 228), // #EEEBE4
+				// Dark mode
+				DarkModeTitleBar:          windows.RGB(45, 42, 38),    // #2D2A26
+				DarkModeTitleBarInactive:  windows.RGB(35, 33, 30),    // #23211E
+				DarkModeTitleText:         windows.RGB(230, 230, 230), // #E6E6E6
+				DarkModeTitleTextInactive: windows.RGB(128, 128, 128), // #808080
+				DarkModeBorder:            windows.RGB(60, 57, 52),    // #3C3934
+				DarkModeBorderInactive:    windows.RGB(50, 47, 42),    // #322F2A
+			},
 		},
 		Mac: &mac.Options{
 			TitleBar:             mac.TitleBarHiddenInset(),
