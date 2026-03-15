@@ -21,11 +21,42 @@
 
 ---
 
-> **Gridea Pro** 基于 [Gridea](https://github.com/getgridea/gridea)（10k+ Stars）重新构建，感谢原作者 [@EryouHao](https://github.com/EryouHao) 创造了  [Gridea](https://github.com/getgridea/gridea) 这个优秀的项目，设计思想和产品逻辑值得肯定。原版 Gridea 已停止更新约四年，Gridea Pro 以全新技术栈延续其愿景：**让每个人都能零门槛拥有自己的博客。**
+> **Gridea Pro** 基于 [Gridea](https://github.com/getgridea/gridea)（10k+ Stars）完全升级重构，感谢原作者 [@EryouHao](https://github.com/EryouHao) 创造了  [Gridea](https://github.com/getgridea/gridea) 这个优秀的项目，帮助了无数人建立自己的博客。原版 Gridea 已停止更新约四年，Gridea Pro 以全新技术栈延续其愿景：**让每个人都能零门槛拥有自己的博客。**
 
 ---
 
 ## 软件截图
+### 文章管理页面
+
+![文章管理页面](screenshots/article-list.png)
+
+### 写作页面
+
+![编辑页面](screenshots/editor.png)
+
+### 闪念页面
+
+![闪念页面](screenshots/memos.png)
+
+### 评论管理页面
+
+![评论管理页面](screenshots/comments.png)
+
+### 菜单管理页面
+
+![菜单管理页面](screenshots/menus.png)
+
+### 分类管理页面
+
+![分类管理页面](screenshots/categories.png)
+
+### 标签管理页面
+
+![标签管理页面](screenshots/tags.png)
+
+### 友链管理页面
+
+![友链管理页面](screenshots/links.png)
 
 
 ## 为什么选择 Gridea Pro？
@@ -85,7 +116,7 @@
 
 - 评论系统集成（Gitalk、Disqus 等）
 - MCP（AI 集成）支持
-- 12 种界面语言
+- 11 种界面语言
 
 ## 快速开始
 
