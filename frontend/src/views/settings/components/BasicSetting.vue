@@ -62,7 +62,7 @@ v-for="p in ['github', 'netlify', 'vercel', 'coding', 'gitee', 'sftp']" :key="St
           <div></div>
           <div>
             <a
-href="https://gridea.dev/netlify" target="_blank"
+href="https://gridea.pro/netlify" target="_blank"
               class="text-primary hover:underline text-sm opacity-80 decoration-primary/50 underline-offset-4">{{ t('settings.network.howToConfigure') }}</a>
           </div>
         </div>

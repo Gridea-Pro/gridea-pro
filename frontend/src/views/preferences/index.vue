@@ -167,7 +167,7 @@ const saveFolder = () => {
 }
 
 const openWebsite = () => {
-  BrowserOpenURL('https://gridea.dev')
+  BrowserOpenURL('https://gridea.pro')
 }
 </script>
 

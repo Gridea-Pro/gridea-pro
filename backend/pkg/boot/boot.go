@@ -545,7 +545,7 @@ func buildMenu(
 
 	helpMenu.AddText(T("help.docs"), nil, func(_ *menu.CallbackData) {
 		if appCtx != nil {
-			wailsRuntime.BrowserOpenURL(appCtx, "https://gridea.dev")
+			wailsRuntime.BrowserOpenURL(appCtx, "https://gridea.pro")
 		}
 	})
 	helpMenu.AddText(T("help.feedback"), nil, func(_ *menu.CallbackData) {

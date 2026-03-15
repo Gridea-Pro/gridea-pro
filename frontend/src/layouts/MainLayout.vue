@@ -126,7 +126,7 @@ fill-rule="evenodd" clip-rule="evenodd"
         <div class="download-container mb-4 text-center text-sm">
           👉 <a
 href="#" class="text-primary hover:underline"
-            @click.prevent="openInBrowser('https://gridea.dev')">Gridea
+            @click.prevent="openInBrowser('https://gridea.pro')">Gridea
             Homepage</a> | <a
 href="#" class="text-primary hover:underline"
             @click.prevent="openInBrowser('https://github.com/getgridea/gridea/releases')">Github Releases</a> 👈
