@@ -28,35 +28,35 @@
 ## 软件截图
 ### 文章管理页面
 
-![文章管理页面](screenshots/article-list.png)
+![文章管理页面](images/post.png)
 
 ### 写作页面
 
-![编辑页面](screenshots/editor.png)
+![编辑页面](images/editor.png)
 
 ### 闪念页面
 
-![闪念页面](screenshots/memos.png)
+![闪念页面](images/memos.png)
 
 ### 评论管理页面
 
-![评论管理页面](screenshots/comments.png)
+![评论管理页面](images/comments.png)
 
 ### 菜单管理页面
 
-![菜单管理页面](screenshots/menus.png)
+![菜单管理页面](images/menus.png)
 
 ### 分类管理页面
 
-![分类管理页面](screenshots/categories.png)
+![分类管理页面](images/categories.png)
 
 ### 标签管理页面
 
-![标签管理页面](screenshots/tags.png)
+![标签管理页面](images/tags.png)
 
 ### 友链管理页面
 
-![友链管理页面](screenshots/links.png)
+![友链管理页面](images/links.png)
 
 
 ## 为什么选择 Gridea Pro？
