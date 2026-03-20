@@ -93,8 +93,18 @@ jobs:
       - name: Build macOS ${{ matrix.arch }}
         run: wails build -platform ${{ matrix.platform }} -clean -trimpath -ldflags "-X main.Version=${{ env.VERSION }}"
 
+      - name: Build MCP server
+        env:
+          GOOS: darwin
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 1
+        run: |
+          go build -ldflags="-s -w -X main.Version=${{ env.VERSION }}" \
+            -o "build/bin/${{ env.BIN_NAME }}.app/Contents/MacOS/${{ env.BIN_SLUG }}-mcp" \
+            ./backend/cmd/mcp
+
       - name: List build output
-        run: ls -la build/bin/
+        run: ls -la "build/bin/${{ env.BIN_NAME }}.app/Contents/MacOS/"
 
       - name: Create DMG
         run: |
@@ -152,6 +162,14 @@ jobs:
       - name: Build Windows ${{ matrix.arch }}
         run: wails build -platform windows/${{ matrix.arch }} -clean -trimpath -ldflags "-X main.Version=${{ env.VERSION }}"
 
+      - name: Build MCP server
+        env:
+          GOOS: windows
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w -X main.Version=${{ env.VERSION }}" -o "build/bin/${{ env.BIN_SLUG }}-mcp.exe" ./backend/cmd/mcp
+
       - name: List build output
         shell: bash
         run: ls -la build/bin/
@@ -194,6 +212,7 @@ jobs:
 
           [Files]
           Source: "build\bin\${{ env.BIN_NAME }}.exe"; DestDir: "{app}"; Flags: ignoreversion
+          Source: "build\bin\${{ env.BIN_SLUG }}-mcp.exe"; DestDir: "{app}"; Flags: ignoreversion
 
           [Icons]
           Name: "{group}\${{ env.APP_NAME }}"; Filename: "{app}\${{ env.BIN_NAME }}.exe"
@@ -271,6 +290,14 @@ jobs:
       - name: Build Linux binary
         run: wails build -platform linux/amd64 -clean -trimpath -tags webkit2_41 -ldflags "-X main.Version=${{ env.VERSION }}"
 
+      - name: Build MCP server
+        env:
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w -X main.Version=${{ env.VERSION }}" \
+            -o "build/bin/${{ env.BIN_SLUG }}-mcp" \
+            ./backend/cmd/mcp
+
       - name: List build output
         run: ls -la build/bin/
 
@@ -310,6 +337,10 @@ jobs:
               dst: "/usr/bin/${SLUG}"
               file_info:
                 mode: 0755
+            - src: "build/bin/${SLUG}-mcp"
+              dst: "/usr/bin/${SLUG}-mcp"
+              file_info:
+                mode: 0755
             - src: "build/appicon.png"
               dst: "/usr/share/icons/hicolor/256x256/apps/${SLUG}.png"
             - src: "${SLUG}.desktop"
@@ -337,6 +368,8 @@ jobs:
 
           cp "build/bin/${{ env.BIN_NAME }}" "AppDir/usr/bin/${SLUG}"
           chmod 755 "AppDir/usr/bin/${SLUG}"
+          cp "build/bin/${SLUG}-mcp" "AppDir/usr/bin/${SLUG}-mcp"
+          chmod 755 "AppDir/usr/bin/${SLUG}-mcp"
           cp build/appicon.png "AppDir/${SLUG}.png"
           cp build/appicon.png "AppDir/usr/share/icons/hicolor/256x256/apps/${SLUG}.png"
           cp "${{ env.BIN_SLUG }}.desktop" "AppDir/${SLUG}.desktop"
