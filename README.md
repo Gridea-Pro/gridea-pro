@@ -21,6 +21,16 @@
 
 ---
 
+<h3 align="center">
+  <a href="https://are.ink/">述尔</a> — 一个产品经理的碎碎念 | 温故而知新
+</h3>
+
+<p align="center">
+  <b>Preview / 预览站点</b>&nbsp;&nbsp;👉&nbsp;&nbsp;<a href="https://are.ink/">https://are.ink/</a>
+</p>
+
+---
+
 > **Gridea Pro** 基于 [Gridea](https://github.com/getgridea/gridea)（10k+ Stars）完全升级重构，感谢原作者 [@EryouHao](https://github.com/EryouHao) 创造了  [Gridea](https://github.com/getgridea/gridea) 这个优秀的项目，帮助了无数人建立自己的博客。原版 Gridea 已停止更新约四年，Gridea Pro 以全新技术栈延续其愿景：**让每个人都能零门槛拥有自己的博客。**
 
 ---
