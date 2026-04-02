@@ -211,10 +211,10 @@ href="https://gridea.pro/netlify" target="_blank"
       </template>
 
       <!-- Proxy Settings -->
-      <div class="grid grid-cols-[180px_1fr] items-start gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ t('settings.network.proxyEnabled') }}</label>
+      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
+        <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.proxyEnabled') }}</label>
         <div class="flex items-center gap-3">
-          <Switch :checked="form.proxyEnabled" @update:checked="(v: boolean) => form.proxyEnabled = v" />
+          <Switch :checked="form.proxyEnabled" @update:checked="(v: boolean) => form.proxyEnabled = v" size="sm" />
           <span class="text-xs text-muted-foreground">{{ t('settings.network.proxyEnabledDesc') }}</span>
         </div>
       </div>

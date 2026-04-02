@@ -5,7 +5,7 @@
       <div class="grid grid-cols-[180px_1fr] items-center gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.seo.jsonLD') }}</label>
         <div class="flex items-center gap-3">
-          <Switch :checked="form.enableJsonLD" @update:checked="(v: boolean) => form.enableJsonLD = v" />
+          <Switch :checked="form.enableJsonLD" @update:checked="(v: boolean) => form.enableJsonLD = v" size="sm" />
           <span class="text-xs text-muted-foreground">{{ t('settings.seo.jsonLDDesc') }}</span>
         </div>
       </div>
@@ -14,7 +14,7 @@
       <div class="grid grid-cols-[180px_1fr] items-center gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.seo.openGraph') }}</label>
         <div class="flex items-center gap-3">
-          <Switch :checked="form.enableOpenGraph" @update:checked="(v: boolean) => form.enableOpenGraph = v" />
+          <Switch :checked="form.enableOpenGraph" @update:checked="(v: boolean) => form.enableOpenGraph = v" size="sm" />
           <span class="text-xs text-muted-foreground">{{ t('settings.seo.openGraphDesc') }}</span>
         </div>
       </div>
@@ -23,7 +23,7 @@
       <div class="grid grid-cols-[180px_1fr] items-center gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.seo.canonicalURL') }}</label>
         <div class="flex items-center gap-3">
-          <Switch :checked="form.enableCanonicalURL" @update:checked="(v: boolean) => form.enableCanonicalURL = v" />
+          <Switch :checked="form.enableCanonicalURL" @update:checked="(v: boolean) => form.enableCanonicalURL = v" size="sm" />
           <span class="text-xs text-muted-foreground">{{ t('settings.seo.canonicalURLDesc') }}</span>
         </div>
       </div>

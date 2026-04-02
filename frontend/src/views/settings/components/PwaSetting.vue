@@ -5,7 +5,7 @@
       <div class="grid grid-cols-[180px_1fr] items-center gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.pwa.enable') }}</label>
         <div class="flex items-center gap-3">
-          <Switch :checked="form.enabled" @update:checked="(v: boolean) => form.enabled = v" />
+          <Switch :checked="form.enabled" @update:checked="(v: boolean) => form.enabled = v" size="sm" />
           <span class="text-xs text-muted-foreground">{{ t('settings.pwa.enableDesc') }}</span>
         </div>
       </div>
