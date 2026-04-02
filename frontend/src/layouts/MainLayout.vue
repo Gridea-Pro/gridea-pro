@@ -128,7 +128,7 @@ href="#" class="text-primary hover:underline"
             @click.prevent="openInBrowser('https://gridea.pro')">Gridea
             Homepage</a> | <a
 href="#" class="text-primary hover:underline"
-            @click.prevent="openInBrowser('https://github.com/getgridea/gridea/releases')">Github Releases</a> 👈
+            @click.prevent="openInBrowser('https://github.com/Gridea-Pro/gridea-pro/releases')">Github Releases</a> 👈
         </div>
         <h2 class="text-xl font-bold mb-2">{{ newVersion }}</h2>
         <div class="version-info prose prose-sm max-w-none dark:prose-invert" v-html="updateContent"></div>
@@ -308,7 +308,7 @@ const goWeb = () => {
 }
 
 const handleGithubClick = () => {
-  openInBrowser('https://github.com/getgridea/gridea')
+  openInBrowser('https://github.com/Gridea-Pro/gridea-pro')
 }
 
 const openInBrowser = (url: string) => {

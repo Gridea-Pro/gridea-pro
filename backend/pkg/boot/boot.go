@@ -551,7 +551,7 @@ func buildMenu(
 	})
 	helpMenu.AddText(T("help.feedback"), nil, func(_ *menu.CallbackData) {
 		if appCtx != nil {
-			wailsRuntime.BrowserOpenURL(appCtx, "https://github.com/getgridea/gridea/issues")
+			wailsRuntime.BrowserOpenURL(appCtx, "https://github.com/Gridea-Pro/gridea-pro/issues")
 		}
 	})
 	helpMenu.AddSeparator()
