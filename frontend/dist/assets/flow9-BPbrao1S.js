@@ -1,0 +1,1 @@
+import{Ar as e,Or as t,kr as n}from"./editor-GlYe_ju9.js";n();export{t as conf,e as language};

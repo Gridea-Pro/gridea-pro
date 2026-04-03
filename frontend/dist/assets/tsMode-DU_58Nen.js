@@ -1,0 +1,1 @@
+import{a as e,i as t,n,r,t as i}from"./editor-GlYe_ju9.js";r();export{i as getJavaScriptWorker,n as getTypeScriptWorker,t as setupJavaScript,e as setupTypeScript};

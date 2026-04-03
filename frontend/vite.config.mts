@@ -38,10 +38,16 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': ['vue', 'vue-router', 'pinia'],
-          'markdown': ['markdown-it'],
-          'editor': ['monaco-markdown'],
+        manualChunks: (id) => {
+          if (id.includes('node_modules/vue') || id.includes('node_modules/vue-router') || id.includes('node_modules/pinia')) {
+            return 'vendor'
+          }
+          if (id.includes('node_modules/markdown-it')) {
+            return 'markdown'
+          }
+          if (id.includes('node_modules/monaco')) {
+            return 'editor'
+          }
         },
       },
     },

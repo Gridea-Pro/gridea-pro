@@ -1,0 +1,1 @@
+import{Oa as e,ka as t}from"./editor-GlYe_ju9.js";export{e as conf,t as language};

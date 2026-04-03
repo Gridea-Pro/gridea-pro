@@ -166,7 +166,7 @@
     --ring: #1677ff;
   }
 
-  html.dark [data-theme='blue'] {
+  html.dark[data-theme='blue'] {
     --primary: #3b82f6;
     --ring: #3b82f6;
   }
@@ -193,7 +193,7 @@
     --sidebar: #EAE6D9;
   }
 
-  html.dark [data-theme='warm'] {
+  html.dark[data-theme='warm'] {
     --background: #2D2A26;
     --foreground: #D5C4A1;
     --card: #36332E;
@@ -231,7 +231,7 @@
     --sidebar: #FFE4E1;
   }
 
-  html.dark [data-theme='sakura'] {
+  html.dark[data-theme='sakura'] {
     --background: #2B1D22;
     --foreground: #FADADD;
     --card: #36242A;
@@ -269,7 +269,7 @@
     --sidebar: #E6E0F5;
   }
 
-  html.dark [data-theme='twilight'] {
+  html.dark[data-theme='twilight'] {
     --background: #1E1B2E;
     --foreground: #E0D4FC;
     --card: #262238;

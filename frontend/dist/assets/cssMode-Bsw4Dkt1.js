@@ -1,0 +1,1 @@
+import{d as e,f as t}from"./editor-GlYe_ju9.js";e();export{t as setupMode};

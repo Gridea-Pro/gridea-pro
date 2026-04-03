@@ -1,0 +1,1 @@
+import{X as e,Y as t,Z as n}from"./editor-GlYe_ju9.js";e();export{t as conf,n as language};

@@ -1,0 +1,1 @@
+import{ai as e,ii as t,oi as n}from"./editor-GlYe_ju9.js";e();export{t as conf,n as language};
