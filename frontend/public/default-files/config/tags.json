@@ -1,21 +1,21 @@
 {
     "tags": [
         {
-            "id": "Gridea",
+            "_id": "Gr1dea",
             "name": "Gridea",
             "slug": "gridea",
             "used": true,
             "color": "#eab308"
         },
         {
-            "id": "GrideaPro",
+            "_id": "Gr1dPr",
             "name": "Gridea Pro",
             "slug": "gridea-pro",
             "used": true,
             "color": "#22c55e"
         },
         {
-            "id": "RuMen0",
+            "_id": "RuMen0",
             "name": "入门",
             "slug": "getting-started",
             "used": true,

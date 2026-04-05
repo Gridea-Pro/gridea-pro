@@ -1,6 +1,7 @@
 {
     "categories": [
         {
+            "_id": "DfCat0",
             "name": "默认分类",
             "slug": "default",
             "description": "默认分类"
