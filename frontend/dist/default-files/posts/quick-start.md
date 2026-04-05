@@ -176,6 +176,8 @@ Gridea Pro 内置了完整的 [MCP（Model Context Protocol）](https://modelcon
 
 配置方式很简单。以 Claude Desktop 为例，打开 Settings → Developer → Edit Config，在 `mcpServers` 中添加：
 
+**macOS：**
+
 ```json
 {
   "mcpServers": {
@@ -189,8 +191,23 @@ Gridea Pro 内置了完整的 [MCP（Model Context Protocol）](https://modelcon
 }
 ```
 
-- **command** — `gridea-pro-mcp` 二进制文件的路径（macOS 在 `.app` 包内，Windows 在安装目录下）
-- **SOURCE_DIR** — 你的博客数据目录路径（默认在 `文档/Gridea Pro`）
+**Windows：**
+
+```json
+{
+  "mcpServers": {
+    "gridea-pro": {
+      "command": "C:\\Program Files\\Gridea Pro\\gridea-pro-mcp.exe",
+      "env": {
+        "SOURCE_DIR": "C:\\Users\\你的用户名\\Documents\\Gridea Pro"
+      }
+    }
+  }
+}
+```
+
+- **command** — `gridea-pro-mcp` 二进制文件的路径
+- **SOURCE_DIR** — 你的博客数据目录路径
 
 保存后重启 Claude Desktop，就可以在对话中直接管理你的博客了。它通过本地管道通信，不需要网络、不需要端口、不需要认证，数据始终在你的电脑上。
 
