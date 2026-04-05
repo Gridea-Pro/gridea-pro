@@ -208,6 +208,9 @@ Gridea Pro 内置了完整的 [MCP（Model Context Protocol）](https://modelcon
 
 - **command** — `gridea-pro-mcp` 二进制文件的路径
 - **SOURCE_DIR** — 你的博客数据目录路径
+- **DEPLOY_ENABLED** — 是否允许 AI 执行发布/同步操作（可选，默认关闭）
+
+默认情况下，AI 只能帮你写文章、管理内容，**不能**直接发布到线上。如果你信任 AI 并希望它能帮你一键发布，在 `env` 中加上 `"DEPLOY_ENABLED": "true"` 即可开启。建议熟悉流程后再开启。
 
 保存后重启 Claude Desktop，就可以在对话中直接管理你的博客了。它通过本地管道通信，不需要网络、不需要端口、不需要认证，数据始终在你的电脑上。
 
