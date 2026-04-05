@@ -1,6 +1,6 @@
 ---
-title: '我们为什么要写博客？'
-date:
+title: '都 2026 年了，我们为什么还要写博客'
+date: __INIT_DATE_02__
 tags: ['Gridea Pro']
 published: true
 hideInList: false

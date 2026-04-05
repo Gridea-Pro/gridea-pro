@@ -1,6 +1,6 @@
 ---
 title: 关于
-date:
+date: __INIT_DATE_05__
 tags: 
 published: true
 hideInList: true

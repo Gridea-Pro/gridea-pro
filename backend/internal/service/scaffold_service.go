@@ -84,20 +84,22 @@ func (s *ScaffoldService) InitSite(appDir string) error {
 	return nil
 }
 
-// fillDefaultDates scans default posts and memos, replacing empty date fields with current time.
-// Posts: replaces "date:" (empty) in YAML frontmatter with "date: 2006-01-02 15:04:05".
-// Memos: replaces empty createdAt/updatedAt strings in JSON with RFC3339 timestamps.
-// Each item gets a slightly offset time to maintain correct sort order.
+// fillDefaultDates replaces date placeholders in default posts and memos with current time.
+//
+// Posts use placeholders like __INIT_DATE_00__, __INIT_DATE_01__, etc. in frontmatter.
+// The number suffix controls sort order: 00 is newest, higher numbers are older.
+// Each increment adds a 1-minute offset into the past.
+//
+// Memos use empty createdAt/updatedAt strings ("") which are replaced with current time.
 func (s *ScaffoldService) fillDefaultDates(appDir string) {
 	now := time.Now()
 
-	// Fill post dates — each post gets a 1-minute offset to maintain order
+	// Fill post dates — scan all .md files for __INIT_DATE_XX__ placeholders
 	postsDir := filepath.Join(appDir, "posts")
 	entries, err := os.ReadDir(postsDir)
 	if err != nil {
 		return
 	}
-	offset := 0
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".md" {
 			continue
@@ -107,19 +109,26 @@ func (s *ScaffoldService) fillDefaultDates(appDir string) {
 		if err != nil {
 			continue
 		}
-		// Only fill if "date:" is empty (the line is exactly "date:" or "date: ")
-		if bytes.Contains(data, []byte("date:")) && !bytes.Contains(data, []byte("date: 2")) {
-			postTime := now.Add(-time.Duration(offset) * time.Minute)
-			dateStr := postTime.Format("2006-01-02 15:04:05")
-			newData := bytes.Replace(data, []byte("date:"), []byte("date: "+dateStr), 1)
-			if !bytes.Equal(data, newData) {
-				_ = os.WriteFile(postPath, newData, 0644)
-				offset++
+		// Match __INIT_DATE_XX__ where XX is 00-99
+		if !bytes.Contains(data, []byte("__INIT_DATE_")) {
+			continue
+		}
+		newData := data
+		for i := 0; i < 100; i++ {
+			placeholder := fmt.Sprintf("__INIT_DATE_%02d__", i)
+			if bytes.Contains(newData, []byte(placeholder)) {
+				postTime := now.Add(-time.Duration(i) * time.Minute)
+				dateStr := postTime.Format("2006-01-02 15:04:05")
+				newData = bytes.Replace(newData, []byte(placeholder), []byte(dateStr), 1)
+				break
 			}
+		}
+		if !bytes.Equal(data, newData) {
+			_ = os.WriteFile(postPath, newData, 0644)
 		}
 	}
 
-	// Fill memo dates
+	// Fill memo dates — replace empty strings with current time
 	memosPath := filepath.Join(appDir, "config", "memos.json")
 	memosData, err := os.ReadFile(memosPath)
 	if err != nil {

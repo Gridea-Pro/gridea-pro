@@ -1,6 +1,6 @@
 ---
 title: '我为什么复活了 Gridea'
-date:
+date: __INIT_DATE_04__
 tags: ['Gridea Pro', 'Gridea']
 published: true
 hideInList: false

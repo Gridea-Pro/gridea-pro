@@ -1,6 +1,6 @@
 ---
 title: 'Gridea Pro 快速上手指南'
-date:
+date: __INIT_DATE_01__
 tags: ['Gridea Pro', '入门']
 published: true
 hideInList: false

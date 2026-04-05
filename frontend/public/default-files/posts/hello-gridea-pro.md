@@ -1,6 +1,6 @@
 ---
 title: 'Hello Gridea Pro，念念不忘，必有回响'
-date:
+date: __INIT_DATE_00__
 tags: ['Gridea Pro']
 published: true
 hideInList: false

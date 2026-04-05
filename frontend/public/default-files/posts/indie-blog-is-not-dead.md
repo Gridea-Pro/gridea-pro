@@ -1,6 +1,6 @@
 ---
 title: '独立博客没有死，正在死的是平庸的博客'
-date:
+date: __INIT_DATE_03__
 tags: ['Gridea Pro']
 published: true
 hideInList: false
