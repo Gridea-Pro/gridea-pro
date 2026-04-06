@@ -37,8 +37,8 @@
       </div>
 
       <!-- Google Analytics -->
-      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.seo.googleAnalytics') }}</label>
+      <div class="grid grid-cols-[180px_1fr] items-start gap-4">
+        <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ t('settings.seo.googleAnalytics') }}</label>
         <div class="max-w-sm">
           <Input v-model="form.googleAnalyticsId" placeholder="G-XXXXXXXXXX" />
           <div class="text-xs text-muted-foreground mt-1.5">{{ t('settings.seo.googleAnalyticsDesc') }}</div>

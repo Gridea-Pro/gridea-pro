@@ -60,15 +60,15 @@ href="https://gridea.pro/netlify" target="_blank"
 
       <!-- Vercel -->
       <template v-if="form.platform === 'vercel'">
-        <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-          <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.projectName') }}</label>
+        <div class="grid grid-cols-[180px_1fr] items-start gap-4">
+          <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ t('settings.network.projectName') }}</label>
           <div class="max-w-sm">
             <Input v-model="form.repository" placeholder="my-vercel-project" class="" />
             <div class="text-xs text-muted-foreground mt-1.5">{{ t('settings.network.vercelProjectDesc') }}</div>
           </div>
         </div>
-        <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-          <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.accessToken') }}</label>
+        <div class="grid grid-cols-[180px_1fr] items-start gap-4">
+          <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ t('settings.network.accessToken') }}</label>
           <div class="relative max-w-sm">
             <Input v-model="form.token" :type="passVisible ? 'text' : 'password'" class="pr-8" />
             <component
@@ -78,8 +78,8 @@ href="https://gridea.pro/netlify" target="_blank"
             <div class="text-xs text-muted-foreground mt-1.5">{{ t('settings.network.vercelTokenDesc') }}</div>
           </div>
         </div>
-        <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-          <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.customDomain') }}</label>
+        <div class="grid grid-cols-[180px_1fr] items-start gap-4">
+          <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ t('settings.network.customDomain') }}</label>
           <div class="max-w-sm">
             <Input v-model="form.cname" placeholder="mydomain.com" class="" />
             <div class="text-xs text-muted-foreground mt-1.5">{{ t('settings.network.vercelDomainTip') }}</div>
@@ -195,8 +195,8 @@ href="https://gridea.pro/netlify" target="_blank"
             </div>
           </div>
         </div>
-        <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-          <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.remotePath') }}</label>
+        <div class="grid grid-cols-[180px_1fr] items-start gap-4">
+          <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ t('settings.network.remotePath') }}</label>
           <div class="max-w-sm">
             <Input v-model="form.remotePath" class="" />
             <div class="text-xs text-muted-foreground mt-1.5">{{ t('settings.network.remotePathTip') }}</div>

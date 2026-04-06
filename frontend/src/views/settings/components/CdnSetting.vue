@@ -57,8 +57,8 @@
           </div>
 
           <!-- GitHub Token -->
-          <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-            <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.cdn.githubToken') }}</label>
+          <div class="grid grid-cols-[180px_1fr] items-start gap-4">
+            <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ t('settings.cdn.githubToken') }}</label>
             <div class="max-w-sm">
               <div class="relative">
                 <Input
@@ -90,8 +90,8 @@
 
         <!-- 自定义 CDN -->
         <template v-if="form.provider === 'custom'">
-          <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-            <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.cdn.baseUrl') }}</label>
+          <div class="grid grid-cols-[180px_1fr] items-start gap-4">
+            <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ t('settings.cdn.baseUrl') }}</label>
             <div class="max-w-sm">
               <Input v-model="form.baseUrl" placeholder="https://cdn.example.com" />
               <div class="text-xs text-muted-foreground mt-1.5">{{ t('settings.cdn.baseUrlDesc') }}</div>
