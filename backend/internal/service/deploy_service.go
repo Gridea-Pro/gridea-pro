@@ -96,7 +96,7 @@ func (s *DeployService) DeployToRemote(ctx context.Context) error {
 	// 4. Instantiate strategy based on platform
 	var provider deploy.Provider
 	switch setting.Platform {
-	case "github", "gitee":
+	case "github", "gitee", "coding":
 		provider = deploy.NewGitProvider()
 	case "vercel":
 		proxyURL := ""
@@ -104,8 +104,15 @@ func (s *DeployService) DeployToRemote(ctx context.Context) error {
 			proxyURL = setting.ProxyURL
 		}
 		provider = deploy.NewVercelProvider(proxyURL)
+	case "netlify":
+		proxyURL := ""
+		if setting.ProxyEnabled {
+			proxyURL = setting.ProxyURL
+		}
+		provider = deploy.NewNetlifyProvider(proxyURL)
+	case "sftp":
+		provider = deploy.NewSftpProvider()
 	default:
-		// Fallback or handle appropriately
 		provider = deploy.NewGitProvider()
 	}
 

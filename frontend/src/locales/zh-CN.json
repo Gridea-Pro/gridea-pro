@@ -406,7 +406,10 @@
             "vercelTokenMissing": "未设置 Vercel Token",
             "gitTokenMissing": "Token 或用户名缺失，请在设置中配置",
             "inProgress": "部署正在进行中",
-            "repoNotConfigured": "仓库地址未配置"
+            "repoNotConfigured": "仓库地址未配置",
+            "netlifySiteIdMissing": "未设置 Netlify Site ID，请在设置中配置",
+            "netlifyTokenMissing": "未设置 Netlify Access Token",
+            "sftpConfigMissing": "SFTP 配置不完整，请检查服务器地址和认证信息"
         },
         "render": {
             "failed": "渲染失败"

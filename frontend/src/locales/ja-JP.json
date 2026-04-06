@@ -401,7 +401,10 @@
             "vercelTokenMissing": "Vercel Token が設定されていません",
             "gitTokenMissing": "トークンまたはユーザー名が不足しています。設定で構成してください",
             "inProgress": "デプロイが進行中です",
-            "repoNotConfigured": "リポジトリアドレスが設定されていません"
+            "repoNotConfigured": "リポジトリアドレスが設定されていません",
+            "netlifySiteIdMissing": "Netlify Site ID が設定されていません",
+            "netlifyTokenMissing": "Netlify Access Token が設定されていません",
+            "sftpConfigMissing": "SFTP の設定が不完全です。サーバーアドレスと認証情報を確認してください"
         },
         "render": {
             "failed": "レンダリングに失敗しました"

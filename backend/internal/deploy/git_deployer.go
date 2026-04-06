@@ -60,6 +60,7 @@ func (p *GitProvider) Deploy(ctx context.Context, outputDir string, setting *dom
 	repoUrl = strings.TrimPrefix(repoUrl, "http://")
 	repoUrl = strings.TrimPrefix(repoUrl, "git@github.com:")
 	repoUrl = strings.TrimPrefix(repoUrl, "git@gitee.com:")
+	repoUrl = strings.TrimPrefix(repoUrl, "git@e.coding.net:")
 
 	if !strings.Contains(repoUrl, "/") {
 		switch setting.Platform {
@@ -67,6 +68,8 @@ func (p *GitProvider) Deploy(ctx context.Context, outputDir string, setting *dom
 			repoUrl = fmt.Sprintf("github.com/%s/%s", setting.Username(), repoUrl)
 		case "gitee":
 			repoUrl = fmt.Sprintf("gitee.com/%s/%s", setting.Username(), repoUrl)
+		case "coding":
+			repoUrl = fmt.Sprintf("e.coding.net/%s/%s", setting.Username(), repoUrl)
 		}
 	} else {
 		switch setting.Platform {
@@ -78,10 +81,14 @@ func (p *GitProvider) Deploy(ctx context.Context, outputDir string, setting *dom
 			if !strings.Contains(repoUrl, "gitee.com") {
 				repoUrl = fmt.Sprintf("gitee.com/%s", repoUrl)
 			}
+		case "coding":
+			if !strings.Contains(repoUrl, "e.coding.net") {
+				repoUrl = fmt.Sprintf("e.coding.net/%s", repoUrl)
+			}
 		}
 	}
 
-	if (setting.Platform == "github" || setting.Platform == "gitee") && !strings.HasSuffix(repoUrl, ".git") {
+	if (setting.Platform == "github" || setting.Platform == "gitee" || setting.Platform == "coding") && !strings.HasSuffix(repoUrl, ".git") {
 		repoUrl += ".git"
 	}
 

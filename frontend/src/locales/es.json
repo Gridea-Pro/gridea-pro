@@ -401,7 +401,10 @@
             "vercelTokenMissing": "Token de Vercel no configurado",
             "gitTokenMissing": "Falta el token o el usuario. Configúralos en los ajustes",
             "inProgress": "El despliegue ya está en curso",
-            "repoNotConfigured": "La URL del repositorio no está configurada"
+            "repoNotConfigured": "La URL del repositorio no está configurada",
+            "netlifySiteIdMissing": "No se ha configurado el Site ID de Netlify",
+            "netlifyTokenMissing": "No se ha configurado el Access Token de Netlify",
+            "sftpConfigMissing": "Configuración SFTP incompleta. Verifique la dirección del servidor y las credenciales"
         },
         "render": {
             "failed": "Error de renderizado"

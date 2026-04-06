@@ -67,7 +67,7 @@ func deploySiteHandler(settingService *service.SettingService, renderer *engine.
 		// 3. Select deploy provider
 		var provider deploy.Provider
 		switch setting.Platform {
-		case "github", "gitee":
+		case "github", "gitee", "coding":
 			provider = deploy.NewGitProvider()
 		case "vercel":
 			proxyURL := ""
@@ -75,6 +75,14 @@ func deploySiteHandler(settingService *service.SettingService, renderer *engine.
 				proxyURL = setting.ProxyURL
 			}
 			provider = deploy.NewVercelProvider(proxyURL)
+		case "netlify":
+			proxyURL := ""
+			if setting.ProxyEnabled {
+				proxyURL = setting.ProxyURL
+			}
+			provider = deploy.NewNetlifyProvider(proxyURL)
+		case "sftp":
+			provider = deploy.NewSftpProvider()
 		default:
 			provider = deploy.NewGitProvider()
 		}

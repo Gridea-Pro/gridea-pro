@@ -401,7 +401,10 @@
             "vercelTokenMissing": "Jeton Vercel non défini",
             "gitTokenMissing": "Le jeton ou le nom d'utilisateur est manquant. Veuillez les configurer dans les paramètres",
             "inProgress": "Un déploiement est déjà en cours",
-            "repoNotConfigured": "L'URL du dépôt n'est pas configurée"
+            "repoNotConfigured": "L'URL du dépôt n'est pas configurée",
+            "netlifySiteIdMissing": "Le Site ID Netlify n'est pas configuré",
+            "netlifyTokenMissing": "Le Access Token Netlify n'est pas configuré",
+            "sftpConfigMissing": "Configuration SFTP incomplète. Vérifiez l'adresse du serveur et les identifiants"
         },
         "render": {
             "failed": "Échec du rendu"

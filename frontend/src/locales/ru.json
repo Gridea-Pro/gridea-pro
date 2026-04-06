@@ -401,7 +401,10 @@
             "vercelTokenMissing": "Токен Vercel не задан",
             "gitTokenMissing": "Отсутствует токен или имя пользователя. Настройте их в разделе «Настройки»",
             "inProgress": "Развёртывание уже выполняется",
-            "repoNotConfigured": "URL репозитория не настроен"
+            "repoNotConfigured": "URL репозитория не настроен",
+            "netlifySiteIdMissing": "Не указан Netlify Site ID",
+            "netlifyTokenMissing": "Не указан Netlify Access Token",
+            "sftpConfigMissing": "Конфигурация SFTP неполная. Проверьте адрес сервера и учётные данные"
         },
         "render": {
             "failed": "Ошибка рендеринга"

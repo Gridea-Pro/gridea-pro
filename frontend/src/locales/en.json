@@ -401,7 +401,10 @@
             "vercelTokenMissing": "Vercel Token not set",
             "gitTokenMissing": "Token or username is missing. Please configure them in Settings",
             "inProgress": "Deployment is already in progress",
-            "repoNotConfigured": "Repository URL is not configured"
+            "repoNotConfigured": "Repository URL is not configured",
+            "netlifySiteIdMissing": "Netlify Site ID is not set. Please configure it in settings",
+            "netlifyTokenMissing": "Netlify Access Token is not set",
+            "sftpConfigMissing": "SFTP configuration is incomplete. Please check server address and credentials"
         },
         "render": {
             "failed": "Render failed"

@@ -14,5 +14,8 @@ const (
 	ErrGitTokenMissing      = "error.deploy.gitTokenMissing"
 	ErrDeployInProgress     = "error.deploy.inProgress"
 	ErrRepoNotConfigured    = "error.deploy.repoNotConfigured"
+	ErrNetlifySiteIdMissing = "error.deploy.netlifySiteIdMissing"
+	ErrNetlifyTokenMissing  = "error.deploy.netlifyTokenMissing"
+	ErrSftpConfigMissing    = "error.deploy.sftpConfigMissing"
 	ErrRenderFailed         = "error.render.failed"
 )

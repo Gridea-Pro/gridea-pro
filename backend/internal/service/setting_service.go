@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"gridea-pro/backend/internal/domain"
 
@@ -16,6 +18,7 @@ import (
 	gitconfig "github.com/go-git/go-git/v5/config"
 	gittransport "github.com/go-git/go-git/v5/plumbing/transport"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"golang.org/x/crypto/ssh"
 )
 
 type SettingService struct {
@@ -177,14 +180,101 @@ func (s *SettingService) RemoteDetect(ctx context.Context, setting domain.Settin
 			message = fmt.Sprintf("Vercel Token 无效 (HTTP %d)", resp.StatusCode)
 		}
 
-	default:
-		// 对于其他平台（Netlify/SFTP），简单验证配置非空
-		if setting.Token() != "" || setting.Password() != "" || setting.PrivateKey() != "" {
-			success = true
-			message = "配置已保存，凭据不为空"
-		} else {
-			message = "凭据为空，请检查配置"
+	case "netlify":
+		siteId := setting.NetlifySiteId()
+		token := setting.NetlifyAccessToken()
+		if siteId == "" || token == "" {
+			message = "Site ID 或 Access Token 为空"
+			break
 		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+			fmt.Sprintf("https://api.netlify.com/api/v1/sites/%s", siteId), nil)
+		if err != nil {
+			message = fmt.Sprintf("无法创建请求: %v", err)
+			break
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		netlifyClient := http.DefaultClient
+		if setting.ProxyEnabled && setting.ProxyURL != "" {
+			netlifyClient = newHTTPClient(setting.ProxyURL)
+		}
+		resp, err := netlifyClient.Do(req)
+		if err != nil {
+			message = fmt.Sprintf("连接失败: %v", err)
+			break
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			success = true
+			message = "Netlify 连接成功"
+		} else {
+			message = fmt.Sprintf("Netlify 验证失败 (HTTP %d)", resp.StatusCode)
+		}
+
+	case "sftp":
+		server := setting.Server()
+		if server == "" {
+			message = "服务器地址为空"
+			break
+		}
+
+		sftpPort := 22
+		if p := setting.Port(); p != "" {
+			if v, err := strconv.Atoi(p); err == nil && v > 0 {
+				sftpPort = v
+			}
+		}
+
+		var authMethods []ssh.AuthMethod
+		if pk := setting.PrivateKey(); pk != "" {
+			var keyData []byte
+			if strings.HasPrefix(pk, "-----BEGIN") {
+				keyData = []byte(pk)
+			} else {
+				var readErr error
+				keyData, readErr = os.ReadFile(pk)
+				if readErr != nil {
+					message = fmt.Sprintf("读取私钥失败: %v", readErr)
+					break
+				}
+			}
+			signer, parseErr := ssh.ParsePrivateKey(keyData)
+			if parseErr != nil {
+				message = fmt.Sprintf("解析私钥失败: %v", parseErr)
+				break
+			}
+			authMethods = append(authMethods, ssh.PublicKeys(signer))
+		}
+		if pw := setting.Password(); pw != "" {
+			authMethods = append(authMethods, ssh.Password(pw))
+		}
+
+		if len(authMethods) == 0 {
+			message = "密码和私钥均为空"
+			break
+		}
+
+		sshConfig := &ssh.ClientConfig{
+			User:            setting.Username(),
+			Auth:            authMethods,
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         10 * time.Second,
+		}
+
+		sshConn, dialErr := ssh.Dial("tcp", fmt.Sprintf("%s:%d", server, sftpPort), sshConfig)
+		if dialErr != nil {
+			message = fmt.Sprintf("SSH 连接失败: %v", dialErr)
+			break
+		}
+		sshConn.Close()
+		success = true
+		message = "SFTP 连接成功"
+
+	default:
+		message = "不支持的平台类型"
 	}
 
 	return map[string]interface{}{

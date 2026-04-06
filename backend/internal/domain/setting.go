@@ -180,6 +180,18 @@ func (s *Setting) PrivateKey() string { return s.Get("privateKey") }
 // NetlifyAccessToken 当前平台的 Netlify Access Token
 func (s *Setting) NetlifyAccessToken() string { return s.Get("netlifyAccessToken") }
 
+// NetlifySiteId 当前平台的 Netlify Site ID
+func (s *Setting) NetlifySiteId() string { return s.Get("netlifySiteId") }
+
+// Server 当前平台的服务器地址
+func (s *Setting) Server() string { return s.Get("server") }
+
+// Port 当前平台的端口
+func (s *Setting) Port() string { return s.Get("port") }
+
+// RemotePath 当前平台的远程路径
+func (s *Setting) RemotePath() string { return s.Get("remotePath") }
+
 // Validate 校验配置数据
 func (s *Setting) Validate() error {
 	if s.Platform == "" {
