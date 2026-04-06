@@ -26,5 +26,5 @@ const (
 	DefaultArchivesPath = "archives"
 	DefaultCategoryPath = "category"
 	DefaultMemosPath    = "memos"
-	DefaultLinksPath    = "friends"
+	DefaultLinksPath    = "links"
 )

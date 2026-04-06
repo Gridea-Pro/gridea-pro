@@ -11,6 +11,11 @@
             "openType": "Internal"
         },
         {
+            "name": "闪念",
+            "link": "/memos",
+            "openType": "Internal"
+        },
+        {
             "name": "归档",
             "link": "/archives",
             "openType": "Internal"
@@ -21,13 +26,8 @@
             "openType": "Internal"
         },
         {
-            "name": "闪念",
-            "link": "/memos",
-            "openType": "Internal"
-        },
-        {
             "name": "友链",
-            "link": "/friends",
+            "link": "/links",
             "openType": "Internal"
         },
         {

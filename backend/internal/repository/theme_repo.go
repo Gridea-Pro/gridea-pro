@@ -98,7 +98,7 @@ func (r *themeRepository) loadConfigIfNeeded() error {
 			FeedCount:        20,
 			PostPath:         "post",
 			TagPath:          "tag",
-			LinkPath:         "link",
+			LinkPath:         "links",
 		}
 		r.configLoaded = true
 		r.configModTime = currentModTime
