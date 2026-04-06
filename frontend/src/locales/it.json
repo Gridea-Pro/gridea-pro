@@ -305,7 +305,6 @@
             "password": "Password",
             "privateKeyPath": "Chiave privata",
             "selectKeyFile": "Seleziona file chiave",
-            "browse": "Sfoglia",
             "remotePath": "Percorso remoto"
         },
         "system": {

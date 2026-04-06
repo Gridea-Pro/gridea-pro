@@ -305,7 +305,6 @@
             "password": "密碼",
             "privateKeyPath": "私鑰檔案",
             "selectKeyFile": "選擇私鑰檔案",
-            "browse": "選擇",
             "remotePath": "遠端路徑"
         },
         "system": {

@@ -305,7 +305,6 @@
             "password": "Mot de passe",
             "privateKeyPath": "Clé privée",
             "selectKeyFile": "Sélectionner le fichier de clé",
-            "browse": "Parcourir",
             "remotePath": "Chemin distant"
         },
         "system": {

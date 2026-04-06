@@ -305,7 +305,6 @@
             "password": "Password",
             "privateKeyPath": "Private Key",
             "selectKeyFile": "Select private key file",
-            "browse": "Browse",
             "remotePath": "Remote Path"
         },
         "system": {

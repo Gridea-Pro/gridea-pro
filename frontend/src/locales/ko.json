@@ -305,7 +305,6 @@
             "password": "비밀번호",
             "privateKeyPath": "개인 키 파일",
             "selectKeyFile": "개인 키 파일 선택",
-            "browse": "찾아보기",
             "remotePath": "원격 경로"
         },
         "system": {

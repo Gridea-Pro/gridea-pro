@@ -305,7 +305,6 @@
             "password": "密码",
             "privateKeyPath": "私钥文件",
             "selectKeyFile": "选择私钥文件",
-            "browse": "选择",
             "remotePath": "远程路径",
             "proxyEnabled": "启用代理",
             "proxyEnabledDesc": "通过代理服务器访问外部服务",

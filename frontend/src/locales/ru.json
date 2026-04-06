@@ -305,7 +305,6 @@
             "password": "Пароль",
             "privateKeyPath": "Приватный ключ",
             "selectKeyFile": "Выбрать файл ключа",
-            "browse": "Обзор",
             "remotePath": "Удалённый путь"
         },
         "system": {
