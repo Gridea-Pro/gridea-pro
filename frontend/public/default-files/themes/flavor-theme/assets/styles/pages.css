@@ -1,5 +1,5 @@
 /* ============================================================================
-   § 18. PAGE LAYOUT (About, Archives, Tags, Friends, Memos, Tag, 404)
+   § 18. PAGE LAYOUT (About, Archives, Tags, Links, Memos, Tag, 404)
    ============================================================================ */
 
 .page-container {
@@ -179,13 +179,13 @@
    § 22. FRIENDS GRID
    ============================================================================ */
 
-.friends-grid {
+.links-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 16px;
 }
 
-.friend-card {
+.link-card {
   padding: 20px;
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -198,18 +198,18 @@
     background-color var(--transition-fast);
 }
 
-.friend-card:hover {
+.link-card:hover {
   border-color: var(--color-border-hover);
   background-color: #161616;
 }
 
-.friend-card__top {
+.link-card__top {
   display: flex;
   align-items: center;
   gap: 14px;
 }
 
-.friend-card__avatar-wrap {
+.link-card__avatar-wrap {
   width: 44px;
   height: 44px;
   flex-shrink: 0;
@@ -217,7 +217,7 @@
   overflow: hidden;
 }
 
-.friend-card__avatar-wrap img {
+.link-card__avatar-wrap img {
   width: 100% !important;
   height: 100% !important;
   max-width: none !important;
@@ -226,7 +226,7 @@
   border-radius: 0;
 }
 
-.friend-card__avatar-text {
+.link-card__avatar-text {
   width: 44px;
   height: 44px;
   border-radius: 10px;
@@ -240,19 +240,19 @@
   flex-shrink: 0;
 }
 
-.friend-card__info {
+.link-card__info {
   flex: 1;
   min-width: 0;
 }
 
-.friend-card__name {
+.link-card__name {
   font-size: 15px;
   font-weight: 500;
   color: var(--color-text-primary);
   line-height: 1.3;
 }
 
-.friend-card__arrow {
+.link-card__arrow {
   flex-shrink: 0;
   width: 32px;
   height: 32px;
@@ -267,13 +267,13 @@
     transform var(--transition-fast);
 }
 
-.friend-card:hover .friend-card__arrow {
+.link-card:hover .link-card__arrow {
   background-color: var(--color-text-primary);
   color: #000;
   transform: translateX(2px);
 }
 
-.friend-card__desc {
+.link-card__desc {
   font-size: 13px;
   color: var(--color-text-muted);
   line-height: 1.5;

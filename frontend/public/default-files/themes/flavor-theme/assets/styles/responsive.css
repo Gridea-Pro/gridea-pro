@@ -223,7 +223,7 @@
   }
 
   /* ── Friends Grid ── */
-  .friends-grid {
+  .links-grid {
     grid-template-columns: 1fr;
   }
 

@@ -7,23 +7,23 @@
     <p class="page-subtitle">志同道合的朋友们</p>
   </div>
 
-  <div class="friends-page">
+  <div class="links-page">
     {% if links|length > 0 %}
-    <div class="friends-grid">
+    <div class="links-grid">
       {% for link in links %}
-      <a href="{{ link.siteLink }}" class="friend-card" target="_blank" rel="noopener noreferrer">
-        <div class="friend-card__top">
+      <a href="{{ link.siteLink }}" class="link-card" target="_blank" rel="noopener noreferrer">
+        <div class="link-card__top">
           {% if link.avatar %}
-          <div class="friend-card__avatar-wrap">
+          <div class="link-card__avatar-wrap">
             <img src="{{ link.avatar }}" alt="{{ link.siteName }}" />
           </div>
           {% else %}
-          <span class="friend-card__avatar-text">{{ link.siteName|truncatechars:1 }}</span>
+          <span class="link-card__avatar-text">{{ link.siteName|truncatechars:1 }}</span>
           {% endif %}
-          <div class="friend-card__info">
-            <span class="friend-card__name">{{ link.siteName }}</span>
+          <div class="link-card__info">
+            <span class="link-card__name">{{ link.siteName }}</span>
           </div>
-          <span class="friend-card__arrow">
+          <span class="link-card__arrow">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="7" y1="17" x2="17" y2="7"></line>
               <polyline points="7 7 17 7 17 17"></polyline>
@@ -31,7 +31,7 @@
           </span>
         </div>
         {% if link.description %}
-        <span class="friend-card__desc">{{ link.description }}</span>
+        <span class="link-card__desc">{{ link.description }}</span>
         {% endif %}
       </a>
       {% endfor %}

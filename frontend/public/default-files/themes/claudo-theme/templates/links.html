@@ -15,13 +15,13 @@
   </div>
 
   {{ if notEmpty (index .Site.CustomConfig "linksContent") }}
-  <div class="friends-intro">
+  <div class="links-intro">
     {{ safeHTML (index .Site.CustomConfig "linksContent") }}
   </div>
   {{ end }}
 
   {{ if notEmpty (index .Site.CustomConfig "linksHtml") }}
-  <div class="friends-grid">
+  <div class="links-grid">
     {{ safeHTML (index .Site.CustomConfig "linksHtml") }}
   </div>
   {{ else }}
