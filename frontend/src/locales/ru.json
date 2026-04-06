@@ -305,7 +305,12 @@
             "password": "Пароль",
             "privateKeyPath": "Приватный ключ",
             "selectKeyFile": "Выбрать файл ключа",
-            "remotePath": "Удалённый путь"
+            "remotePath": "Удалённый путь",
+            "proxyEnabled": "Включить прокси",
+            "proxyEnabledDesc": "Доступ к внешним сервисам через прокси-сервер",
+            "proxyURL": "Адрес прокси-сервера",
+            "proxyURLDesc": "Поддержка HTTP/HTTPS/SOCKS5, напр.: http://127.0.0.1:7890 или socks5://127.0.0.1:1080",
+            "proxyURLInvalid": "Неверный формат адреса. Используйте префикс http://, https:// или socks5://"
         },
         "system": {
             "displayLanguage": "Язык интерфейса",

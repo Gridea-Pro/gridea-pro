@@ -305,7 +305,12 @@
             "password": "비밀번호",
             "privateKeyPath": "개인 키 파일",
             "selectKeyFile": "개인 키 파일 선택",
-            "remotePath": "원격 경로"
+            "remotePath": "원격 경로",
+            "proxyEnabled": "프록시 사용",
+            "proxyEnabledDesc": "프록시 서버를 통해 외부 서비스에 접근",
+            "proxyURL": "프록시 서버 주소",
+            "proxyURLDesc": "HTTP/HTTPS/SOCKS5 프로토콜 지원. 예: http://127.0.0.1:7890 또는 socks5://127.0.0.1:1080",
+            "proxyURLInvalid": "주소 형식이 올바르지 않습니다. http://, https://, 또는 socks5://로 시작하세요"
         },
         "system": {
             "displayLanguage": "표시 언어",

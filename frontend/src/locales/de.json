@@ -305,7 +305,12 @@
             "password": "Passwort",
             "privateKeyPath": "Privater Schlüssel",
             "selectKeyFile": "Schlüsseldatei auswählen",
-            "remotePath": "Remote-Pfad"
+            "remotePath": "Remote-Pfad",
+            "proxyEnabled": "Proxy aktivieren",
+            "proxyEnabledDesc": "Externe Dienste über einen Proxyserver erreichen",
+            "proxyURL": "Proxyserver-Adresse",
+            "proxyURLDesc": "Unterstützt HTTP/HTTPS/SOCKS5-Protokolle, z.B. http://127.0.0.1:7890 oder socks5://127.0.0.1:1080",
+            "proxyURLInvalid": "Ungültiges Adressformat. Verwenden Sie http://, https:// oder socks5:// als Präfix"
         },
         "system": {
             "displayLanguage": "Anzeigesprache",

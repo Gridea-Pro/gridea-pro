@@ -305,7 +305,12 @@
             "password": "パスワード",
             "privateKeyPath": "秘密鍵ファイル",
             "selectKeyFile": "秘密鍵ファイルを選択",
-            "remotePath": "リモートパス"
+            "remotePath": "リモートパス",
+            "proxyEnabled": "プロキシを有効にする",
+            "proxyEnabledDesc": "プロキシサーバーを経由して外部サービスにアクセス",
+            "proxyURL": "プロキシサーバーアドレス",
+            "proxyURLDesc": "HTTP/HTTPS/SOCKS5 プロトコルに対応。例：http://127.0.0.1:7890 または socks5://127.0.0.1:1080",
+            "proxyURLInvalid": "アドレス形式が正しくありません。http://、https://、または socks5:// で始めてください"
         },
         "system": {
             "displayLanguage": "表示言語",

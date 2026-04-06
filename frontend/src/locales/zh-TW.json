@@ -305,7 +305,12 @@
             "password": "密碼",
             "privateKeyPath": "私鑰檔案",
             "selectKeyFile": "選擇私鑰檔案",
-            "remotePath": "遠端路徑"
+            "remotePath": "遠端路徑",
+            "proxyEnabled": "啟用代理",
+            "proxyEnabledDesc": "透過代理伺服器存取外部服務",
+            "proxyURL": "代理伺服器地址",
+            "proxyURLDesc": "支援 HTTP/HTTPS/SOCKS5 協定，例如：http://127.0.0.1:7890 或 socks5://127.0.0.1:1080",
+            "proxyURLInvalid": "地址格式不正確，請使用 http://、https:// 或 socks5:// 開頭"
         },
         "system": {
             "displayLanguage": "顯示語言",
