@@ -199,7 +199,9 @@ href="https://gridea.pro/netlify" target="_blank"
           <div class="max-w-sm">
             <div class="flex gap-2">
               <Input v-model="form.privateKey" class="flex-1" readonly :placeholder="t('settings.network.selectKeyFile')" />
-              <Button variant="outline" class="shrink-0" @click="selectKeyFile">{{ t('settings.network.browse') }}</Button>
+              <Button variant="outline" size="icon" @click="selectKeyFile">
+                <FolderOpenIcon class="size-5" />
+              </Button>
             </div>
           </div>
         </div>
@@ -279,7 +281,7 @@ import { toast } from '@/helpers/toast'
 import FooterBox from '@/components/FooterBox/index.vue'
 import ga from '@/helpers/analytics'
 import type { ISettingForm } from '@/interfaces/setting'
-import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
+import { EyeIcon, EyeSlashIcon, FolderOpenIcon } from '@heroicons/vue/24/outline'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
