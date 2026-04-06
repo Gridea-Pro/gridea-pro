@@ -325,8 +325,9 @@ const savePlatformConfig = (platform: string) => {
   const config: Record<string, any> = {}
   for (const field of fields) {
     if (field === 'domain') {
-      // domain 保存时固定 https:// 前缀
-      config[field] = form.domain ? `https://${form.domain}` : ''
+      // domain 保存时固定 https:// 前缀，去掉尾部斜杠
+      const d = form.domain ? form.domain.replace(/\/+$/, '') : ''
+      config[field] = d ? `https://${d}` : ''
     } else {
       config[field] = form[field] || ''
     }
