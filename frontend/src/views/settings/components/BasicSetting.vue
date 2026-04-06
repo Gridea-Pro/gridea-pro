@@ -38,7 +38,7 @@ v-for="p in ['github', 'netlify', 'vercel', 'coding', 'gitee', 'sftp']" :key="St
             <Input v-model="form.netlifySiteId" class="" />
           </div>
         </div>
-        <div v-if="remoteType === 'password'" class="grid grid-cols-[180px_1fr] items-center gap-4">
+        <div class="grid grid-cols-[180px_1fr] items-center gap-4">
           <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.accessToken') }}</label>
           <div class="relative max-w-sm">
             <Input v-model="form.netlifyAccessToken" :type="passVisible ? 'text' : 'password'" class="pr-8" />
