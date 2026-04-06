@@ -21,8 +21,8 @@ v-for="p in ['github', 'netlify', 'vercel', 'coding', 'gitee', 'sftp']" :key="St
         </div>
       </div>
 
-      <!-- Domain -->
-      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
+      <!-- Domain (non-SFTP platforms) -->
+      <div v-if="form.platform !== 'sftp'" class="grid grid-cols-[180px_1fr] items-center gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.domain') }}</label>
         <div class="flex gap-2 max-w-sm">
           <div class="w-28">
@@ -206,6 +206,24 @@ href="https://gridea.pro/netlify" target="_blank"
           <div class="max-w-sm">
             <Input v-model="form.remotePath" class="" />
             <div class="text-xs text-muted-foreground mt-1.5">{{ t('settings.network.remotePathTip') }}</div>
+          </div>
+        </div>
+        <!-- SFTP: Domain at the end -->
+        <div class="grid grid-cols-[180px_1fr] items-center gap-4">
+          <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.domain') }}</label>
+          <div class="flex gap-2 max-w-sm">
+            <div class="w-28">
+              <Select :model-value="String(protocol || '')" @update:model-value="(v) => protocol = v">
+                <SelectTrigger class="">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="https://">https://</SelectItem>
+                  <SelectItem value="http://">http://</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Input v-model="form.domain" placeholder="myblog.com" class="flex-1" />
           </div>
         </div>
       </template>
