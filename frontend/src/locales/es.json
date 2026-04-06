@@ -275,6 +275,7 @@
             "repository": "Nombre del repositorio",
             "branch": "Rama",
             "username": "Usuario de la rama",
+            "sftpUsername": "Usuario",
             "email": "Email",
             "token": "Token",
             "tokenUsername": "Usuario del Token",

@@ -275,6 +275,7 @@
             "repository": "저장소 이름",
             "branch": "브랜치",
             "username": "저장소 사용자 이름",
+            "sftpUsername": "사용자 이름",
             "email": "이메일",
             "token": "토큰",
             "tokenUsername": "토큰 사용자 이름",

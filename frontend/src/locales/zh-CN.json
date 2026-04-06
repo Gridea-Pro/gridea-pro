@@ -275,6 +275,7 @@
             "repository": "仓库名称",
             "branch": "分 支",
             "username": "仓库用户名",
+            "sftpUsername": "用户名",
             "email": "邮 箱",
             "token": "令 牌",
             "tokenUsername": "令牌用户名",

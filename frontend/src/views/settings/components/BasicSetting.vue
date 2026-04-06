@@ -165,7 +165,7 @@ href="https://gridea.pro/netlify" target="_blank"
           </div>
         </div>
         <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-          <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.username') }}</label>
+          <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.network.sftpUsername') }}</label>
           <div class="max-w-sm">
             <Input v-model="form.username" class="" />
           </div>

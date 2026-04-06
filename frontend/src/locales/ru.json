@@ -275,6 +275,7 @@
             "repository": "Название репозитория",
             "branch": "Ветка",
             "username": "Имя пользователя ветки",
+            "sftpUsername": "Имя пользователя",
             "email": "Email",
             "token": "Токен",
             "tokenUsername": "Имя пользователя токена",

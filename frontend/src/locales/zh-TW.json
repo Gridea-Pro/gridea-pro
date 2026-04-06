@@ -275,6 +275,7 @@
             "repository": "儲存庫名稱",
             "branch": "分支",
             "username": "儲存庫使用者名稱",
+            "sftpUsername": "使用者名稱",
             "email": "信箱",
             "token": "令牌",
             "tokenUsername": "令牌使用者名稱",

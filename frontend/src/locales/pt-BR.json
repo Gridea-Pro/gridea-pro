@@ -275,6 +275,7 @@
             "repository": "Nome do Repositório",
             "branch": "Branch",
             "username": "Usuário da Branch",
+            "sftpUsername": "Usuário",
             "email": "Email",
             "token": "Token",
             "tokenUsername": "Usuário do Token",

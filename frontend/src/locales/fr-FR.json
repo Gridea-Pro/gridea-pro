@@ -275,6 +275,7 @@
             "repository": "Nom du dépôt",
             "branch": "Branche",
             "username": "Nom d'utilisateur de la branche",
+            "sftpUsername": "Nom d'utilisateur",
             "email": "E-mail",
             "token": "Jeton",
             "tokenUsername": "Nom d'utilisateur du jeton",
