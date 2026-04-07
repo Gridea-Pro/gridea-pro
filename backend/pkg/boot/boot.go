@@ -146,29 +146,31 @@ func Run(assets embed.FS, version string) {
 		log.Printf("Warning: Failed to initialize config manager: %v", err)
 	}
 
-	var conf *config.AppConfig
-	if configManager != nil {
-		conf, err = configManager.LoadConfig()
-		if err != nil {
-			log.Printf("Warning: Failed to load config: %v", err)
-		}
-	}
-
-	// 初始化路径：优先使用配置中的路径，否则使用默认的 Documents/Gridea Pro
+	// 初始化路径：多站点模式，优先从 Sites 列表找活跃站点
 	var appDir string
 	home, _ := os.UserHomeDir()
+	defaultPath := filepath.Join(home, "Documents", "Gridea Pro")
 
-	if conf != nil && conf.SourceFolder != "" {
-		// 验证配置中的路径是否存在
-		if _, err := os.Stat(conf.SourceFolder); err == nil {
-			appDir = conf.SourceFolder
+	if configManager != nil {
+		// 迁移旧配置 / 确保 Sites 列表存在
+		sites, migrateErr := configManager.MigrateToSites(defaultPath)
+		if migrateErr != nil {
+			log.Printf("Warning: Failed to migrate sites: %v", migrateErr)
+		}
+		// 从 Sites 列表找活跃站点
+		for _, s := range sites {
+			if s.Active {
+				if _, err := os.Stat(s.Path); err == nil {
+					appDir = s.Path
+				}
+				break
+			}
 		}
 	}
 
-	// 如果没有配置或配置路径无效，使用默认路径
+	// 兜底：使用默认路径
 	if appDir == "" {
-		docs := filepath.Join(home, "Documents")
-		appDir = filepath.Join(docs, "Gridea Pro")
+		appDir = defaultPath
 	}
 
 	// 初始化 Services (Facade)

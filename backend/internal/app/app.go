@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"gridea-pro/backend/internal/config"
 	"gridea-pro/backend/internal/facade"
 	"gridea-pro/backend/internal/service"
@@ -132,57 +133,45 @@ func (a *App) registerEvents(ctx context.Context) {
 }
 
 func (a *App) handleSourceFolderChange(newPath string) {
+	if err := a.switchToPath(newPath); err != nil {
+		a.ShowToast(err.Error(), "error")
+		runtime.EventsEmit(a.ctx, EventAppSourceFolderSet, false)
+		return
+	}
+	runtime.EventsEmit(a.ctx, EventAppSourceFolderSet, true)
+	a.ShowToast("源文件夹已更新", "success")
+}
+
+// switchToPath 切换到指定路径的站点（核心热更新逻辑）
+func (a *App) switchToPath(newPath string) error {
 	// 验证路径是否存在
 	if _, err := os.Stat(newPath); os.IsNotExist(err) {
-		a.ShowToast("路径不存在", "error")
-		return
+		return fmt.Errorf("路径不存在: %s", newPath)
 	}
 
-	// 0. Ensure new site is initialized
+	// 初始化站点目录
 	if err := a.services.Services.Scaffold.InitSite(newPath); err != nil {
-		a.ShowToast("初始化站点失败: "+err.Error(), "error")
-		runtime.EventsEmit(a.ctx, EventAppSourceFolderSet, false)
-		return
+		return fmt.Errorf("初始化站点失败: %w", err)
 	}
 
-	// 保存配置
-	cm, err := config.NewConfigManager()
-	if err != nil {
-		a.ShowToast("初始化配置管理器失败: "+err.Error(), "error")
-		runtime.EventsEmit(a.ctx, EventAppSourceFolderSet, false)
-		return
-	}
-	if err := cm.UpdateSourceFolder(newPath); err != nil {
-		a.ShowToast("保存配置失败: "+err.Error(), "error")
-		runtime.EventsEmit(a.ctx, EventAppSourceFolderSet, false)
-		return
-	}
-
-	// --- 热更新逻辑 ---
-
-	newBuildDir := filepath.Join(newPath, "output")
-
+	// 热更新 App 状态
 	a.mu.Lock()
-	// 1. 更新 App 状态
 	a.appDir = newPath
-	a.buildDir = newBuildDir
+	a.buildDir = filepath.Join(newPath, "output")
 	a.mu.Unlock()
 
-	// 3. 更新 PreviewService 的路径
-	// 先停止服务，因为 UpdateAppDir 会替换 PreviewService 的内部实例
+	// 更新 PreviewService
 	shouldRestart := false
-	if a.previewService.IsRunning() {
+	if a.previewService != nil && a.previewService.IsRunning() {
 		_ = a.previewService.StopPreviewServer()
 		shouldRestart = true
 	}
 
-	// 2. 更新所有业务 Service 的路径 (这会更新 PreviewFacade.internal)
+	// 更新所有业务 Service
 	a.services.UpdateAppDir(newPath)
 
 	if shouldRestart {
-		// 重新启动
 		go func() {
-			// 自动触发一次渲染，确保新目录有内容
 			if err := a.services.Renderer.RenderAll(); err != nil {
 				runtime.LogError(a.ctx, "Auto render failed after source change: "+err.Error())
 			}
@@ -192,25 +181,126 @@ func (a *App) handleSourceFolderChange(newPath string) {
 		}()
 	}
 
-	// Update ResourceWatcher
+	// 更新 ResourceWatcher
 	if a.resourceWatcher != nil {
 		a.resourceWatcher.Close()
 	}
-	a.resourceWatcher, err = service.NewResourceWatcher(newPath)
-	if err != nil {
-		runtime.LogError(a.ctx, "Failed to create resource watcher for new path: "+err.Error())
+	var watchErr error
+	a.resourceWatcher, watchErr = service.NewResourceWatcher(newPath)
+	if watchErr != nil {
+		runtime.LogError(a.ctx, "Failed to create resource watcher: "+watchErr.Error())
 	} else if a.resourceWatcher != nil {
 		a.resourceWatcher.Start(a.ctx)
 	}
 
-	// 4.重新加载站点数据
+	// 重新加载站点数据并通知前端
 	siteData := a.LoadSite()
-
-	// 5. 通知前端更新
 	runtime.EventsEmit(a.ctx, EventAppSiteLoaded, siteData)
-	runtime.EventsEmit(a.ctx, EventAppSourceFolderSet, true)
 
-	a.ShowToast("源文件夹已更新", "success")
+	return nil
+}
+
+// GetSites 获取站点列表
+func (a *App) GetSites() []config.SiteEntry {
+	cm, err := config.NewConfigManager()
+	if err != nil {
+		return nil
+	}
+	sites, _ := cm.GetSites()
+	return sites
+}
+
+// AddSite 添加新站点
+func (a *App) AddSite(name, path string) ([]config.SiteEntry, error) {
+	cm, err := config.NewConfigManager()
+	if err != nil {
+		return nil, err
+	}
+
+	// 初始化站点目录
+	if err := a.services.Services.Scaffold.InitSite(path); err != nil {
+		return nil, fmt.Errorf("初始化站点失败: %w", err)
+	}
+
+	sites, _ := cm.GetSites()
+
+	// 检查路径是否已存在
+	for _, s := range sites {
+		if s.Path == path {
+			return nil, fmt.Errorf("该站点路径已存在")
+		}
+	}
+
+	sites = append(sites, config.SiteEntry{
+		Name:   name,
+		Path:   path,
+		Active: false,
+	})
+
+	if err := cm.SaveSites(sites); err != nil {
+		return nil, err
+	}
+	return sites, nil
+}
+
+// RemoveSite 删除站点（不删除源文件）
+func (a *App) RemoveSite(path string) ([]config.SiteEntry, error) {
+	cm, err := config.NewConfigManager()
+	if err != nil {
+		return nil, err
+	}
+
+	sites, _ := cm.GetSites()
+	var newSites []config.SiteEntry
+	for _, s := range sites {
+		if s.Path != path {
+			newSites = append(newSites, s)
+		}
+	}
+
+	if err := cm.SaveSites(newSites); err != nil {
+		return nil, err
+	}
+	return newSites, nil
+}
+
+// UpdateSites 更新站点列表（用于排序）
+func (a *App) UpdateSites(sites []config.SiteEntry) error {
+	cm, err := config.NewConfigManager()
+	if err != nil {
+		return err
+	}
+	return cm.SaveSites(sites)
+}
+
+// SwitchSite 切换活跃站点
+func (a *App) SwitchSite(path string) error {
+	cm, err := config.NewConfigManager()
+	if err != nil {
+		return err
+	}
+
+	sites, _ := cm.GetSites()
+
+	// 更新 active 状态
+	found := false
+	for i := range sites {
+		sites[i].Active = sites[i].Path == path
+		if sites[i].Path == path {
+			found = true
+		}
+	}
+	if !found {
+		return fmt.Errorf("站点不存在")
+	}
+
+	// 保存配置
+	if err := cm.SaveSites(sites); err != nil {
+		return err
+	}
+
+	// 执行热切换
+	return a.switchToPath(path)
 }
 
 func (a *App) Shutdown(ctx context.Context) {

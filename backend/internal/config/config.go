@@ -13,10 +13,19 @@ const (
 	ConfigFileName = "config.json"
 )
 
+// SiteEntry 站点条目
+type SiteEntry struct {
+	Name   string `json:"name"`
+	Path   string `json:"path"`
+	Active bool   `json:"active"`
+}
+
 // AppConfig 定义应用级别的全局配置
 type AppConfig struct {
-	// SourceFolder 站点源文件目录
-	SourceFolder string `json:"sourceFolder"`
+	// SourceFolder 站点源文件目录（兼容旧版）
+	SourceFolder string      `json:"sourceFolder"`
+	// Sites 多站点列表
+	Sites        []SiteEntry `json:"sites,omitempty"`
 }
 
 // ConfigManager 负责管理 AppConfig 的加载和保存
@@ -94,4 +103,73 @@ func (m *ConfigManager) UpdateSourceFolder(path string) error {
 
 	config.SourceFolder = path
 	return m.SaveConfig(config)
+}
+
+// GetSites 获取站点列表
+func (m *ConfigManager) GetSites() ([]SiteEntry, error) {
+	config, err := m.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+	return config.Sites, nil
+}
+
+// SaveSites 保存站点列表
+func (m *ConfigManager) SaveSites(sites []SiteEntry) error {
+	config, err := m.LoadConfig()
+	if err != nil {
+		config = &AppConfig{}
+	}
+	config.Sites = sites
+	// 同步 SourceFolder 为活跃站点路径（兼容旧版）
+	for _, s := range sites {
+		if s.Active {
+			config.SourceFolder = s.Path
+			break
+		}
+	}
+	return m.SaveConfig(config)
+}
+
+// GetActiveSite 获取当前活跃站点
+func (m *ConfigManager) GetActiveSite() (*SiteEntry, error) {
+	config, err := m.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+	for i := range config.Sites {
+		if config.Sites[i].Active {
+			return &config.Sites[i], nil
+		}
+	}
+	return nil, nil
+}
+
+// MigrateToSites 将旧的 SourceFolder 迁移为 Sites 列表
+// 如果 Sites 已有数据则不迁移
+func (m *ConfigManager) MigrateToSites(defaultPath string) ([]SiteEntry, error) {
+	config, err := m.LoadConfig()
+	if err != nil {
+		config = &AppConfig{}
+	}
+
+	if len(config.Sites) > 0 {
+		return config.Sites, nil
+	}
+
+	// 迁移旧配置
+	path := config.SourceFolder
+	if path == "" {
+		path = defaultPath
+	}
+
+	config.Sites = []SiteEntry{
+		{Name: "My Site", Path: path, Active: true},
+	}
+	config.SourceFolder = path
+
+	if err := m.SaveConfig(config); err != nil {
+		return nil, err
+	}
+	return config.Sites, nil
 }
