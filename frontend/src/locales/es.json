@@ -142,6 +142,23 @@
             "archivesPathPrefixDefault": "archivo",
             "saveError": "Error al guardar"
         },
+        "sites": {
+            "title": "Sitios",
+            "add": "Añadir sitio",
+            "name": "Nombre del sitio",
+            "path": "Ruta de la carpeta fuente",
+            "namePlaceholder": "ej: Mi blog",
+            "selectPath": "Seleccionar carpeta",
+            "active": "Sitio activo",
+            "confirmDelete": "¿Eliminar este sitio? (los archivos fuente no se eliminarán)",
+            "cannotDisableLast": "Debe haber al menos un sitio activo",
+            "cannotDeleteActive": "Cambie a otro sitio antes de eliminar",
+            "switching": "Cambiando sitio...",
+            "switched": "Sitio cambiado",
+            "added": "Sitio añadido",
+            "deleted": "Sitio eliminado",
+            "empty": "No hay sitios. Haga clic en el botón de arriba para añadir"
+        },
         "comment": {
             "title": "Configuración de comentarios",
             "enable": "Habilitar comentarios",

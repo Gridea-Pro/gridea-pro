@@ -142,6 +142,23 @@
             "archivesPathPrefixDefault": "archiv",
             "saveError": "Speichern fehlgeschlagen"
         },
+        "sites": {
+            "title": "Websites",
+            "add": "Website hinzufügen",
+            "name": "Website-Name",
+            "path": "Quellordner-Pfad",
+            "namePlaceholder": "z.B. Mein Blog",
+            "selectPath": "Ordner auswählen",
+            "active": "Aktive Website",
+            "confirmDelete": "Diese Website löschen? (Quelldateien werden nicht entfernt)",
+            "cannotDisableLast": "Mindestens eine Website muss aktiv sein",
+            "cannotDeleteActive": "Bitte zuerst zu einer anderen Website wechseln",
+            "switching": "Website wird gewechselt...",
+            "switched": "Website gewechselt",
+            "added": "Website hinzugefügt",
+            "deleted": "Website gelöscht",
+            "empty": "Keine Websites vorhanden. Klicken Sie oben auf Hinzufügen"
+        },
         "comment": {
             "title": "Kommentareinstellungen",
             "enable": "Kommentare aktivieren",

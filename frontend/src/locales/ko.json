@@ -142,6 +142,23 @@
             "archivesPathPrefixDefault": "archive",
             "saveError": "저장 실패"
         },
+        "sites": {
+            "title": "사이트",
+            "add": "사이트 추가",
+            "name": "사이트 이름",
+            "path": "소스 폴더 경로",
+            "namePlaceholder": "예: 내 블로그",
+            "selectPath": "폴더 선택",
+            "active": "활성 사이트",
+            "confirmDelete": "이 사이트를 삭제하시겠습니까? (소스 파일은 삭제되지 않습니다)",
+            "cannotDisableLast": "최소 하나의 사이트를 활성화해야 합니다",
+            "cannotDeleteActive": "삭제하기 전에 다른 사이트로 전환하세요",
+            "switching": "사이트 전환 중...",
+            "switched": "사이트가 전환되었습니다",
+            "added": "사이트가 추가되었습니다",
+            "deleted": "사이트가 삭제되었습니다",
+            "empty": "사이트가 없습니다. 위의 버튼을 눌러 추가하세요"
+        },
         "comment": {
             "title": "댓글 설정",
             "enable": "댓글 사용",

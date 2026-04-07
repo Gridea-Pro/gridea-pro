@@ -142,6 +142,23 @@
             "archivesPathPrefixDefault": "archive",
             "saveError": "Save failed"
         },
+        "sites": {
+            "title": "Sites",
+            "add": "Add Site",
+            "name": "Site Name",
+            "path": "Source Folder Path",
+            "namePlaceholder": "e.g. My Blog",
+            "selectPath": "Select folder",
+            "active": "Active Site",
+            "confirmDelete": "Delete this site? (source files will not be removed)",
+            "cannotDisableLast": "At least one site must be active",
+            "cannotDeleteActive": "Switch to another site before deleting",
+            "switching": "Switching site...",
+            "switched": "Site switched",
+            "added": "Site added",
+            "deleted": "Site deleted",
+            "empty": "No sites yet. Click the button above to add one"
+        },
         "comment": {
             "title": "Comment settings",
             "enable": "Enable comment",

@@ -142,6 +142,23 @@
             "archivesPathPrefixDefault": "archivio",
             "saveError": "Salvataggio fallito"
         },
+        "sites": {
+            "title": "Siti",
+            "add": "Aggiungi sito",
+            "name": "Nome del sito",
+            "path": "Percorso cartella sorgente",
+            "namePlaceholder": "es: Il mio blog",
+            "selectPath": "Seleziona cartella",
+            "active": "Sito attivo",
+            "confirmDelete": "Eliminare questo sito? (i file sorgente non verranno rimossi)",
+            "cannotDisableLast": "Almeno un sito deve essere attivo",
+            "cannotDeleteActive": "Passare a un altro sito prima di eliminare",
+            "switching": "Cambio sito in corso...",
+            "switched": "Sito cambiato",
+            "added": "Sito aggiunto",
+            "deleted": "Sito eliminato",
+            "empty": "Nessun sito. Clicca il pulsante sopra per aggiungere"
+        },
         "comment": {
             "title": "Impostazioni commenti",
             "enable": "Abilita commenti",

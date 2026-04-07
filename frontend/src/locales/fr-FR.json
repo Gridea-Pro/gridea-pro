@@ -142,6 +142,23 @@
             "archivesPathPrefixDefault": "archive",
             "saveError": "Échec de l'enregistrement"
         },
+        "sites": {
+            "title": "Sites",
+            "add": "Ajouter un site",
+            "name": "Nom du site",
+            "path": "Chemin du dossier source",
+            "namePlaceholder": "ex : Mon blog",
+            "selectPath": "Sélectionner un dossier",
+            "active": "Site actif",
+            "confirmDelete": "Supprimer ce site ? (les fichiers source ne seront pas supprimés)",
+            "cannotDisableLast": "Au moins un site doit être actif",
+            "cannotDeleteActive": "Basculez vers un autre site avant de supprimer",
+            "switching": "Changement de site...",
+            "switched": "Site changé",
+            "added": "Site ajouté",
+            "deleted": "Site supprimé",
+            "empty": "Aucun site. Cliquez sur le bouton ci-dessus pour en ajouter"
+        },
         "comment": {
             "title": "Paramètres des commentaires",
             "enable": "Activer les commentaires",

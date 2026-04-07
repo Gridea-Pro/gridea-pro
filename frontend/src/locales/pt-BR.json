@@ -142,6 +142,23 @@
             "archivesPathPrefixDefault": "arquivo",
             "saveError": "Falha ao salvar"
         },
+        "sites": {
+            "title": "Sites",
+            "add": "Adicionar site",
+            "name": "Nome do site",
+            "path": "Caminho da pasta fonte",
+            "namePlaceholder": "ex: Meu blog",
+            "selectPath": "Selecionar pasta",
+            "active": "Site ativo",
+            "confirmDelete": "Excluir este site? (os arquivos fonte não serão removidos)",
+            "cannotDisableLast": "Pelo menos um site deve estar ativo",
+            "cannotDeleteActive": "Mude para outro site antes de excluir",
+            "switching": "Mudando site...",
+            "switched": "Site alterado",
+            "added": "Site adicionado",
+            "deleted": "Site excluído",
+            "empty": "Nenhum site. Clique no botão acima para adicionar"
+        },
         "comment": {
             "title": "Configurações de comentários",
             "enable": "Habilitar comentários",

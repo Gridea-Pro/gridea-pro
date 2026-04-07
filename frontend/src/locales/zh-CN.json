@@ -142,6 +142,23 @@
             "archivesPathPrefixDefault": "archive",
             "saveError": "保存失败"
         },
+        "sites": {
+            "title": "站点",
+            "add": "添加站点",
+            "name": "站点名称",
+            "path": "源文件夹路径",
+            "namePlaceholder": "如：我的博客",
+            "selectPath": "选择文件夹",
+            "active": "当前站点",
+            "confirmDelete": "确认删除此站点？（不会删除源文件）",
+            "cannotDisableLast": "请至少启用一个站点",
+            "cannotDeleteActive": "请先切换到其他站点再删除",
+            "switching": "正在切换站点...",
+            "switched": "站点已切换",
+            "added": "站点已添加",
+            "deleted": "站点已删除",
+            "empty": "暂无站点，点击右上角添加"
+        },
         "comment": {
             "title": "评论配置",
             "enable": "启用评论",
