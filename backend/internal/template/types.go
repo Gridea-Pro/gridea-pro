@@ -151,9 +151,10 @@ type CategoryView struct {
 
 // MenuView 菜单视图
 type MenuView struct {
-	Name     string `json:"name"`
-	Link     string `json:"link"`
-	OpenType string `json:"openType"` // "Internal" 或 "External"
+	Name     string     `json:"name"`
+	Link     string     `json:"link"`
+	OpenType string     `json:"openType"` // "Internal" 或 "External"
+	Children []MenuView `json:"children,omitempty"`
 }
 
 // PaginationView 分页视图

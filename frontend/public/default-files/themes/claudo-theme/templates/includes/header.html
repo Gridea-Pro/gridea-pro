@@ -1,0 +1,82 @@
+{{/* header.html - Go Template partial for site header */}}
+<header class="site-header" id="siteHeader">
+  <div class="header-inner container">
+    <div class="header-left">
+      <a href="/" class="header-logo">
+        {{ if notEmpty (index .Site.CustomConfig "siteLogo") }}
+        <img src="{{ index .Site.CustomConfig "siteLogo" }}" alt="{{ .ThemeConfig.SiteName }}" width="32" height="32" />
+        {{ else }}
+        <span class="header-logo-text">{{ truncate 1 .ThemeConfig.SiteName }}</span>
+        {{ end }}
+      </a>
+      <a href="/" class="header-site-name">{{ .ThemeConfig.SiteName }}</a>
+    </div>
+
+    <nav class="header-nav" id="headerNav">
+      {{ range .Menus }}
+      {{ if .Children }}
+      <div class="header-nav-group">
+        <span class="header-nav-item">
+          {{ .Name }}
+          <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </span>
+        <div class="nav-dropdown">
+          {{ range .Children }}
+          <a class="nav-dropdown-item" href="{{ .Link }}"{{ if eq .OpenType "External" }} target="_blank" rel="noopener noreferrer"{{ end }}>{{ .Name }}</a>
+          {{ end }}
+        </div>
+      </div>
+      {{ else }}
+      <a class="header-nav-item" href="{{ .Link }}"{{ if eq .OpenType "External" }} target="_blank" rel="noopener noreferrer"{{ end }}>{{ .Name }}</a>
+      {{ end }}
+      {{ end }}
+    </nav>
+
+    <div class="header-right">
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+        <svg class="theme-toggle-icon theme-toggle-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg class="theme-toggle-icon theme-toggle-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+      {{ if notEmpty (index .Site.CustomConfig "showSearch") }}
+      <button class="header-btn search-btn" id="btnSearch" aria-label="搜索">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </button>
+      {{ end }}
+      <button class="header-menu-toggle" id="menuToggle" aria-label="菜单">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile Nav -->
+<nav class="mobile-nav" id="mobileNav">
+  {{ range .Menus }}
+  <a class="mobile-nav-item" href="{{ .Link }}"{{ if eq .OpenType "External" }} target="_blank" rel="noopener noreferrer"{{ end }}>{{ .Name }}</a>
+  {{ if .Children }}
+  {{ range .Children }}
+  <a class="mobile-nav-item mobile-nav-subitem" href="{{ .Link }}"{{ if eq .OpenType "External" }} target="_blank" rel="noopener noreferrer"{{ end }}>{{ .Name }}</a>
+  {{ end }}
+  {{ end }}
+  {{ end }}
+</nav>
+
+<script>
+(function() {
+  var toggle = document.getElementById('menuToggle');
+  var nav = document.getElementById('mobileNav');
+  if (!toggle || !nav) return;
+
+  toggle.addEventListener('click', function() {
+    nav.classList.toggle('open');
+    document.body.style.overflow = nav.classList.contains('open') ? 'hidden' : '';
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && nav.classList.contains('open')) {
+      nav.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  });
+})();
+</script>

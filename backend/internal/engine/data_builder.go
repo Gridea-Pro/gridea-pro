@@ -129,20 +129,29 @@ func (b *TemplateDataBuilder) Build(ctx context.Context, posts []domain.Post, co
 	wg.Wait()
 
 	// 获取菜单
+	normalizeLink := func(link, openType string) string {
+		if openType == "Internal" && link != "" && !strings.HasPrefix(link, "/") && !strings.HasPrefix(link, "http") {
+			return "/" + link
+		}
+		return link
+	}
 	var menuViews []template.MenuView
 	if b.menuRepo != nil {
 		menus, _ := b.menuRepo.List(ctx)
 		for _, menu := range menus {
-			link := menu.Link
-			// 内部链接自动补 "/" 前缀，避免生成相对路径
-			if menu.OpenType == "Internal" && link != "" && !strings.HasPrefix(link, "/") && !strings.HasPrefix(link, "http") {
-				link = "/" + link
-			}
-			menuViews = append(menuViews, template.MenuView{
+			mv := template.MenuView{
 				Name:     menu.Name,
-				Link:     link,
+				Link:     normalizeLink(menu.Link, menu.OpenType),
 				OpenType: menu.OpenType,
-			})
+			}
+			for _, child := range menu.Children {
+				mv.Children = append(mv.Children, template.MenuView{
+					Name:     child.Name,
+					Link:     normalizeLink(child.Link, child.OpenType),
+					OpenType: child.OpenType,
+				})
+			}
+			menuViews = append(menuViews, mv)
 		}
 	}
 
