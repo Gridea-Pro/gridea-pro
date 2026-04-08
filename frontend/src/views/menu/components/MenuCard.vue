@@ -28,23 +28,23 @@
             </div>
             <div class="flex items-center px-4 gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <button
-                    class="p-2 text-muted-foreground hover:text-primary hover:bg-secondary rounded-lg transition-colors cursor-pointer"
+                    class="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
                     :title="t('siteMenu.addSubmenu')" @click.stop="$emit('add-child', index)">
                     <PlusIcon class="size-3" />
                 </button>
                 <button v-if="menu.children?.length"
-                    class="p-2 text-muted-foreground hover:text-primary hover:bg-secondary rounded-lg transition-colors cursor-pointer"
+                    class="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
                     @click.stop="expanded = !expanded">
                     <ChevronDownIcon class="size-3 transition-transform duration-200"
                         :class="{ 'rotate-180': expanded }" />
                 </button>
                 <button
-                    class="p-2 text-muted-foreground hover:text-primary hover:bg-secondary rounded-lg transition-colors cursor-pointer"
+                    class="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
                     :title="t('common.edit')" @click.stop="$emit('edit', menu, index)">
                     <PencilIcon class="size-3" />
                 </button>
                 <button
-                    class="p-2 text-muted-foreground hover:text-destructive hover:bg-secondary rounded-lg transition-colors cursor-pointer"
+                    class="p-2 text-muted-foreground hover:text-destructive hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
                     :title="t('common.delete')" @click.stop="$emit('delete', index)">
                     <TrashIcon class="size-3" />
                 </button>
@@ -75,13 +75,13 @@
                         </div>
                         <div class="flex items-center px-3 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
-                                class="p-1.5 text-muted-foreground hover:text-primary hover:bg-secondary rounded-lg transition-colors cursor-pointer"
+                                class="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
                                 :title="t('common.edit')"
                                 @click.stop="$emit('edit-child', index, menu, childIdx, child)">
                                 <PencilIcon class="size-3" />
                             </button>
                             <button
-                                class="p-1.5 text-muted-foreground hover:text-destructive hover:bg-secondary rounded-lg transition-colors cursor-pointer"
+                                class="p-1.5 text-muted-foreground hover:text-destructive hover:bg-primary/10 rounded-lg transition-colors cursor-pointer"
                                 :title="t('common.delete')"
                                 @click.stop="$emit('delete-child', index, childIdx)">
                                 <TrashIcon class="size-3" />

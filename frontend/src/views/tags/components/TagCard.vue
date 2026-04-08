@@ -15,12 +15,12 @@ class="group flex items-center justify-between h-16 p-5 rounded-xl relative curs
             </div>
             <div class="hidden group-hover:flex items-center gap-1">
                 <button
-                    class="p-1 text-muted-foreground hover:text-primary hover:bg-secondary rounded-md transition-colors cursor-pointer"
+                    class="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors cursor-pointer"
                     :title="t('common.edit')" @click.stop="$emit('edit', tag, index)">
                     <PencilIcon class="size-3" />
                 </button>
                 <button
-                    class="p-1 text-muted-foreground hover:text-destructive hover:bg-secondary rounded-md transition-colors cursor-pointer"
+                    class="p-1 text-muted-foreground hover:text-destructive hover:bg-primary/10 rounded-md transition-colors cursor-pointer"
                     :title="t('common.delete')" @click.stop="$emit('delete', tag.slug || '')">
                     <TrashIcon class="size-3" />
                 </button>
