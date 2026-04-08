@@ -71,8 +71,10 @@ func (f *MenuFacade) SaveMenuFromFrontend(form MenuForm) ([]domain.Menu, error) 
 	}
 
 	if index >= 0 && index < len(menus) {
-		// 更新现有菜单
-		menus[index] = newMenu
+		// 更新现有菜单，保留子菜单
+		menus[index].Name = newMenu.Name
+		menus[index].OpenType = newMenu.OpenType
+		menus[index].Link = newMenu.Link
 	} else {
 		// 添加新菜单
 		menus = append(menus, newMenu)

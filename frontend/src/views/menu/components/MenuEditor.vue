@@ -2,7 +2,12 @@
     <Sheet :open="open" @update:open="$emit('update:open', $event)">
         <SheetContent side="right" class="w-[400px] sm:max-w-md p-0 gap-0 flex flex-col">
             <SheetHeader class="px-6 py-6 border-b">
-                <SheetTitle>{{ t('nav.menu') }}</SheetTitle>
+                <SheetTitle>
+                    <span v-if="parentName" class="text-muted-foreground font-normal">
+                        {{ parentName }} /
+                    </span>
+                    {{ parentName ? t('siteMenu.submenu') : t('nav.menu') }}
+                </SheetTitle>
             </SheetHeader>
 
             <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
@@ -83,6 +88,7 @@ defineProps<{
     menuTypes: any
     menuLinks: Array<{ text: string, value: string }>
     canSubmit: boolean
+    parentName?: string
 }>()
 
 defineEmits<{

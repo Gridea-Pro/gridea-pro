@@ -16,16 +16,33 @@
     <div class="flex-1 overflow-y-auto px-4 py-6">
       <draggable v-model="menuList" handle=".handle" item-key="name" @change="handleMenuSort">
         <template #item="{ element: menu, index }">
-          <MenuCard :menu="menu" :index="index" @edit="editMenu" @delete="confirmDelete" />
+          <MenuCard
+            :menu="menu"
+            :index="index"
+            @edit="editMenu"
+            @delete="confirmDelete"
+            @add-child="newSubMenu"
+            @edit-child="editSubMenu"
+            @delete-child="confirmDeleteChild"
+          />
         </template>
       </draggable>
     </div>
 
     <!-- Edit/New Drawer -->
     <MenuEditor
-v-model:open="visible" :form="form" :menu-types="menuTypes" :menu-links="menuLinks"
-      :can-submit="canSubmit" @name-change="handleNameChange" @open-type-change="handleOpenTypeChange"
-      @link-change="handleLinkChange" @close="closeSheet" @save="saveMenu" />
+      v-model:open="visible"
+      :form="form"
+      :menu-types="menuTypes"
+      :menu-links="menuLinks"
+      :can-submit="canSubmit"
+      :parent-name="parentName"
+      @name-change="handleNameChange"
+      @open-type-change="handleOpenTypeChange"
+      @link-change="handleLinkChange"
+      @close="closeSheet"
+      @save="saveMenu"
+    />
 
     <DeleteConfirmDialog v-model:open="deleteModalVisible" :confirm-text="t('common.delete')" @confirm="handleDelete" />
 
@@ -51,11 +68,15 @@ const {
   form,
   menuLinks,
   canSubmit,
+  parentName,
   newMenu,
+  newSubMenu,
   closeSheet,
   editMenu,
+  editSubMenu,
   saveMenu,
   confirmDelete,
+  confirmDeleteChild,
   handleDelete,
   handleMenuSort,
   handleNameChange,

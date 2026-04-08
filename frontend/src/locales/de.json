@@ -113,7 +113,9 @@
         "saved": "Menü gespeichert",
         "deleted": "Menü gelöscht",
         "inputOrSelect": "Eingeben oder unten auswählen",
-        "selectInternalLink": "Internen Link auswählen..."
+        "selectInternalLink": "Internen Link auswählen...",
+        "submenu": "Untermenü",
+        "addSubmenu": "Untermenü hinzufügen"
     },
     "settings": {
         "basic": {

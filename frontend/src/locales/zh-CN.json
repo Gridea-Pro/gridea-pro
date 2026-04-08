@@ -113,7 +113,9 @@
         "saved": "菜单已保存",
         "deleted": "菜单已删除",
         "inputOrSelect": "如 /links 或 https://example.com",
-        "selectInternalLink": "选择内部链接..."
+        "selectInternalLink": "选择内部链接...",
+        "submenu": "子菜单",
+        "addSubmenu": "添加子菜单"
     },
     "settings": {
         "basic": {

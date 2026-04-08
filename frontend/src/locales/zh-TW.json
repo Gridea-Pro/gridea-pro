@@ -113,7 +113,9 @@
         "saved": "選單已儲存",
         "deleted": "選單已刪除",
         "inputOrSelect": "輸入或從下方選擇",
-        "selectInternalLink": "選擇內部連結..."
+        "selectInternalLink": "選擇內部連結...",
+        "submenu": "子選單",
+        "addSubmenu": "新增子選單"
     },
     "settings": {
         "basic": {

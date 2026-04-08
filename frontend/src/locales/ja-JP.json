@@ -113,7 +113,9 @@
         "saved": "メニューを保存しました",
         "deleted": "メニューを削除しました",
         "inputOrSelect": "入力または下から選択",
-        "selectInternalLink": "内部リンクを選択..."
+        "selectInternalLink": "内部リンクを選択...",
+        "submenu": "サブメニュー",
+        "addSubmenu": "サブメニューを追加"
     },
     "settings": {
         "basic": {

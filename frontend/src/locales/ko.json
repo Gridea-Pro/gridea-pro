@@ -113,7 +113,9 @@
         "saved": "메뉴 저장됨",
         "deleted": "메뉴 삭제됨",
         "inputOrSelect": "입력하거나 아래에서 선택",
-        "selectInternalLink": "내부 링크 선택..."
+        "selectInternalLink": "내부 링크 선택...",
+        "submenu": "서브메뉴",
+        "addSubmenu": "서브메뉴 추가"
     },
     "settings": {
         "basic": {

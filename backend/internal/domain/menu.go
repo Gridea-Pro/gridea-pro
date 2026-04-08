@@ -12,6 +12,7 @@ type Menu struct {
 	Name     string `json:"name"`
 	Link     string `json:"link"`
 	OpenType string `json:"openType"` // "_blank" or "_self"
+	Children []Menu `json:"children,omitempty"`
 }
 
 // Validate 校验菜单数据

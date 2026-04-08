@@ -113,7 +113,9 @@
         "saved": "Menú guardado",
         "deleted": "Menú eliminado",
         "inputOrSelect": "Escribe o selecciona a continuación",
-        "selectInternalLink": "Seleccionar enlace interno..."
+        "selectInternalLink": "Seleccionar enlace interno...",
+        "submenu": "Submenú",
+        "addSubmenu": "Añadir submenú"
     },
     "settings": {
         "basic": {

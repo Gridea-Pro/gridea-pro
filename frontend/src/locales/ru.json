@@ -113,7 +113,9 @@
         "saved": "Меню сохранено",
         "deleted": "Меню удалено",
         "inputOrSelect": "Введите или выберите ниже",
-        "selectInternalLink": "Выберите внутреннюю ссылку..."
+        "selectInternalLink": "Выберите внутреннюю ссылку...",
+        "submenu": "Подменю",
+        "addSubmenu": "Добавить подменю"
     },
     "settings": {
         "basic": {
