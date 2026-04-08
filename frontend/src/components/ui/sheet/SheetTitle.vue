@@ -9,7 +9,7 @@ const props = defineProps<DialogTitleProps & { class?: HTMLAttributes['class'] }
 <template>
   <DialogTitle
     v-bind="props"
-    :class="cn('text-sm font-semibold text-foreground', props.class)"
+    :class="cn('text-base font-semibold text-foreground', props.class)"
   >
     <slot />
   </DialogTitle>
