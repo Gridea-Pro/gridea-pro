@@ -120,5 +120,5 @@ defineEmits<{
 }>()
 
 const { t } = useI18n()
-const expanded = ref(true)
+const expanded = ref(false)
 </script>
