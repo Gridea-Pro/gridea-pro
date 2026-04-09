@@ -106,13 +106,46 @@ jobs:
       - name: List build output
         run: ls -la "build/bin/${{ env.BIN_NAME }}.app/Contents/MacOS/"
 
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Generate DMG background image
+        run: bash build/darwin/dmg/create-background.sh build/bin/dmg-background.png
+
       - name: Create DMG
         run: |
           cd build/bin
-          hdiutil create -volname "${{ env.APP_NAME }}" \
-            -srcfolder "${{ env.BIN_NAME }}.app" \
-            -ov -format UDZO \
-            "${{ env.RELEASE_PREFIX }}_${VERSION}_macos_${{ matrix.arch }}.dmg"
+
+          # 准备一个干净的源目录，只包含要进 DMG 的内容（即 .app）
+          # 否则 wails build 产生的其它中间文件也会被 create-dmg 一并打入
+          rm -rf dmg-src
+          mkdir -p dmg-src
+          cp -R "${{ env.BIN_NAME }}.app" dmg-src/
+
+          OUTPUT="${{ env.RELEASE_PREFIX }}_${VERSION}_macos_${{ matrix.arch }}.dmg"
+          rm -f "$OUTPUT"
+
+          # 关键参数：
+          #   --window-size 600 400          ← 与 background 的尺寸一致
+          #   --icon … 150 200               ← 左侧 App 图标位置
+          #   --app-drop-link 450 200        ← 右侧 Applications 快捷方式位置
+          #   --background dmg-background.png← 自定义背景
+          create-dmg \
+            --volname "${{ env.APP_NAME }}" \
+            --background "dmg-background.png" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 110 \
+            --text-size 13 \
+            --icon "${{ env.BIN_NAME }}.app" 150 200 \
+            --hide-extension "${{ env.BIN_NAME }}.app" \
+            --app-drop-link 450 200 \
+            --no-internet-enable \
+            "$OUTPUT" \
+            dmg-src/
+
+          # 清理临时目录，避免被 upload-artifact 误传
+          rm -rf dmg-src dmg-background.png
 
       - uses: actions/upload-artifact@v4
         with:
