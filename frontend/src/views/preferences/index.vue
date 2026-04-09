@@ -175,8 +175,8 @@ v-for="item in navItems" :key="item.key"
                       </Button>
                     </div>
                     <label class="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer w-fit">
-                      <input type="checkbox" :checked="useCustomModelId" class="cursor-pointer"
-                        @change="(e: any) => onUseCustomModelToggle(e.target.checked)" />
+                      <Checkbox :model-value="useCustomModelId"
+                        @update:model-value="(v: any) => onUseCustomModelToggle(!!v)" />
                       {{ t('settings.ai.useCustomModelId') }}
                     </label>
                   </div>
@@ -290,6 +290,7 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import {
   SwatchIcon,
