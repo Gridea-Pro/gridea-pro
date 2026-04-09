@@ -163,22 +163,32 @@ func (s *AIService) GenerateSlug(ctx context.Context, title string) (string, err
 	prompt := fmt.Sprintf(
 		"Generate an SEO-friendly English URL slug from the blog title.\n\n"+
 			"Goal: Both search engines and human readers should immediately understand "+
-			"what the article is about just by looking at the slug.\n\n"+
+			"what the article is about just by looking at the slug. The slug must read "+
+			"like a natural English phrase, not a word-for-word translation.\n\n"+
+			"Process (think before writing):\n"+
+			"1. Identify the SINGLE main idea of the title (one sentence in your head).\n"+
+			"2. If the title has a subtitle (after —, ——, :, or 、), treat it as background "+
+			"context only — DO NOT translate it word by word. Use it just to disambiguate the main idea.\n"+
+			"3. Express that main idea as a short English phrase: subject + action + (optional context).\n"+
+			"4. Trim to 4–8 words. NEVER exceed 8 words. Aim for 5–6.\n\n"+
 			"Rules:\n"+
-			"- 4–8 words (aim for 5–6); capture the article's core topic and intent, not just isolated keywords\n"+
-			"- Preserve the meaningful subject, action, and context — drop only filler words (a, an, the, is, are, that, how, what)\n"+
-			"- Keep short logical connectors when they aid clarity: vs, with, for, to, in\n"+
-			"- Brand/tech names must be exact and lowercased (e.g. macos, docker, nextjs, gpt-4, wechat, claude-code)\n"+
+			"- HARD LIMIT: 8 words maximum. Count the words before outputting.\n"+
+			"- Drop filler words: a, an, the, is, are, that, how, what, something, anything, everyone, every\n"+
+			"- Keep short connectors only when they aid clarity: vs, with, for, to, in\n"+
+			"- Brand/tech names must be exact and lowercased (e.g. macos, docker, nextjs, gpt-4, wechat, claude-code, gridea)\n"+
 			"- Keep version numbers and years when present (e.g. gpt-4, 2026)\n"+
-			"- All lowercase, hyphens as separators, no special characters, no trailing hyphen\n\n"+
+			"- All lowercase, hyphens as separators, no special characters, no trailing hyphen\n"+
+			"- NEVER translate emotional/rhetorical phrases literally (e.g. 「每个想写点什么的人」「都值得」「让世界更美好」)\n\n"+
 			"Examples:\n"+
 			"- 我用 Claude Code 重构了整个项目的代码 → refactor-entire-project-with-claude-code\n"+
 			"- Arc 和 Chrome 哪个更适合开发者日常使用？ → arc-vs-chrome-for-developers\n"+
 			"- 独立开发者出海第一步：选对收款工具 → indie-developer-global-payment-tools\n"+
 			"- The Best Markdown Editors for Developers in 2026 → best-markdown-editors-for-developers-2026\n"+
 			"- 如何用 Docker 部署 Next.js 到生产环境 → deploy-nextjs-to-production-with-docker\n"+
-			"- 从零搭建一个个人博客系统 → build-personal-blog-system-from-scratch\n\n"+
-			"Output ONLY the slug string, nothing else.\n\n"+
+			"- 从零搭建一个个人博客系统 → build-personal-blog-system-from-scratch\n"+
+			"- 我为什么复活了 Gridea —— 每个想写点什么的人，都值得一个更简单的开始 → why-i-revived-gridea-for-simpler-writing\n"+
+			"- ChatGPT 改变了我的工作方式：从效率工具到思考伙伴 → how-chatgpt-changed-my-workflow\n\n"+
+			"Output ONLY the slug string, nothing else. No quotes, no explanation.\n\n"+
 			"Title: %s",
 		title,
 	)
