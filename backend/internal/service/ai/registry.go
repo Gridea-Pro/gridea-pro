@@ -43,7 +43,7 @@ var providerRegistry = []ProviderInfo{
 	},
 	{
 		ID:       "anthropic",
-		Name:     "Anthropic Claude",
+		Name:     "Anthropic",
 		Protocol: ProtocolAnthropic,
 		BaseURL:  "https://api.anthropic.com",
 		DefaultModels: []string{
@@ -67,7 +67,7 @@ var providerRegistry = []ProviderInfo{
 	},
 	{
 		ID:       "xai",
-		Name:     "xAI Grok",
+		Name:     "xAI (Grok)",
 		Protocol: ProtocolOpenAI,
 		BaseURL:  "https://api.x.ai/v1",
 		DefaultModels: []string{
@@ -80,7 +80,7 @@ var providerRegistry = []ProviderInfo{
 	// ─── 国内主流 ──────────────────────────────────────
 	{
 		ID:       "deepseek",
-		Name:     "DeepSeek 深度求索",
+		Name:     "DeepSeek",
 		Protocol: ProtocolOpenAI,
 		BaseURL:  "https://api.deepseek.com/v1",
 		DefaultModels: []string{
@@ -91,7 +91,7 @@ var providerRegistry = []ProviderInfo{
 	},
 	{
 		ID:       "glm",
-		Name:     "智谱 GLM",
+		Name:     "GLM (智谱)",
 		Protocol: ProtocolOpenAI,
 		BaseURL:  "https://open.bigmodel.cn/api/paas/v4",
 		DefaultModels: []string{
@@ -104,7 +104,7 @@ var providerRegistry = []ProviderInfo{
 	},
 	{
 		ID:       "kimi",
-		Name:     "月之暗面 Kimi",
+		Name:     "Kimi (Moonshot)",
 		Protocol: ProtocolOpenAI,
 		BaseURL:  "https://api.moonshot.cn/v1",
 		DefaultModels: []string{
@@ -116,7 +116,7 @@ var providerRegistry = []ProviderInfo{
 	},
 	{
 		ID:       "qwen",
-		Name:     "阿里通义千问",
+		Name:     "通义千问 (阿里)",
 		Protocol: ProtocolOpenAI,
 		BaseURL:  "https://dashscope.aliyuncs.com/compatible-mode/v1",
 		DefaultModels: []string{
@@ -128,7 +128,7 @@ var providerRegistry = []ProviderInfo{
 	},
 	{
 		ID:       "doubao",
-		Name:     "字节豆包",
+		Name:     "豆包 (字节)",
 		Protocol: ProtocolOpenAI,
 		BaseURL:  "https://ark.cn-beijing.volces.com/api/v3",
 		DefaultModels: []string{
