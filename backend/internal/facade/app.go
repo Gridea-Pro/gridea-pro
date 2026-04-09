@@ -3,6 +3,7 @@ package facade
 import (
 	"context"
 	"embed"
+	"gridea-pro/backend/internal/config"
 	"gridea-pro/backend/internal/domain"
 	"gridea-pro/backend/internal/engine"
 	"gridea-pro/backend/internal/repository"
@@ -83,8 +84,10 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	seoSettingRepo := repository.NewSeoSettingRepository(appDir)
 	cdnSettingRepo := repository.NewCdnSettingRepository(appDir)
 	pwaSettingRepo := repository.NewPwaSettingRepository(appDir)
-	aiSettingRepo := repository.NewAISettingRepository(appDir)
-	aiUsageRepo := repository.NewAIUsageRepository(appDir)
+	// AI 配置和调用计数器使用应用级目录（跨站点共享，避免敏感信息泄露到站点目录）
+	cm, _ := config.NewConfigManager()
+	aiSettingRepo := repository.NewAISettingRepository(cm)
+	aiUsageRepo := repository.NewAIUsageRepository(cm.AppConfigDir())
 
 	// 2. Init Services
 	tagService := service.NewTagService(tagRepo)

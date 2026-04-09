@@ -16,19 +16,29 @@ import (
 // 普通用户无法逆向得到该值，因此无法手动伪造合法 sig
 const aiUsageSigSecret = "gridea-pro-ai-usage-v1-7f3a9c2e8b1d4f6a"
 
+// aiUsageRepository 内置模型调用计数器
+//
+// 存储位置：应用级配置目录 ai_usage.json
+//   - macOS:   ~/Library/Application Support/Gridea Pro/ai_usage.json
+//   - Linux:   ~/.config/Gridea Pro/ai_usage.json
+//   - Windows: %AppData%/Gridea Pro/ai_usage.json
+//
+// 放在应用级目录而非站点目录的原因：
+//  1. 配额是设备级语义，不应该因切换站点而重置
+//  2. 不应跟随站点同步到云端，避免被多设备绕过
 type aiUsageRepository struct {
-	mu     sync.RWMutex
-	appDir string
-	cache  *domain.AIUsage
-	loaded bool
+	mu        sync.RWMutex
+	configDir string
+	cache     *domain.AIUsage
+	loaded    bool
 }
 
-func NewAIUsageRepository(appDir string) domain.AIUsageRepository {
-	return &aiUsageRepository{appDir: appDir}
+func NewAIUsageRepository(appConfigDir string) domain.AIUsageRepository {
+	return &aiUsageRepository{configDir: appConfigDir}
 }
 
 func (r *aiUsageRepository) filePath() string {
-	return filepath.Join(r.appDir, "config", "ai_usage.json")
+	return filepath.Join(r.configDir, "ai_usage.json")
 }
 
 // computeUsageSig 根据字段计算 HMAC-SHA256 签名

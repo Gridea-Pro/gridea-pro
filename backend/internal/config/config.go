@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+
+	"gridea-pro/backend/internal/domain"
 )
 
 const (
@@ -24,6 +26,9 @@ type SiteEntry struct {
 type AppConfig struct {
 	// Sites 多站点列表
 	Sites []SiteEntry `json:"sites,omitempty"`
+	// AISetting AI 模型配置（应用级，跨站点共享）
+	// 包含 API Key 等敏感信息，必须放在应用级而非站点目录
+	AISetting *domain.AISetting `json:"aiSetting,omitempty"`
 }
 
 // ConfigManager 负责管理 AppConfig 的加载和保存
@@ -116,6 +121,34 @@ func (m *ConfigManager) GetActiveSite() (*SiteEntry, error) {
 		}
 	}
 	return nil, nil
+}
+
+// GetAISetting 获取 AI 配置（不存在则返回零值）
+func (m *ConfigManager) GetAISetting() (domain.AISetting, error) {
+	cfg, err := m.LoadConfig()
+	if err != nil {
+		return domain.AISetting{}, err
+	}
+	if cfg.AISetting == nil {
+		return domain.AISetting{}, nil
+	}
+	return *cfg.AISetting, nil
+}
+
+// SaveAISetting 保存 AI 配置
+func (m *ConfigManager) SaveAISetting(setting domain.AISetting) error {
+	cfg, err := m.LoadConfig()
+	if err != nil {
+		cfg = &AppConfig{}
+	}
+	cfg.AISetting = &setting
+	return m.SaveConfig(cfg)
+}
+
+// AppConfigDir 返回应用级配置目录路径（如 ~/.config/Gridea Pro）
+// 用于存放 AI 调用计数等设备级状态
+func (m *ConfigManager) AppConfigDir() string {
+	return m.configDir
 }
 
 // MigrateToSites 确保 Sites 列表存在
