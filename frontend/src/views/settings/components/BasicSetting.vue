@@ -37,7 +37,7 @@
 
           <!-- 已连接时的操作按钮 -->
           <div v-if="activeStatus?.connected" class="flex items-center gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" class="h-8 text-xs rounded-full px-4"
+            <Button variant="outline" size="sm" class="h-8 text-xs rounded-full px-4 text-primary hover:bg-primary/10 hover:text-primary border-primary/20"
               @click="openDrawer(activePlatformData.id)">
               <Cog6ToothIcon class="size-3.5 mr-1.5" />
               {{ t('settings.network.editConfig') }}
@@ -56,7 +56,7 @@
           <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 bg-muted/40 rounded-lg">
             <!-- 用户头像 + 用户名（可点击跳转主页） -->
             <a v-if="activeStatus?.username"
-              class="flex items-center gap-2 text-xs cursor-pointer hover:opacity-80 transition-opacity"
+              class="flex items-center gap-2 text-xs cursor-pointer"
               @click="openUserProfile(activePlatformData.id, activeStatus.username)">
               <img v-if="activeStatus?.avatarUrl" :src="activeStatus.avatarUrl"
                 class="size-5 rounded-full flex-shrink-0" alt="" />
@@ -173,6 +173,14 @@
     </div>
 
     </div>
+
+    <!-- ── 断开连接确认弹窗 ──────────────────────────────────── -->
+    <DeleteConfirmDialog
+      v-model:open="revokeDialogOpen"
+      :title="t('settings.network.disconnect')"
+      :content="t('settings.network.revokeConfirm')"
+      :confirm-text="t('settings.network.disconnect')"
+      @confirm="confirmRevoke" />
 
     <!-- ── 手动配置抽屉 ───────────────────────────────────────── -->
     <Transition name="drawer">
@@ -402,6 +410,7 @@ import { useI18n } from 'vue-i18n'
 import { useSiteStore } from '@/stores/site'
 import { toast } from '@/helpers/toast'
 import { FolderOpenIcon, Cog6ToothIcon, ArrowPathIcon, XMarkIcon, InformationCircleIcon, KeyIcon, GlobeAltIcon, CodeBracketIcon, ServerStackIcon, UserIcon, LinkIcon } from '@heroicons/vue/24/outline'
+import DeleteConfirmDialog from '@/components/ConfirmDialog/DeleteConfirmDialog.vue'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -443,6 +452,8 @@ const oauthLoading = ref<Record<string, boolean>>({})
 const activePlatform = ref('github')
 const detectLoading = ref(false)
 const saveLoading = ref(false)
+const revokeDialogOpen = ref(false)
+const revokePlatformId = ref('')
 
 // 抽屉状态
 const drawerOpen = ref(false)
@@ -562,10 +573,16 @@ async function handleOAuth(platformId: string) {
   }
 }
 
-async function handleRevoke(platformId: string) {
+function handleRevoke(platformId: string) {
+  revokePlatformId.value = platformId
+  revokeDialogOpen.value = true
+}
+
+async function confirmRevoke() {
+  const platformId = revokePlatformId.value
+  revokeDialogOpen.value = false
   try {
     await RevokeToken(platformId)
-    // 从后端重新加载状态，确保一致
     await loadStatuses()
     EventsEmit('app-site-reload')
     toast.success(`${getPlatformName(platformId)} ${t('settings.network.disconnected')}`)
