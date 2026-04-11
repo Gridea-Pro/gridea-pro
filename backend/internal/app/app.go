@@ -425,7 +425,6 @@ func (a *App) ShowPreferences() {
 	if a.ctx == nil {
 		return
 	}
-	runtime.WindowCenter(a.ctx)
 	runtime.EventsEmit(a.ctx, EventShowPreferencesDialog)
 }
 
