@@ -440,7 +440,10 @@
         "colorWarm": "Sunset Warm",
         "colorSakura": "Sakura Pink",
         "colorTwilight": "Twilight Purple",
-        "colorGlass": "Frosted Glass"
+        "colorGlass": "Frosted Glass",
+        "editorFontFamily": "Editor Font Family",
+        "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+        "editorFontFamilyHint": "Multiple fonts separated by commas; the first available font is used"
     },
     "shortcutKeys": {
         "editing": "Editing",

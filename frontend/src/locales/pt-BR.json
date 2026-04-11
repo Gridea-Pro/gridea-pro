@@ -440,7 +440,10 @@
         "colorWarm": "Pôr do Sol",
         "colorSakura": "Rosa Sakura",
         "colorTwilight": "Roxo Crepúsculo",
-        "colorGlass": "Vidro Fosco"
+        "colorGlass": "Vidro Fosco",
+        "editorFontFamily": "Fonte do editor",
+        "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+        "editorFontFamilyHint": "Múltiplas fontes separadas por vírgulas; a primeira fonte disponível é usada"
     },
     "shortcutKeys": {
         "editing": "Edição",

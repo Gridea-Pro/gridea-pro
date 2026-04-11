@@ -440,7 +440,10 @@
         "colorWarm": "Cálido atardecer",
         "colorSakura": "Rosa sakura",
         "colorTwilight": "Púrpura crepúsculo",
-        "colorGlass": "Cristal esmerilado"
+        "colorGlass": "Cristal esmerilado",
+        "editorFontFamily": "Fuente del editor",
+        "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+        "editorFontFamilyHint": "Múltiples fuentes separadas por comas; se usa la primera fuente disponible"
     },
     "shortcutKeys": {
         "editing": "Edición",

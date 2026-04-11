@@ -45,6 +45,16 @@
         </div>
       </div>
     </div>
+
+    <div>
+      <div class="text-sm font-medium text-[var(--text-secondary)] mb-4">{{ t('preferences.editorFontFamily') }}</div>
+      <Input
+        v-model="editorFontFamily"
+        :placeholder="t('preferences.editorFontFamilyPlaceholder')"
+        class="max-w-md font-mono text-sm"
+      />
+      <div class="text-xs text-[var(--text-secondary)] mt-2">{{ t('preferences.editorFontFamilyHint') }}</div>
+    </div>
   </div>
 </template>
 
@@ -53,6 +63,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useThemeStore, ThemeMode, ThemeColor } from '@/stores/theme'
 import { SunIcon, MoonIcon, ComputerDesktopIcon, CheckIcon } from '@heroicons/vue/24/outline'
+import { Input } from '@/components/ui/input'
 
 const { t } = useI18n()
 const themeStore = useThemeStore()
@@ -65,6 +76,11 @@ const mode = computed({
 const theme = computed({
   get: () => themeStore.theme,
   set: (val) => themeStore.setTheme(val)
+})
+
+const editorFontFamily = computed({
+  get: () => themeStore.editorFontFamily,
+  set: (val) => themeStore.setEditorFontFamily(val),
 })
 
 const modeOptions = computed(() => [

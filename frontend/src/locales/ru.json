@@ -440,7 +440,10 @@
         "colorWarm": "Тёплый закат",
         "colorSakura": "Сакура",
         "colorTwilight": "Сумеречный фиолетовый",
-        "colorGlass": "Матовое стекло"
+        "colorGlass": "Матовое стекло",
+        "editorFontFamily": "Шрифт редактора",
+        "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+        "editorFontFamilyHint": "Несколько шрифтов через запятую; используется первый доступный шрифт"
     },
     "shortcutKeys": {
         "editing": "Редактирование",

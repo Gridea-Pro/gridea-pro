@@ -440,7 +440,10 @@
         "colorWarm": "Coucher de soleil",
         "colorSakura": "Rose sakura",
         "colorTwilight": "Violet crépuscule",
-        "colorGlass": "Verre dépoli"
+        "colorGlass": "Verre dépoli",
+        "editorFontFamily": "Police de l'éditeur",
+        "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+        "editorFontFamilyHint": "Plusieurs polices séparées par des virgules ; la première police disponible est utilisée"
     },
     "shortcutKeys": {
         "editing": "Édition",

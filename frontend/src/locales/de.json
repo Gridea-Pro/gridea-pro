@@ -440,7 +440,10 @@
         "colorWarm": "Sonnenuntergang",
         "colorSakura": "Sakura-Rosa",
         "colorTwilight": "Dämmerungslila",
-        "colorGlass": "Milchglas"
+        "colorGlass": "Milchglas",
+        "editorFontFamily": "Editor-Schriftart",
+        "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+        "editorFontFamilyHint": "Mehrere Schriftarten durch Kommas getrennt; die erste verfügbare Schriftart wird verwendet"
     },
     "shortcutKeys": {
         "editing": "Bearbeitung",

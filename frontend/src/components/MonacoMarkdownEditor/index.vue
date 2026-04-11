@@ -170,8 +170,7 @@ const initEditor = () => {
     links: false,
     automaticLayout: true,
     padding: { top: 24, bottom: 64 },
-    fontFamily:
-      'ui-monospace, Menlo, Monaco, "Cascadia Code", "Segoe UI Mono", Consolas, "Courier New", monospace',
+    fontFamily: themeStore.editorFontFamily,
     unicodeHighlight: {
       ambiguousCharacters: false,
       invisibleCharacters: false,
@@ -277,6 +276,15 @@ watch(isEmpty, (val) => {
     editorRef.value.updateOptions({ scrollBeyondLastLine: !val })
   }
 })
+
+watch(
+  () => themeStore.editorFontFamily,
+  (fontFamily) => {
+    if (editorRef.value) {
+      editorRef.value.updateOptions({ fontFamily })
+    }
+  },
+)
 
 // ─── 暴露给父组件 ─────────────────────────────────────────────────────────────
 

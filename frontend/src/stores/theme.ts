@@ -4,6 +4,9 @@ import { ref, computed } from 'vue'
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type ThemeColor = 'default' | 'blue' | 'warm' | 'sakura' | 'twilight' | 'glass'
 
+export const EDITOR_FONT_FAMILY_DEFAULT =
+  'ui-monospace, Menlo, Monaco, "Cascadia Code", "Segoe UI Mono", Consolas, "Courier New", monospace'
+
 export const useThemeStore = defineStore('theme', () => {
   // State
   const mode = ref<ThemeMode>(
@@ -14,6 +17,9 @@ export const useThemeStore = defineStore('theme', () => {
   )
   const systemIsDark = ref(
     window.matchMedia('(prefers-color-scheme: dark)').matches
+  )
+  const editorFontFamily = ref<string>(
+    localStorage.getItem('app_editor_font_family') || EDITOR_FONT_FAMILY_DEFAULT
   )
 
   // Getters
@@ -65,6 +71,11 @@ export const useThemeStore = defineStore('theme', () => {
     applyTheme()
   }
 
+  function setEditorFontFamily(value: string) {
+    editorFontFamily.value = value
+    localStorage.setItem('app_editor_font_family', value)
+  }
+
   function initTheme() {
     applyTheme()
     // Listen for system changes
@@ -84,12 +95,14 @@ export const useThemeStore = defineStore('theme', () => {
     mode,
     theme,
     systemIsDark,
+    editorFontFamily,
     // Getters
     isDark,
     antDesignTheme,
     // Actions
     setMode,
     setTheme,
+    setEditorFontFamily,
     applyTheme,
     initTheme
   }

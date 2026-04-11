@@ -440,7 +440,10 @@
         "colorWarm": "Tramonto caldo",
         "colorSakura": "Rosa sakura",
         "colorTwilight": "Viola crepuscolo",
-        "colorGlass": "Vetro smerigliato"
+        "colorGlass": "Vetro smerigliato",
+        "editorFontFamily": "Font dell'editor",
+        "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+        "editorFontFamilyHint": "Font multipli separati da virgole; viene utilizzato il primo font disponibile"
     },
     "shortcutKeys": {
         "editing": "Modifica",

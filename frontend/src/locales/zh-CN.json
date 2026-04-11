@@ -470,7 +470,10 @@
     "colorWarm": "日落暖",
     "colorSakura": "樱花粉",
     "colorTwilight": "暮山紫",
-    "colorGlass": "毛玻璃"
+    "colorGlass": "毛玻璃",
+    "editorFontFamily": "编辑器字体",
+    "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+    "editorFontFamilyHint": "多个字体用英文逗号分隔，前面的字体优先使用"
   },
   "shortcutKeys": {
     "editing": "编辑",

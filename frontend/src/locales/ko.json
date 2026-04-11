@@ -440,7 +440,10 @@
         "colorWarm": "선셋 웜",
         "colorSakura": "벚꽃 핑크",
         "colorTwilight": "석양 퍼플",
-        "colorGlass": "프로스트 글래스"
+        "colorGlass": "프로스트 글래스",
+        "editorFontFamily": "편집기 폰트",
+        "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+        "editorFontFamilyHint": "여러 폰트는 영문 쉼표로 구분하며, 먼저 나오는 폰트가 우선 사용됩니다"
     },
     "shortcutKeys": {
         "editing": "편집",

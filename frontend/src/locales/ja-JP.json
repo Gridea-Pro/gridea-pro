@@ -440,7 +440,10 @@
         "colorWarm": "サンセットウォーム",
         "colorSakura": "桜ピンク",
         "colorTwilight": "トワイライトパープル",
-        "colorGlass": "すりガラス"
+        "colorGlass": "すりガラス",
+        "editorFontFamily": "エディターフォント",
+        "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+        "editorFontFamilyHint": "複数のフォントは英字カンマで区切り、率先使用的是前面的字体"
     },
     "shortcutKeys": {
         "editing": "編集",

@@ -440,7 +440,10 @@
         "colorWarm": "日落暖",
         "colorSakura": "櫻花粉",
         "colorTwilight": "暮山紫",
-        "colorGlass": "毛玻璃"
+        "colorGlass": "毛玻璃",
+        "editorFontFamily": "編輯器字體",
+        "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
+        "editorFontFamilyHint": "多個字體用英文逗號分隔，前面的字體優先使用"
     },
     "shortcutKeys": {
         "editing": "編輯",
