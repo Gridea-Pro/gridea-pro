@@ -381,6 +381,8 @@
       "editConfig": "编辑配置",
       "setAsActive": "设为当前",
       "activeLabel": "当前使用",
+      "currentPlatform": "当前平台",
+      "otherPlatforms": "其他平台",
       "waitingAuth": "等待授权...",
       "authSuccess": "授权成功",
       "authFailed": "授权失败",
