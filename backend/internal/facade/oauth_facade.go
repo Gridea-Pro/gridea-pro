@@ -18,12 +18,12 @@ func NewOAuthFacade(svc *service.OAuthService) *OAuthFacade {
 // StartOAuthFlow 启动 OAuth 授权流程
 // 会在系统浏览器打开授权页面，授权完成后通过 Wails 事件通知前端
 // 事件名：oauth:success / oauth:error
-func (f *OAuthFacade) StartOAuthFlow(provider string) error {
+func (f *OAuthFacade) StartOAuthFlow(provider, lang string) error {
 	ctx := WailsContext
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.service.StartOAuthFlow(ctx, provider)
+	return f.service.StartOAuthFlow(ctx, provider, lang)
 }
 
 // RevokeToken 撤销指定平台的授权（清除 Keychain 凭证 + 连接元信息）
