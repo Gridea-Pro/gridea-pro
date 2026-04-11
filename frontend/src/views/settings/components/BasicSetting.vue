@@ -681,17 +681,17 @@ async function autoFillAfterOAuth(platformId: string, username: string, email: s
   const lowerUsername = username.toLowerCase()
 
   if (platformId === 'github') {
-    if (!cfg.repository) cfg.repository = `${lowerUsername}.github.io`
-    if (!cfg.branch) cfg.branch = 'main'
-    if (!cfg.username) cfg.username = username
-    if (!cfg.email && email) cfg.email = email
-    if (!cfg.domain) cfg.domain = `https://${lowerUsername}.github.io`
+    cfg.repository = `${lowerUsername}.github.io`
+    cfg.branch = cfg.branch || 'main'
+    cfg.username = username
+    cfg.email = email || cfg.email || ''
+    cfg.domain = `https://${lowerUsername}.github.io`
   } else if (platformId === 'gitee') {
-    if (!cfg.repository) cfg.repository = lowerUsername
-    if (!cfg.branch) cfg.branch = 'master'
-    if (!cfg.username) cfg.username = username
-    if (!cfg.email && email) cfg.email = email
-    if (!cfg.domain) cfg.domain = `https://${lowerUsername}.gitee.io`
+    cfg.repository = lowerUsername
+    cfg.branch = cfg.branch || 'master'
+    cfg.username = username
+    cfg.email = email || cfg.email || ''
+    cfg.domain = `https://${lowerUsername}.gitee.io`
   } else if (platformId === 'netlify') {
     // Netlify 无法自动推断 site id，仅填充已知信息
   }
