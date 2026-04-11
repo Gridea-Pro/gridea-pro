@@ -188,7 +188,7 @@
           <!-- 抽屉头部 -->
           <SheetHeader class="px-6 py-6 border-b">
             <SheetTitle class="flex items-center gap-3">
-              <div class="size-7 rounded-lg flex items-center justify-center text-white text-xs"
+              <div class="size-7 rounded-md flex items-center justify-center text-white text-xs"
                 :style="{ background: currentPlatform?.color }">
                 <component v-if="currentPlatform?.icon" :is="currentPlatform.icon" class="size-3.5" />
               </div>
@@ -229,14 +229,23 @@
 
             <!-- ─ GitHub / Gitee / Coding ─ -->
             <template v-if="['github', 'gitee', 'coding'].includes(drawerPlatform)">
-              <FormField :label="t('settings.network.domain')" prefix="https://">
-                <Input v-model="drawerForm.domain" placeholder="mydomain.com" />
+              <FormField :label="t('settings.network.domain')">
+                <div class="relative">
+                  <span class="absolute left-3 top-2 text-muted-foreground text-sm">https://</span>
+                  <Input v-model="drawerForm.domain" class="pl-16" placeholder="mydomain.com" />
+                </div>
               </FormField>
               <FormField :label="t('settings.network.repository')">
-                <Input v-model="drawerForm.repository" placeholder="username/repo" />
+                <div class="relative">
+                  <CodeBracketIcon class="absolute left-3 top-2.5 size-4 text-muted-foreground/60" />
+                  <Input v-model="drawerForm.repository" class="pl-9" placeholder="repo-name" />
+                </div>
               </FormField>
               <FormField :label="t('settings.network.branch')">
-                <Input v-model="drawerForm.branch" :placeholder="drawerPlatform === 'github' ? 'main' : 'master'" />
+                <div class="relative">
+                  <BranchIcon class="absolute left-3 top-2.5 size-4 text-muted-foreground/60" />
+                  <Input v-model="drawerForm.branch" class="pl-9" :placeholder="drawerPlatform === 'github' ? 'main' : 'master'" />
+                </div>
               </FormField>
               <FormField :label="t('settings.network.username')">
                 <Input v-model="drawerForm.username" />
@@ -248,7 +257,7 @@
                 <Input v-model="drawerForm.tokenUsername" />
               </FormField>
               <FormField :label="t('settings.network.token')">
-                <PasswordInput v-model="drawerForm.token"
+                <Input v-model="drawerForm.token" type="password"
                   :placeholder="hasExistingCredential(drawerPlatform, 'token') ? t('settings.network.tokenPlaceholder') : ''" />
               </FormField>
               <FormField label="CNAME">
@@ -258,14 +267,17 @@
 
             <!-- ─ Netlify ─ -->
             <template v-if="drawerPlatform === 'netlify'">
-              <FormField :label="t('settings.network.domain')" prefix="https://">
-                <Input v-model="drawerForm.domain" placeholder="mydomain.com" />
+              <FormField :label="t('settings.network.domain')">
+                <div class="relative">
+                  <span class="absolute left-3 top-2 text-muted-foreground text-sm">https://</span>
+                  <Input v-model="drawerForm.domain" class="pl-16" placeholder="mydomain.com" />
+                </div>
               </FormField>
               <FormField :label="t('settings.network.siteId')">
                 <Input v-model="drawerForm.netlifySiteId" />
               </FormField>
               <FormField :label="t('settings.network.accessToken')">
-                <PasswordInput v-model="drawerForm.netlifyAccessToken"
+                <Input v-model="drawerForm.netlifyAccessToken" type="password"
                   :placeholder="hasExistingCredential('netlify', 'netlifyAccessToken') ? t('settings.network.tokenPlaceholder') : ''" />
                 <template #hint>
                   <a href="https://gridea.pro/netlify" target="_blank"
@@ -278,15 +290,18 @@
 
             <!-- ─ Vercel ─ -->
             <template v-if="drawerPlatform === 'vercel'">
-              <FormField :label="t('settings.network.domain')" prefix="https://">
-                <Input v-model="drawerForm.domain" placeholder="mydomain.com" />
+              <FormField :label="t('settings.network.domain')">
+                <div class="relative">
+                  <span class="absolute left-3 top-2 text-muted-foreground text-sm">https://</span>
+                  <Input v-model="drawerForm.domain" class="pl-16" placeholder="mydomain.com" />
+                </div>
               </FormField>
               <FormField :label="t('settings.network.projectName')">
                 <Input v-model="drawerForm.repository" placeholder="my-vercel-project" />
                 <template #hint>{{ t('settings.network.vercelProjectDesc') }}</template>
               </FormField>
               <FormField :label="t('settings.network.accessToken')">
-                <PasswordInput v-model="drawerForm.token"
+                <Input v-model="drawerForm.token" type="password"
                   :placeholder="hasExistingCredential('vercel', 'token') ? t('settings.network.tokenPlaceholder') : ''" />
                 <template #hint>{{ t('settings.network.vercelTokenDesc') }}</template>
               </FormField>
@@ -329,7 +344,7 @@
               </FormField>
               <FormField v-if="drawerForm.transferProtocol === 'ftp' || sftpAuthType === 'password'"
                 :label="t('settings.network.password')">
-                <PasswordInput v-model="drawerForm.password"
+                <Input v-model="drawerForm.password" type="password"
                   :placeholder="hasExistingCredential('sftp', 'password') ? t('settings.network.tokenPlaceholder') : ''" />
               </FormField>
               <FormField v-if="drawerForm.transferProtocol !== 'ftp' && sftpAuthType === 'key'"
@@ -346,8 +361,11 @@
                 <Input v-model="drawerForm.remotePath" />
                 <template #hint>{{ t('settings.network.remotePathTip') }}</template>
               </FormField>
-              <FormField :label="t('settings.network.domain')" prefix="https://">
-                <Input v-model="drawerForm.domain" placeholder="myblog.com" />
+              <FormField :label="t('settings.network.domain')">
+                <div class="relative">
+                  <span class="absolute left-3 top-2 text-muted-foreground text-sm">https://</span>
+                  <Input v-model="drawerForm.domain" class="pl-16" placeholder="myblog.com" />
+                </div>
               </FormField>
             </template>
 
@@ -692,7 +710,7 @@ async function saveDrawer() {
     await SaveSettingFromFrontend(settingDomain)
     EventsEmit('app-site-reload')
     await loadStatuses()
-    toast.success(t('settings.network.credentialSaved'))
+    toast.success(t('settings.basic.saveSuccess'))
     closeDrawer()
   } catch (e: any) {
     toast.error(e?.message || t('settings.network.saveFailed'))
@@ -833,37 +851,12 @@ function openUserProfile(platformId: string, username: string) {
 <!-- 小工具组件（行内定义，避免额外文件） -->
 <script lang="ts">
 export const FormField = {
-  props: ['label', 'prefix'],
+  props: ['label'],
   template: `
     <div class="space-y-1.5">
       <label class="text-xs font-medium text-muted-foreground">{{ label }}</label>
-      <div class="relative">
-        <span v-if="prefix" class="absolute left-3 top-2.5 text-muted-foreground text-sm z-10 pointer-events-none">{{ prefix }}</span>
-        <div :class="prefix ? 'pl-[4.5rem]' : ''">
-          <slot />
-        </div>
-      </div>
+      <slot />
       <div v-if="$slots.hint" class="text-xs text-muted-foreground"><slot name="hint" /></div>
-    </div>
-  `
-}
-
-export const PasswordInput = {
-  props: ['modelValue', 'placeholder'],
-  emits: ['update:modelValue'],
-  data() { return { visible: false } },
-  template: `
-    <div class="relative">
-      <input :type="visible ? 'text' : 'password'"
-        :value="modelValue" :placeholder="placeholder"
-        @input="$emit('update:modelValue', $event.target.value)"
-        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring pr-9" />
-      <button type="button" tabindex="-1"
-        @click="visible = !visible"
-        class="absolute right-2.5 top-2.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors">
-        <svg v-if="visible" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>
-      </button>
     </div>
   `
 }
