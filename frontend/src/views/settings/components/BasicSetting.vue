@@ -1,5 +1,5 @@
 <template>
-  <div class="pb-20 max-w-3xl mx-auto pt-2">
+  <div class="pb-20 pt-2">
 
     <!-- ── 平台列表 ───────────────────────────────────────────── -->
     <div class="space-y-2">
