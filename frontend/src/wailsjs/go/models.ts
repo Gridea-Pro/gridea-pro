@@ -25,6 +25,31 @@ export namespace ai {
 
 }
 
+export namespace service {
+
+	export class PlatformStatus {
+	    connected: boolean;
+	    connectedVia: string;
+	    username: string;
+	    avatarUrl: string;
+	    email: string;
+
+	    static createFrom(source: any = {}) {
+	        return new PlatformStatus(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.connected = source["connected"];
+	        this.connectedVia = source["connectedVia"];
+	        this.username = source["username"];
+	        this.avatarUrl = source["avatarUrl"];
+	        this.email = source["email"];
+	    }
+	}
+
+}
+
 export namespace config {
 	
 	export class SiteEntry {

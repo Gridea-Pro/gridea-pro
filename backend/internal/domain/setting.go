@@ -11,11 +11,74 @@ import (
 
 // Setting 系统设置
 // platform 标识当前启用的平台，platformConfigs 按平台独立存储所有配置
+// 注意：敏感字段（token/password/privateKey）存储于系统 Keychain，不序列化到 JSON
 type Setting struct {
-	Platform        string                       `json:"platform"`
-	PlatformConfigs map[string]map[string]any    `json:"platformConfigs,omitempty"`
-	ProxyEnabled    bool                         `json:"proxyEnabled"`
-	ProxyURL        string                       `json:"proxyURL"`
+	Platform        string                    `json:"platform"`
+	PlatformConfigs map[string]map[string]any `json:"platformConfigs,omitempty"`
+	ProxyEnabled    bool                      `json:"proxyEnabled"`
+	ProxyURL        string                    `json:"proxyURL"`
+}
+
+// SensitiveFields 各平台需要存入 Keychain 的敏感字段
+// key: 平台 ID，value: 字段名列表
+var SensitiveFields = map[string][]string{
+	"github":  {"token"},
+	"gitee":   {"token"},
+	"coding":  {"token"},
+	"netlify": {"netlifyAccessToken"},
+	"vercel":  {"token"},
+	"sftp":    {"password", "privateKey"},
+}
+
+// ExtractSensitiveFields 从 PlatformConfigs 中提取敏感字段
+// 返回 map[credentialKey]value，并将原始配置中的这些字段清空
+// credentialKey 格式为 "{platform}:{field}"，与 Keychain 的 account 字段对应
+func (s *Setting) ExtractSensitiveFields() map[string]string {
+	result := make(map[string]string)
+	if s.PlatformConfigs == nil {
+		return result
+	}
+	for platform, fields := range SensitiveFields {
+		cfg := s.PlatformConfigs[platform]
+		if cfg == nil {
+			continue
+		}
+		for _, field := range fields {
+			val, ok := cfg[field].(string)
+			if !ok || val == "" {
+				continue
+			}
+			result[platform+":"+field] = val
+			delete(cfg, field)
+		}
+	}
+	return result
+}
+
+// InjectCredentials 将凭证值注入 PlatformConfigs（用于部署/测试时补全凭证）
+// 仅在对应字段为空时才注入（不覆盖前端新传入的值）
+func (s *Setting) InjectCredentials(credentials map[string]string) {
+	if s.PlatformConfigs == nil {
+		s.PlatformConfigs = make(map[string]map[string]any)
+	}
+	for platform, fields := range SensitiveFields {
+		for _, field := range fields {
+			key := platform + ":" + field
+			val, ok := credentials[key]
+			if !ok || val == "" {
+				continue
+			}
+			// 只在字段为空时注入
+			cfg := s.PlatformConfigs[platform]
+			if cfg == nil {
+				cfg = make(map[string]any)
+				s.PlatformConfigs[platform] = cfg
+			}
+			if existing, _ := cfg[field].(string); existing == "" {
+				cfg[field] = val
+			}
+		}
+	}
 }
 
 // platformFieldOrder 定义各平台配置项的输出顺序，与前端表单顺序一致

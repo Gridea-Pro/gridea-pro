@@ -22,6 +22,15 @@ type SiteEntry struct {
 	Active bool   `json:"active"`
 }
 
+// PlatformMeta 平台连接元信息（非敏感，可安全存入应用级配置）
+// 凭证（Token / 密码）存储在系统 Keychain，不在此结构中
+type PlatformMeta struct {
+	ConnectedVia string `json:"connectedVia"` // "oauth" | "manual"
+	Username     string `json:"username,omitempty"`
+	AvatarURL    string `json:"avatarUrl,omitempty"`
+	Email        string `json:"email,omitempty"`
+}
+
 // AppConfig 定义应用级别的全局配置
 type AppConfig struct {
 	// Sites 多站点列表
@@ -29,6 +38,8 @@ type AppConfig struct {
 	// AISetting AI 模型配置（应用级，跨站点共享）
 	// 包含 API Key 等敏感信息，必须放在应用级而非站点目录
 	AISetting *domain.AISetting `json:"aiSetting,omitempty"`
+	// PlatformMeta 各平台连接状态元信息（非敏感，凭证在 Keychain）
+	PlatformMeta map[string]PlatformMeta `json:"platformMeta,omitempty"`
 }
 
 // ConfigManager 负责管理 AppConfig 的加载和保存
@@ -149,6 +160,42 @@ func (m *ConfigManager) SaveAISetting(setting domain.AISetting) error {
 // 用于存放 AI 调用计数等设备级状态
 func (m *ConfigManager) AppConfigDir() string {
 	return m.configDir
+}
+
+// GetPlatformMeta 获取指定平台的连接元信息
+func (m *ConfigManager) GetPlatformMeta(providerID string) PlatformMeta {
+	cfg, err := m.LoadConfig()
+	if err != nil || cfg.PlatformMeta == nil {
+		return PlatformMeta{}
+	}
+	return cfg.PlatformMeta[providerID]
+}
+
+// SavePlatformMeta 保存指定平台的连接元信息
+// 传入零值 PlatformMeta 表示清除该平台的元信息
+func (m *ConfigManager) SavePlatformMeta(providerID string, meta PlatformMeta) error {
+	cfg, err := m.LoadConfig()
+	if err != nil {
+		cfg = &AppConfig{}
+	}
+	if cfg.PlatformMeta == nil {
+		cfg.PlatformMeta = make(map[string]PlatformMeta)
+	}
+	if meta.ConnectedVia == "" {
+		delete(cfg.PlatformMeta, providerID)
+	} else {
+		cfg.PlatformMeta[providerID] = meta
+	}
+	return m.SaveConfig(cfg)
+}
+
+// GetAllPlatformMeta 获取所有平台的连接元信息
+func (m *ConfigManager) GetAllPlatformMeta() map[string]PlatformMeta {
+	cfg, err := m.LoadConfig()
+	if err != nil || cfg.PlatformMeta == nil {
+		return make(map[string]PlatformMeta)
+	}
+	return cfg.PlatformMeta
 }
 
 // MigrateToSites 确保 Sites 列表存在

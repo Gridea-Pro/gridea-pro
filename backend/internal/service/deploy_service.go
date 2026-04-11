@@ -17,6 +17,7 @@ type DeployService struct {
 	settingRepo      domain.SettingRepository
 	renderer         *engine.Engine // Injected to trigger site build before deploy
 	cdnUploadService *CdnUploadService
+	oauthService     *OAuthService // 用于从 Keychain 补全凭证
 	appDir           string
 	mu               sync.Mutex
 	isDeploying      bool
@@ -27,6 +28,11 @@ func NewDeployService(settingRepo domain.SettingRepository, appDir string) *Depl
 		settingRepo: settingRepo,
 		appDir:      appDir,
 	}
+}
+
+// SetOAuthService 注入 OAuthService（用于从 Keychain 读取凭证）
+func (s *DeployService) SetOAuthService(oauthSvc *OAuthService) {
+	s.oauthService = oauthSvc
 }
 
 // SetRenderer injects the RendererService into DeployService
@@ -57,11 +63,15 @@ func (s *DeployService) DeployToRemote(ctx context.Context) error {
 
 	s.log(ctx, "Starting deployment check...")
 
-	// 1. Get Settings safely
+	// 1. Get Settings safely，并从 Keychain 补全凭证
 	setting, err := s.settingRepo.GetSetting(ctx)
 	if err != nil {
 		s.log(ctx, fmt.Sprintf("Failed to load settings: %v", err))
 		return err
+	}
+	if s.oauthService != nil {
+		creds := s.oauthService.GetAllCredentials()
+		setting.InjectCredentials(creds)
 	}
 
 	s.log(ctx, fmt.Sprintf("Deploying to domain: %s", setting.Domain()))

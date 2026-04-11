@@ -8,6 +8,7 @@ import (
 	"gridea-pro/backend/internal/engine"
 	"gridea-pro/backend/internal/repository"
 	"gridea-pro/backend/internal/service"
+	"gridea-pro/backend/internal/service/credential"
 	"path/filepath"
 	"sync"
 )
@@ -34,6 +35,7 @@ type AppServices struct {
 	PwaSetting *PwaSettingFacade
 	CdnUpload  *CdnUploadFacade
 	AI         *AIFacade
+	OAuth      *OAuthFacade
 	// Internal services for event/update handling
 	Services struct {
 		Category *service.CategoryService
@@ -88,6 +90,9 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	cm, _ := config.NewConfigManager()
 	aiSettingRepo := repository.NewAISettingRepository(cm)
 	aiUsageRepo := repository.NewAIUsageRepository(cm.AppConfigDir())
+	// 凭证服务：系统 Keychain（Linux 无 libsecret 时降级为加密文件）
+	credService := credential.New(cm.AppConfigDir())
+	oauthService := service.NewOAuthService(credService, cm)
 
 	// 2. Init Services
 	tagService := service.NewTagService(tagRepo)
@@ -119,6 +124,7 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	cdnUploadService := service.NewCdnUploadService(cdnSettingRepo, settingRepo, appDir)
 	deployService.SetCdnUploadService(cdnUploadService)
 	deployService.SetRenderer(rendererService)
+	deployService.SetOAuthService(oauthService)
 	aiService := service.NewAIService(aiSettingRepo, settingRepo, aiUsageRepo)
 
 	// 3. Wrap with Facades
@@ -131,7 +137,7 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 		Deploy:   NewDeployFacade(deployService),
 		Renderer: NewRendererFacade(rendererService),
 		Theme:    NewThemeFacade(themeService),
-		Setting:  NewSettingFacade(settingService),
+		Setting:  NewSettingFacade(settingService, oauthService),
 		Comment:    NewCommentFacade(commentService),
 		Memo:       NewMemoFacade(memoService),
 		Preview:    NewPreviewFacade(previewService),
@@ -140,6 +146,7 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 		PwaSetting: NewPwaSettingFacade(pwaSettingRepo, appDir),
 		CdnUpload:  NewCdnUploadFacade(cdnUploadService),
 		AI:         NewAIFacade(aiSettingRepo, aiService),
+		OAuth:      NewOAuthFacade(oauthService),
 		Services: struct {
 			Category  *service.CategoryService
 			Post      *service.PostService
@@ -237,6 +244,7 @@ func (s *AppServices) UpdateAppDir(appDir string) {
 	s.CdnUpload.internal = newServices.Services.CdnUpload
 	s.AI.repo = newServices.AI.repo
 	s.AI.service = newServices.AI.service
+	// OAuth 服务是应用级的（跨站点共享），UpdateAppDir 时无需重建
 	// Scaffold service doesn't need update generally, but good to keep in sync
 	s.Services.Scaffold = newServices.Services.Scaffold
 	s.Services.Comment = newServices.Services.Comment
