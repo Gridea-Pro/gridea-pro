@@ -19,13 +19,7 @@
             <div class="flex items-center gap-2.5">
               <span class="text-base font-bold text-foreground">{{ activePlatformData.name }}</span>
               <!-- 状态 chip -->
-              <template v-if="activeStatus?.connected && activeStatus?.connectedVia === 'oauth'">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-[11px] font-medium">
-                  <span class="size-1.5 rounded-full bg-green-500 inline-block"></span>
-                  {{ activeStatus.username || t('settings.network.connected') }}
-                </span>
-              </template>
-              <template v-else-if="activeStatus?.connected">
+              <template v-if="activeStatus?.connected">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-[11px] font-medium">
                   <span class="size-1.5 rounded-full bg-green-500 inline-block"></span>
                   {{ t('settings.network.connected') }}
@@ -56,10 +50,18 @@
           </div>
         </div>
 
-        <!-- 已连接：配置信息展示 -->
-        <div v-if="activeStatus?.connected && activeConfigItems.length > 0"
+        <!-- 已连接：用户信息 + 配置信息展示 -->
+        <div v-if="activeStatus?.connected"
           class="px-6 pb-5 -mt-1">
           <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 bg-muted/40 rounded-lg">
+            <!-- 用户头像 + 用户名 -->
+            <div v-if="activeStatus?.username" class="flex items-center gap-2 text-xs">
+              <img v-if="activeStatus?.avatarUrl" :src="activeStatus.avatarUrl"
+                class="size-5 rounded-full flex-shrink-0" alt="" />
+              <span class="font-semibold text-foreground">{{ activeStatus.username }}</span>
+            </div>
+            <!-- 分隔点 -->
+            <span v-if="activeStatus?.username && activeConfigItems.length > 0" class="text-muted-foreground/30">·</span>
             <div v-for="item in activeConfigItems" :key="item.label"
               class="flex items-center gap-1.5 text-xs text-muted-foreground">
               <component :is="item.icon" class="size-3.5 flex-shrink-0 opacity-60" />
