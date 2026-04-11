@@ -311,14 +311,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sa
 .card{text-align:center;padding:48px 56px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:24px;backdrop-filter:blur(20px);max-width:420px;width:100%}
 .brand{margin-bottom:32px}
 .brand img{width:56px;height:56px;border-radius:14px;margin-bottom:10px}
-.brand-name{font-size:15px;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:-.2px}
+.brand-name{font-size:20px;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:-.2px}
 .status-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
 .status-icon.ok{background:linear-gradient(135deg,#34c759,#30d158)}
 .status-icon.fail{background:linear-gradient(135deg,#ff3b30,#ff453a)}
 .status-icon svg{width:26px;height:26px;color:#fff}
-.title{font-size:20px;font-weight:700;color:#fff;margin-bottom:16px}
+.title{font-size:16px;font-weight:700;color:#fff;margin-bottom:16px}
 .user-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px}
-.user-row img{width:32px;height:32px;border-radius:50%;border:2px solid rgba(52,199,89,.6)}
+.user-row img{width:24px;height:24px;border-radius:50%;border:1px solid rgba(255, 255, 255)}
 .user-row span{font-size:14px;font-weight:600;color:rgba(255,255,255,.85)}
 .hint{font-size:13px;color:rgba(255,255,255,.4);line-height:1.6}
 .err{font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;word-break:break-all}
@@ -326,7 +326,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sa
 .footer{font-size:11px;color:rgba(255,255,255,.2)}`
 
 	// Gridea Pro logo (base64 encoded small PNG placeholder — replace with actual logo URL in production)
-	const logoURL = "https://www.gridea.pro/gridea-pro.png"
+	const logoURL = "https://www.gridea.pro/appicon.png"
 
 	if success {
 		name := username
@@ -339,7 +339,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sa
 		} else {
 			userHTML = `<div class="user-row"><span>` + name + ` 已连接</span></div>`
 		}
-		return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Gridea Pro - 授权成功</title>
+		return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Gridea Pro - 授权成功</title><link rel="icon" href="https://www.gridea.pro/favicon.ico">
 <style>` + pageStyle + `</style></head>
 <body><div class="card">
 <div class="brand"><img src="` + logoURL + `" alt="Gridea Pro" onerror="this.style.display='none'" /><div class="brand-name">Gridea Pro</div></div>
