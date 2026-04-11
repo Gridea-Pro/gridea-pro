@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -14,7 +13,76 @@ import (
 	"github.com/dop251/goja"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
+	"github.com/typomedia/lessgo/less"
 )
+
+type lessFileReader struct {
+	baseDir string
+}
+
+func (r *lessFileReader) ReadFile(path string) ([]byte, error) {
+	if filepath.IsAbs(path) {
+		return os.ReadFile(path)
+	}
+	return os.ReadFile(filepath.Join(r.baseDir, path))
+}
+
+func inlineLess(content string, baseDir string, visited map[string]bool) (string, error) {
+	importRe := regexp.MustCompile(`@import\s+["']([^"']+)["'];?`)
+
+	var result bytes.Buffer
+	lastEnd := 0
+
+	matches := importRe.FindAllStringSubmatchIndex(content, -1)
+
+	for _, match := range matches {
+		result.WriteString(content[lastEnd:match[0]])
+
+		importPath := content[match[2]:match[3]]
+
+		if strings.HasPrefix(importPath, "http://") ||
+			strings.HasPrefix(importPath, "https://") ||
+			strings.HasPrefix(importPath, "//") ||
+			strings.HasPrefix(importPath, "~") {
+			result.WriteString(content[match[0]:match[1]])
+			lastEnd = match[1]
+			continue
+		}
+
+		if !strings.HasSuffix(importPath, ".less") {
+			importPath = importPath + ".less"
+		}
+
+		fullPath := importPath
+		if !filepath.IsAbs(importPath) {
+			fullPath = filepath.Join(baseDir, importPath)
+		}
+
+		absPath, _ := filepath.Abs(fullPath)
+		if visited[absPath] {
+			lastEnd = match[1]
+			continue
+		}
+		visited[absPath] = true
+
+		importedContent, err := os.ReadFile(fullPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read import %s: %w", importPath, err)
+		}
+
+		importedBaseDir := filepath.Dir(fullPath)
+		inlined, err := inlineLess(string(importedContent), importedBaseDir, visited)
+		if err != nil {
+			return "", err
+		}
+
+		result.WriteString(inlined)
+		lastEnd = match[1]
+	}
+
+	result.WriteString(content[lastEnd:])
+	return result.String(), nil
+}
 
 // AssetManager handles theme and site asset operations
 type AssetManager struct {
@@ -48,12 +116,10 @@ func (m *AssetManager) CopyThemeAssets(buildDir, themeName string) error {
 	_ = os.WriteFile(themeCacheFile, []byte(themeName), 0644)
 
 	// 1. 检查并编译 LESS 文件
-	// 1. 检查并编译 LESS 文件
 	lessPath := filepath.Join(assetsPath, DirStyles, FileMainLess)
 	hasLess := false
 	if _, err := os.Stat(lessPath); err == nil {
 		hasLess = true
-		// Use compileLess which has optimization
 		if err := m.compileLess(lessPath, buildDir); err != nil {
 			m.logger.Warn("LESS 编译失败", "error", err)
 		}
@@ -97,16 +163,13 @@ func (m *AssetManager) CopyThemeAssets(buildDir, themeName string) error {
 
 // compileLess 编译 LESS 文件为 CSS
 func (m *AssetManager) compileLess(lessPath, buildDir string) error {
-	// 输出路径
 	cssPath := filepath.Join(buildDir, DirStyles, FileMainCSS)
 
-	// 确保输出目录存在
 	if err := os.MkdirAll(filepath.Dir(cssPath), 0755); err != nil {
 		return fmt.Errorf("创建输出目录失败: %w", err)
 	}
 
 	// Optimization: Check if recompilation is needed
-	// If main.css exists and is newer than both main.less and config.json
 	lessInfo, errLess := os.Stat(lessPath)
 	configInfo, errConf := os.Stat(filepath.Join(m.appDir, "config", "config.json"))
 	if errLess == nil {
@@ -122,15 +185,36 @@ func (m *AssetManager) compileLess(lessPath, buildDir string) error {
 		}
 	}
 
-	// 调用 lessc 命令编译
-	cmd := exec.Command("lessc", lessPath, cssPath)
-	output, err := cmd.CombinedOutput()
+	// 读取 LESS 文件内容
+	lessContent, err := os.ReadFile(lessPath)
 	if err != nil {
-		return fmt.Errorf("lessc 编译失败: %w\n输出: %s", err, string(output))
+		return fmt.Errorf("读取 LESS 文件失败: %w", err)
+	}
+
+	// 内联所有 @import 语句
+	stylesDir := filepath.Dir(lessPath)
+	visited := make(map[string]bool)
+	absPath, _ := filepath.Abs(lessPath)
+	visited[absPath] = true
+
+	inlinedContent, err := inlineLess(string(lessContent), stylesDir, visited)
+	if err != nil {
+		return fmt.Errorf("LESS import 内联失败: %w", err)
+	}
+
+	// 使用 lessgo 编译
+	m.logger.Info("正在编译 LESS 文件", "less", lessPath, "css", cssPath)
+	cssContent, err := less.Render(inlinedContent, map[string]interface{}{"compress": false})
+	if err != nil {
+		return fmt.Errorf("LESS 编译失败: %w", err)
+	}
+
+	// 写入 CSS 文件
+	if err := os.WriteFile(cssPath, []byte(cssContent), 0644); err != nil {
+		return fmt.Errorf("写入 CSS 文件失败: %w", err)
 	}
 
 	// 检查并应用 style-override.js
-	// 从 lessPath 推导主题路径 (lessPath 位于 themeDir/assets/styles/main.less)
 	themePath := filepath.Dir(filepath.Dir(filepath.Dir(lessPath)))
 	overridePath := filepath.Join(themePath, FileStyleOverride)
 	if _, err := os.Stat(overridePath); err == nil {
@@ -138,16 +222,9 @@ func (m *AssetManager) compileLess(lessPath, buildDir string) error {
 		customCSS, err := m.applyStyleOverride(overridePath)
 		if err != nil {
 			m.logger.Warn("应用 style-override.js 失败", "error", err)
-		} else {
-			// 读取编译后的 CSS
-			cssContent, err := os.ReadFile(cssPath)
-			if err != nil {
-				return fmt.Errorf("读取 CSS 文件失败: %w", err)
-			}
-
-			// 追加自定义 CSS
-			cssContent = append(cssContent, []byte("\n"+customCSS)...)
-			if err := os.WriteFile(cssPath, cssContent, 0644); err != nil {
+		} else if customCSS != "" {
+			cssContent = cssContent + "\n/* style-override */\n" + customCSS
+			if err := os.WriteFile(cssPath, []byte(cssContent), 0644); err != nil {
 				return fmt.Errorf("写入 CSS 文件失败: %w", err)
 			}
 			m.logger.Info("自定义样式应用成功")
@@ -324,12 +401,31 @@ func copyDir(src, dst string) error {
 
 // BundleCSS 合并压缩主题 CSS 文件，减少 HTTP 请求
 func (m *AssetManager) BundleCSS(buildDir, themePath string) error {
-	// 1. 读取 head.html 模板，提取 CSS 文件列表和顺序
-	headPath := filepath.Join(themePath, DirTemplates, "partials", "head.html")
-	headContent, err := os.ReadFile(headPath)
-	if err != nil {
-		return fmt.Errorf("读取 head.html 失败: %w", err)
+	// 支持多种模板引擎的 head 文件位置
+	headPaths := []string{
+		filepath.Join(themePath, DirTemplates, "partials", "head.html"),
+		filepath.Join(themePath, DirTemplates, "partials", "head.ejs"),
+		filepath.Join(themePath, DirTemplates, "includes", "head.html"),
+		filepath.Join(themePath, DirTemplates, "includes", "head.ejs"),
+		filepath.Join(themePath, DirTemplates, "_blocks", "head.html"),
+		filepath.Join(themePath, DirTemplates, "_blocks", "head.ejs"),
 	}
+
+	var headContent []byte
+	var headPath string
+	var err error
+	for _, p := range headPaths {
+		headContent, err = os.ReadFile(p)
+		if err == nil {
+			headPath = p
+			break
+		}
+	}
+	if headContent == nil {
+		m.logger.Info("未找到 head 模板文件，跳过 CSS 合并")
+		return nil
+	}
+	m.logger.Info("使用 head 模板", "path", headPath)
 
 	// 提取 /styles/xxx.css 引用
 	cssRefRe := regexp.MustCompile(`href="/styles/([\w.\-]+\.css)"`)
