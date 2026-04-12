@@ -516,7 +516,7 @@ const BranchIcon = { template: `<svg viewBox="0 0 24 24" fill="none" stroke="cur
 const platforms = computed(() => [
   { id: 'github', name: 'GitHub Pages', color: '#24292f', icon: GitHubIcon, hasOAuth: true, profileUrl: 'https://github.com/', description: t('settings.network.githubDesc') },
   { id: 'netlify', name: 'Netlify', color: '#00c7b7', icon: NetlifyIcon, hasOAuth: true, profileUrl: '', description: t('settings.network.netlifyDesc') },
-  { id: 'vercel', name: 'Vercel', color: '#000000', icon: VercelIcon, hasOAuth: false, profileUrl: '', description: t('settings.network.vercelDesc') },
+  { id: 'vercel', name: 'Vercel', color: '#000000', icon: VercelIcon, hasOAuth: true, profileUrl: 'https://vercel.com/', description: t('settings.network.vercelDesc') },
   { id: 'gitee', name: 'Gitee Pages', color: '#c71d23', icon: GiteeIcon, hasOAuth: true, profileUrl: 'https://gitee.com/', description: t('settings.network.giteeDesc') },
   { id: 'coding', name: 'Coding Pages', color: '#0066ff', icon: CodingIcon, hasOAuth: false, profileUrl: '', description: t('settings.network.codingDesc') },
   { id: 'sftp', name: 'SFTP / FTP', color: '#5856d6', icon: ServerIcon, hasOAuth: false, profileUrl: '', description: t('settings.network.sftpDesc') },

@@ -42,10 +42,16 @@ type Provider struct {
 	// EnsureDefaultRepo 确保用户的默认部署仓库存在（不存在则创建，已存在则跳过）
 	// 返回默认仓库名，或错误（不影响授权流程）
 	EnsureDefaultRepo func(client *http.Client, token, username string) (repoName string, err error)
+	// CustomBuildAuthURL 某些平台（如 Vercel Integration）的授权 URL 格式与标准 OAuth 不同，
+	// 如设置则使用此函数构建授权 URL
+	CustomBuildAuthURL func(p *Provider, redirectURI, state string) string
 }
 
 // BuildAuthURL 构建授权 URL
 func (p *Provider) BuildAuthURL(redirectURI, state string) string {
+	if p.CustomBuildAuthURL != nil {
+		return p.CustomBuildAuthURL(p, redirectURI, state)
+	}
 	params := url.Values{
 		"client_id":     {p.ClientID},
 		"redirect_uri":  {redirectURI},
@@ -150,6 +156,10 @@ var (
 	giteeClientSecret   = "dde3869c9c89edabb7b9a20b61044038c31fadeeacc2ca74565a218ba19209c8"
 	netlifyClientID     = "YOUR_NETLIFY_CLIENT_ID"
 	netlifyClientSecret = "YOUR_NETLIFY_CLIENT_SECRET"
+	vercelClientID      = "oac_Dveh2ueHQLSym2UcJB1vRzXD"
+	vercelClientSecret  = "gECj7VpFOS7fmH7cHGoxC4L1"
+	// vercelIntegrationSlug 是在 Vercel Integration Console 创建时指定的 slug
+	vercelIntegrationSlug = "gridea-pro"
 )
 
 // Providers 所有支持 OAuth 的平台
@@ -240,6 +250,40 @@ var Providers = map[string]*Provider{
 			return UserInfo{Username: name, AvatarURL: v.AvatarURL, Email: v.Email}
 		},
 	},
+	"vercel": {
+		ID:           "vercel",
+		AuthURL:      "https://vercel.com/integrations/" + vercelIntegrationSlug + "/new",
+		TokenURL:     "https://api.vercel.com/v2/oauth/access_token",
+		UserInfoURL:  "https://api.vercel.com/v2/user",
+		ClientID:     vercelClientID,
+		ClientSecret: vercelClientSecret,
+		// Vercel Integration 的 redirect URL 必须与在 Vercel 后台注册的完全一致（含端口）
+		FixedPort: 53683,
+		// Vercel Integration 的授权 URL 不使用标准 OAuth 参数，仅需 state
+		CustomBuildAuthURL: func(p *Provider, redirectURI, state string) string {
+			return p.AuthURL + "?state=" + state
+		},
+		UserInfoParser: func(body []byte) UserInfo {
+			var wrapper struct {
+				User struct {
+					Username string `json:"username"`
+					Name     string `json:"name"`
+					Email    string `json:"email"`
+					Avatar   string `json:"avatar"`
+				} `json:"user"`
+			}
+			json.Unmarshal(body, &wrapper)
+			name := wrapper.User.Username
+			if name == "" {
+				name = wrapper.User.Name
+			}
+			avatarURL := ""
+			if wrapper.User.Avatar != "" {
+				avatarURL = "https://api.vercel.com/www/avatar/" + wrapper.User.Avatar + "?s=160"
+			}
+			return UserInfo{Username: name, AvatarURL: avatarURL, Email: wrapper.User.Email}
+		},
+	},
 }
 
 // IsOAuthSupported 平台是否支持 OAuth
@@ -259,5 +303,5 @@ func IsOAuthConfigured(providerID string) bool {
 
 // SupportedProviders 返回所有支持 OAuth 的平台 ID 列表
 func SupportedProviders() []string {
-	return []string{"github", "gitee", "netlify"}
+	return []string{"github", "gitee", "netlify", "vercel"}
 }
