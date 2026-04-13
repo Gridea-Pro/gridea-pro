@@ -282,8 +282,6 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     flex: 1;
-    overflow-y: hidden;
-    overflow-x: hidden;
 
     .post-title {
         width: 728px;

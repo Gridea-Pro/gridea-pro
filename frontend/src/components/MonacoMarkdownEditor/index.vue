@@ -4,7 +4,7 @@
     margin: '0 auto',
     width: props.isPostPage ? '728px' : '100%',
     position: 'relative',
-    overflow: 'hidden'
+    overflow: 'visible'
   }">
     <div ref="elRef" class="monaco-editor-container w-full h-full" style="flex: 1;" />
     <!-- 模板级占位符，比 CSS 方案更可靠 -->
@@ -369,5 +369,23 @@ defineExpose({
   .selected-text {
     background-color: #FFEBB7 !important;
   }
+}
+</style>
+
+<style>
+/* 全局强制修复 Monaco Command Palette (F1) 的居中和被裁切问题 */
+.quick-input-widget {
+  position: fixed !important;
+  top: 15vh !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  margin-left: 0 !important;
+  width: 600px !important;
+  max-width: 90vw !important;
+}
+
+/* 防止可能的列表动画冲突导致错位 */
+.quick-input-widget .monaco-list-row {
+  transform: none !important;
 }
 </style>
