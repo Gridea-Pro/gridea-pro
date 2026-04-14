@@ -17,16 +17,16 @@ import (
 var WailsContext context.Context
 
 type AppServices struct {
-	mu       sync.RWMutex
-	Category *CategoryFacade
-	Post     *PostFacade
-	Menu     *MenuFacade
-	Link     *LinkFacade
-	Tag      *TagFacade
-	Deploy   *DeployFacade
-	Renderer *RendererFacade
-	Theme    *ThemeFacade
-	Setting  *SettingFacade
+	mu         sync.RWMutex
+	Category   *CategoryFacade
+	Post       *PostFacade
+	Menu       *MenuFacade
+	Link       *LinkFacade
+	Tag        *TagFacade
+	Deploy     *DeployFacade
+	Renderer   *RendererFacade
+	Theme      *ThemeFacade
+	Setting    *SettingFacade
 	Comment    *CommentFacade
 	Memo       *MemoFacade
 	Preview    *PreviewFacade
@@ -38,17 +38,17 @@ type AppServices struct {
 	OAuth      *OAuthFacade
 	// Internal services for event/update handling
 	Services struct {
-		Category *service.CategoryService
-		Post     *service.PostService
-		Menu     *service.MenuService
-		Link     *service.LinkService
-		Tag      *service.TagService
-		Deploy   *service.DeployService
-		Renderer *engine.Engine
-		Theme    *service.ThemeService
-		Setting  *service.SettingService
-		Scaffold *service.ScaffoldService
-		Comment  *service.CommentService
+		Category  *service.CategoryService
+		Post      *service.PostService
+		Menu      *service.MenuService
+		Link      *service.LinkService
+		Tag       *service.TagService
+		Deploy    *service.DeployService
+		Renderer  *engine.Engine
+		Theme     *service.ThemeService
+		Setting   *service.SettingService
+		Scaffold  *service.ScaffoldService
+		Comment   *service.CommentService
 		Memo      *service.MemoService
 		Preview   *service.PreviewService
 		CdnUpload *service.CdnUploadService
@@ -95,8 +95,8 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	oauthService := service.NewOAuthService(credService, cm)
 
 	// 2. Init Services
-	tagService := service.NewTagService(tagRepo)
-	categoryService := service.NewCategoryService(categoryRepo)
+	tagService := service.NewTagService(tagRepo, postRepo)
+	categoryService := service.NewCategoryService(categoryRepo, postRepo)
 	postService := service.NewPostService(postRepo, tagRepo, tagService, categoryService, mediaRepo)
 	menuService := service.NewMenuService(menuRepo)
 	linkService := service.NewLinkService(linkRepo)
@@ -129,15 +129,15 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 
 	// 3. Wrap with Facades
 	return &AppServices{
-		Category: NewCategoryFacade(categoryService),
-		Post:     NewPostFacade(postService),
-		Menu:     NewMenuFacade(menuService),
-		Link:     NewLinkFacade(linkService),
-		Tag:      NewTagFacade(tagService),
-		Deploy:   NewDeployFacade(deployService),
-		Renderer: NewRendererFacade(rendererService),
-		Theme:    NewThemeFacade(themeService),
-		Setting:  NewSettingFacade(settingService, oauthService),
+		Category:   NewCategoryFacade(categoryService, postRepo),
+		Post:       NewPostFacade(postService),
+		Menu:       NewMenuFacade(menuService),
+		Link:       NewLinkFacade(linkService),
+		Tag:        NewTagFacade(tagService, postRepo),
+		Deploy:     NewDeployFacade(deployService),
+		Renderer:   NewRendererFacade(rendererService),
+		Theme:      NewThemeFacade(themeService),
+		Setting:    NewSettingFacade(settingService, oauthService),
 		Comment:    NewCommentFacade(commentService),
 		Memo:       NewMemoFacade(memoService),
 		Preview:    NewPreviewFacade(previewService),
@@ -163,17 +163,17 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 			Preview   *service.PreviewService
 			CdnUpload *service.CdnUploadService
 		}{
-			Category: categoryService,
-			Post:     postService,
-			Menu:     menuService,
-			Link:     linkService,
-			Tag:      tagService,
-			Deploy:   deployService,
-			Renderer: rendererService,
-			Theme:    themeService,
-			Setting:  settingService,
-			Scaffold: scaffoldService,
-			Comment:  commentService,
+			Category:  categoryService,
+			Post:      postService,
+			Menu:      menuService,
+			Link:      linkService,
+			Tag:       tagService,
+			Deploy:    deployService,
+			Renderer:  rendererService,
+			Theme:     themeService,
+			Setting:   settingService,
+			Scaffold:  scaffoldService,
+			Comment:   commentService,
 			Memo:      memoService,
 			Preview:   previewService,
 			CdnUpload: cdnUploadService,

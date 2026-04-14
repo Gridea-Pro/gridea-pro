@@ -130,11 +130,14 @@ export function useTag() {
                 color: form.color || '',
                 originalName: form.originalName || '',
             })
-            const newTags = await SaveTagFromFrontend(tagForm)
+            const result = await SaveTagFromFrontend(tagForm)
 
-            if (newTags) {
-                siteStore.tags = newTags
-                tagList.value = [...newTags]
+            if (result) {
+                siteStore.tags = result.tags
+                tagList.value = [...result.tags]
+                if (result.posts) {
+                    siteStore.posts = result.posts
+                }
                 toast.success(t('tag.saved'))
                 visible.value = false
             }
@@ -153,10 +156,13 @@ export function useTag() {
             const tag = siteStore.tags.find(t => t.slug === tagToDelete.value)
             if (tag) {
                 try {
-                    const newTags = await DeleteTagFromFrontend(tag.name)
-                    if (newTags) {
-                        siteStore.tags = newTags
-                        tagList.value = [...newTags]
+                    const result = await DeleteTagFromFrontend(tag.name)
+                    if (result) {
+                        siteStore.tags = result.tags
+                        tagList.value = [...result.tags]
+                        if (result.posts) {
+                            siteStore.posts = result.posts
+                        }
                         toast.success(t('tag.deleted'))
                     }
                 } catch (e: any) {

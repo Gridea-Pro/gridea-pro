@@ -9,10 +9,11 @@ import (
 // TagFacade wraps TagService
 type TagFacade struct {
 	internal *service.TagService
+	postRepo domain.PostRepository
 }
 
-func NewTagFacade(s *service.TagService) *TagFacade {
-	return &TagFacade{internal: s}
+func NewTagFacade(s *service.TagService, postRepo domain.PostRepository) *TagFacade {
+	return &TagFacade{internal: s, postRepo: postRepo}
 }
 
 func (f *TagFacade) LoadTags() ([]domain.Tag, error) {
@@ -59,33 +60,61 @@ type TagForm struct {
 	OriginalName string `json:"originalName"`
 }
 
+// TagCascadeResult 标签操作返回结果（含更新后的文章列表）
+type TagCascadeResult struct {
+	Tags  []domain.Tag  `json:"tags"`
+	Posts []domain.Post `json:"posts"`
+}
+
 // SaveTagFromFrontend accepts a TagForm directly from frontend
-func (f *TagFacade) SaveTagFromFrontend(form TagForm) ([]domain.Tag, error) {
+func (f *TagFacade) SaveTagFromFrontend(form TagForm) (*TagCascadeResult, error) {
 	newTag := domain.Tag{
 		Name:  form.Name,
 		Slug:  form.Slug,
 		Color: form.Color,
 	}
 
-	// Use SaveTag to handle creation/update
 	if err := f.SaveTag(newTag, form.OriginalName); err != nil {
 		return nil, err
 	}
 
-	// Return updated list
-	return f.LoadTags()
+	tags, err := f.LoadTags()
+	if err != nil {
+		return nil, err
+	}
+
+	posts, _, err := f.postRepo.List(ctx(), 1, 10000)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TagCascadeResult{Tags: tags, Posts: posts}, nil
 }
 
-// DeleteTagFromFrontend accepts a tag name (or slug if logic changed) and returns updated list
-func (f *TagFacade) DeleteTagFromFrontend(name string) ([]domain.Tag, error) {
-	// First, if name is a slug, we might need to find the name, but current logic uses name for deletion
-	// Use DeleteTag method
+// DeleteTagFromFrontend accepts a tag name and returns updated list
+func (f *TagFacade) DeleteTagFromFrontend(name string) (*TagCascadeResult, error) {
 	if err := f.DeleteTag(name); err != nil {
 		return nil, err
 	}
 
-	// Return updated list
-	return f.LoadTags()
+	tags, err := f.LoadTags()
+	if err != nil {
+		return nil, err
+	}
+
+	posts, _, err := f.postRepo.List(ctx(), 1, 10000)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TagCascadeResult{Tags: tags, Posts: posts}, nil
+}
+
+func ctx() context.Context {
+	if WailsContext != nil {
+		return WailsContext
+	}
+	return context.TODO()
 }
 
 // RegisterEvents 注册标签相关事件监听器

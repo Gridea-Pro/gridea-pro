@@ -89,8 +89,8 @@ func initServices(appDir string) *Services {
 	cdnSettingRepo := repository.NewCdnSettingRepository(appDir)
 
 	// Services
-	tagService := service.NewTagService(tagRepo)
-	categoryService := service.NewCategoryService(categoryRepo)
+	tagService := service.NewTagService(tagRepo, postRepo)
+	categoryService := service.NewCategoryService(categoryRepo, postRepo)
 	postService := service.NewPostService(postRepo, tagRepo, tagService, categoryService, mediaRepo)
 	menuService := service.NewMenuService(menuRepo)
 	linkService := service.NewLinkService(linkRepo)
