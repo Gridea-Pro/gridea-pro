@@ -63,6 +63,7 @@ export function useSelection() {
 
             if (updatedPosts) {
                 siteStore.posts = updatedPosts
+                EventsEmit('app-site-reload')
                 toast.success(t('article.delete'))
                 selectedPost.value = []
             }

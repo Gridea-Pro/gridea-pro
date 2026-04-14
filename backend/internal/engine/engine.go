@@ -159,6 +159,9 @@ func (s *Engine) RenderAll(ctx context.Context) error {
 	}
 
 	buildDir := filepath.Join(s.appDir, DirOutput)
+
+	// 清理旧的输出文件，避免已删除的文章残留 HTML
+	_ = os.RemoveAll(buildDir)
 	_ = os.MkdirAll(buildDir, 0755)
 
 	var errs error
