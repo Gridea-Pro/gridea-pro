@@ -74,7 +74,11 @@
         "previewServiceFailed": "Falha ao obter o serviço de visualização",
         "selectLocalImage": "Clique para selecionar uma imagem local",
         "contextMenuTip": "Clique com o botão direito no editor para abrir o menu de contexto",
-        "editorPlaceholder": "Escreva algo..."
+        "editorPlaceholder": "Escreva algo...",
+        "todayArticles": "Hoje",
+        "monthArticles": "Este Mês",
+        "allArticles": "Todos os Artigos",
+        "allCategories": "Todas as Categorias"
     },
     "tag": {
         "new": "Nova",

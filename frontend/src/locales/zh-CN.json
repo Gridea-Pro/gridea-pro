@@ -74,7 +74,11 @@
     "previewServiceFailed": "预览服务获取失败",
     "selectLocalImage": "点击选择本地图片",
     "contextMenuTip": "编辑区域右键能弹出快捷菜单哦",
-    "editorPlaceholder": "随便写点什么..."
+        "editorPlaceholder": "随便写点什么...",
+        "todayArticles": "今日文章",
+        "monthArticles": "本月文章",
+        "allArticles": "全部文章",
+        "allCategories": "全部分类"
   },
   "tag": {
     "new": "新标签",

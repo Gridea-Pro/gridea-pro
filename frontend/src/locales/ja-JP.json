@@ -74,7 +74,11 @@
         "previewServiceFailed": "プレビューサービスの取得に失敗しました",
         "selectLocalImage": "クリックしてローカル画像を選択",
         "contextMenuTip": "エディター領域を右クリックするとショートカットメニューが表示されます",
-        "editorPlaceholder": "何か書いてみましょう..."
+        "editorPlaceholder": "何か書いてみましょう...",
+        "todayArticles": "今日の記事",
+        "monthArticles": "今月の記事",
+        "allArticles": "全記事",
+        "allCategories": "全カテゴリ"
     },
     "tag": {
         "new": "新規タグ",

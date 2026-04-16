@@ -74,7 +74,11 @@
         "previewServiceFailed": "Impossible d'obtenir le service d'aperçu",
         "selectLocalImage": "Cliquez pour sélectionner une image locale",
         "contextMenuTip": "Faites un clic droit dans l'éditeur pour ouvrir le menu contextuel",
-        "editorPlaceholder": "Écrivez quelque chose..."
+        "editorPlaceholder": "Écrivez quelque chose...",
+        "todayArticles": "Aujourd'hui",
+        "monthArticles": "Ce Mois",
+        "allArticles": "Tous les Articles",
+        "allCategories": "Toutes les Catégories"
     },
     "tag": {
         "new": "Nouveau",
