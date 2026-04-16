@@ -14,12 +14,13 @@ import (
 )
 
 type TagService struct {
-	repo domain.TagRepository
-	mu   sync.RWMutex
+	repo     domain.TagRepository
+	postRepo domain.PostRepository
+	mu       sync.RWMutex
 }
 
-func NewTagService(repo domain.TagRepository) *TagService {
-	return &TagService{repo: repo}
+func NewTagService(repo domain.TagRepository, postRepo domain.PostRepository) *TagService {
+	return &TagService{repo: repo, postRepo: postRepo}
 }
 
 func (s *TagService) LoadTags(ctx context.Context) ([]domain.Tag, error) {
@@ -31,10 +32,10 @@ func (s *TagService) LoadTags(ctx context.Context) ([]domain.Tag, error) {
 
 func (s *TagService) SaveTag(ctx context.Context, tag domain.Tag, originalName string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	tags, err := s.repo.List(ctx)
 	if err != nil {
+		s.mu.Unlock()
 		return err
 	}
 
@@ -56,10 +57,19 @@ func (s *TagService) SaveTag(ctx context.Context, tag domain.Tag, originalName s
 	}
 
 	if existing != nil {
+		isRename := originalName != "" && existing.Name != tag.Name
 		existing.Name = tag.Name
 		existing.Slug = tag.Slug
 		existing.Color = tag.Color
-		return s.repo.Update(ctx, existing)
+		if err := s.repo.Update(ctx, existing); err != nil {
+			s.mu.Unlock()
+			return err
+		}
+		s.mu.Unlock()
+		if isRename {
+			return s.cascadeTagRename(ctx, originalName, tag.Name)
+		}
+		return nil
 	}
 
 	// Create new
@@ -67,30 +77,37 @@ func (s *TagService) SaveTag(ctx context.Context, tag domain.Tag, originalName s
 		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		id, err := gonanoid.Generate(alphabet, 6)
 		if err != nil {
+			s.mu.Unlock()
 			return err
 		}
 		tag.ID = id
 	}
-	tag.Used = true // Assuming creation means usage in this context
+	tag.Used = true
 
-	return s.repo.Create(ctx, &tag)
+	err = s.repo.Create(ctx, &tag)
+	s.mu.Unlock()
+	return err
 }
 
 func (s *TagService) DeleteTag(ctx context.Context, name string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
-	// We need ID to delete efficiently, but legacy API passed name.
-	// We must find ID first.
 	tags, err := s.repo.List(ctx)
 	if err != nil {
+		s.mu.Unlock()
 		return err
 	}
 	for _, t := range tags {
 		if t.Name == name {
-			return s.repo.Delete(ctx, t.ID)
+			if err := s.repo.Delete(ctx, t.ID); err != nil {
+				s.mu.Unlock()
+				return err
+			}
+			s.mu.Unlock()
+			return s.cascadeTagDelete(ctx, t.ID, name)
 		}
 	}
+	s.mu.Unlock()
 	return nil
 }
 
@@ -217,6 +234,68 @@ func (s *TagService) generateSlug(name string, existingTags []domain.Tag) string
 	}
 
 	return uniqueSlug
+}
+
+func (s *TagService) cascadeTagRename(ctx context.Context, oldName, newName string) error {
+	posts, _, err := s.postRepo.List(ctx, 1, 10000)
+	if err != nil {
+		return err
+	}
+	for i := range posts {
+		changed := false
+		for j, t := range posts[i].Tags {
+			if t == oldName {
+				posts[i].Tags[j] = newName
+				changed = true
+			}
+		}
+		if changed {
+			if err := s.postRepo.Update(ctx, &posts[i]); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (s *TagService) cascadeTagDelete(ctx context.Context, tagID, tagName string) error {
+	posts, _, err := s.postRepo.List(ctx, 1, 10000)
+	if err != nil {
+		return err
+	}
+	for i := range posts {
+		changed := false
+		var newTags []string
+		for _, t := range posts[i].Tags {
+			if t != tagName {
+				newTags = append(newTags, t)
+			} else {
+				changed = true
+			}
+		}
+		var newTagIDs []string
+		for _, id := range posts[i].TagIDs {
+			if id != tagID {
+				newTagIDs = append(newTagIDs, id)
+			} else {
+				changed = true
+			}
+		}
+		if changed {
+			posts[i].Tags = newTags
+			if posts[i].Tags == nil {
+				posts[i].Tags = []string{}
+			}
+			posts[i].TagIDs = newTagIDs
+			if posts[i].TagIDs == nil {
+				posts[i].TagIDs = []string{}
+			}
+			if err := s.postRepo.Update(ctx, &posts[i]); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 var TagColors = []string{

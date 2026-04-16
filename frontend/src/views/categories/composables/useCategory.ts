@@ -112,17 +112,20 @@ export function useCategory() {
         }
 
         try {
-            const categories = await SaveCategoryFromFrontend({
-                id: form.id,        // 空则新建，非空则按 ID 更新
+            const result = await SaveCategoryFromFrontend({
+                id: form.id,
                 name: form.name,
                 slug: form.slug,
                 description: form.description,
-                originalSlug: '',   // 已废弃，保留防能老客户端
+                originalSlug: '',
             })
 
-            if (categories) {
-                siteStore.categories = categories as ICategory[]
-                categoryList.value = [...categories as ICategory[]]
+            if (result) {
+                siteStore.categories = result.categories as ICategory[]
+                categoryList.value = [...result.categories as ICategory[]]
+                if (result.posts) {
+                    siteStore.posts = result.posts
+                }
                 toast.success(t('category.saved'))
                 visible.value = false
             }
@@ -139,10 +142,13 @@ export function useCategory() {
     const handleDelete = async () => {
         if (categoryToDelete.value) {
             try {
-                const categories = await DeleteCategoryFromFrontend(categoryToDelete.value)
-                if (categories) {
-                    siteStore.categories = categories as ICategory[]
-                    categoryList.value = [...categories as ICategory[]]
+                const result = await DeleteCategoryFromFrontend(categoryToDelete.value)
+                if (result) {
+                    siteStore.categories = result.categories as ICategory[]
+                    categoryList.value = [...result.categories as ICategory[]]
+                    if (result.posts) {
+                        siteStore.posts = result.posts
+                    }
                     toast.success(t('category.deleted'))
                 }
             } catch (e: any) {

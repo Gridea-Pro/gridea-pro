@@ -7,12 +7,13 @@ import (
 )
 
 type CategoryService struct {
-	repo domain.CategoryRepository
-	mu   sync.RWMutex
+	repo     domain.CategoryRepository
+	postRepo domain.PostRepository
+	mu       sync.RWMutex
 }
 
-func NewCategoryService(repo domain.CategoryRepository) *CategoryService {
-	return &CategoryService{repo: repo}
+func NewCategoryService(repo domain.CategoryRepository, postRepo domain.PostRepository) *CategoryService {
+	return &CategoryService{repo: repo, postRepo: postRepo}
 }
 
 func (s *CategoryService) LoadCategories(ctx context.Context) ([]domain.Category, error) {
@@ -31,22 +32,50 @@ func (s *CategoryService) SaveCategories(ctx context.Context, categories []domai
 // originalID: 若为空则创建新分类；若非空则按 ID 更新
 func (s *CategoryService) SaveCategory(ctx context.Context, category domain.Category, originalID string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if originalID == "" {
-		// 新建：Create 会自动生成 UUID
-		return s.repo.Create(ctx, &category)
+		err := s.repo.Create(ctx, &category)
+		s.mu.Unlock()
+		return err
 	}
 
-	// 更新：保持 ID 不变
+	existing, err := s.repo.GetByID(ctx, originalID)
+	if err != nil {
+		s.mu.Unlock()
+		return err
+	}
+
+	isRename := existing.Name != category.Name
 	category.ID = originalID
-	return s.repo.Update(ctx, originalID, &category)
+	err = s.repo.Update(ctx, originalID, &category)
+	s.mu.Unlock()
+	if err != nil {
+		return err
+	}
+
+	if isRename {
+		return s.cascadeCategoryRename(ctx, existing.Name, category.Name)
+	}
+	return nil
 }
 
 func (s *CategoryService) DeleteCategory(ctx context.Context, id string) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.repo.Delete(ctx, id)
+
+	existing, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		s.mu.Unlock()
+		return err
+	}
+	catName := existing.Name
+
+	err = s.repo.Delete(ctx, id)
+	s.mu.Unlock()
+	if err != nil {
+		return err
+	}
+
+	return s.cascadeCategoryDelete(ctx, id, catName)
 }
 
 // GetOrCreateCategory 按名称查找分类，不存在则创建（自动生成 UUID）
@@ -83,4 +112,66 @@ func (s *CategoryService) GetByID(ctx context.Context, id string) (*domain.Categ
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.repo.GetByID(ctx, id)
+}
+
+func (s *CategoryService) cascadeCategoryRename(ctx context.Context, oldName, newName string) error {
+	posts, _, err := s.postRepo.List(ctx, 1, 10000)
+	if err != nil {
+		return err
+	}
+	for i := range posts {
+		changed := false
+		for j, c := range posts[i].Categories {
+			if c == oldName {
+				posts[i].Categories[j] = newName
+				changed = true
+			}
+		}
+		if changed {
+			if err := s.postRepo.Update(ctx, &posts[i]); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (s *CategoryService) cascadeCategoryDelete(ctx context.Context, categoryID, categoryName string) error {
+	posts, _, err := s.postRepo.List(ctx, 1, 10000)
+	if err != nil {
+		return err
+	}
+	for i := range posts {
+		changed := false
+		var newCats []string
+		for _, c := range posts[i].Categories {
+			if c != categoryName {
+				newCats = append(newCats, c)
+			} else {
+				changed = true
+			}
+		}
+		var newCatIDs []string
+		for _, id := range posts[i].CategoryIDs {
+			if id != categoryID {
+				newCatIDs = append(newCatIDs, id)
+			} else {
+				changed = true
+			}
+		}
+		if changed {
+			posts[i].Categories = newCats
+			if posts[i].Categories == nil {
+				posts[i].Categories = []string{}
+			}
+			posts[i].CategoryIDs = newCatIDs
+			if posts[i].CategoryIDs == nil {
+				posts[i].CategoryIDs = []string{}
+			}
+			if err := s.postRepo.Update(ctx, &posts[i]); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
