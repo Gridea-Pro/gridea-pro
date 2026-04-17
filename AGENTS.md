@@ -11,8 +11,10 @@
 
 [可选的正文：问题描述、原因分析、解决方案]
 
-Closes #关联Issue号
+[Closes #关联Issue号]
 ```
+
+**注意**：`Closes #XX` 仅在解决 Issue 时才需要添加。如果不是解决 Issue，则不必附上此标签。
 
 ### 类型
 
@@ -140,6 +142,8 @@ git remote add upstream https://github.com/Gridea-Pro/gridea-pro.git
 ```bash
 git checkout -b <类型>/<issue号或描述>
 ```
+
+**例外**：如果用户明确指出在 main 上工作（如"直接在 main 修改"、"不需要开新分支"等），则直接在 main 分支进行修改，无需创建新分支。
 
 分支命名规范（参考 CONTRIBUTING.md）：
 
