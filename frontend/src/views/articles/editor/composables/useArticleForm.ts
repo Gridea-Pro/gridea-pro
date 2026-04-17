@@ -344,7 +344,7 @@ export function useArticleForm(articleFileName: () => string) {
         }
     }
 
-    const handleFileNameChange = (val: any) => {
+    const handleFileNameChange = (val: string) => {
         fileNameChanged = !!val
     }
 

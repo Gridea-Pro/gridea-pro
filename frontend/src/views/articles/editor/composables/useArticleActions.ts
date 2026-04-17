@@ -11,7 +11,7 @@
  * 从 ArticleUpdate.vue 精确迁移，零回归。
  */
 
-import { watch, onMounted, onUnmounted, type Ref, type ComputedRef } from 'vue'
+import { watch, type Ref, type ComputedRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSiteStore } from '@/stores/site'
 import { toast } from '@/helpers/toast'
@@ -48,6 +48,7 @@ export function useArticleActions(options: UseArticleActionsOptions) {
 
     const { t } = useI18n()
     const siteStore = useSiteStore()
+    const saveMenuEvent = 'editor:save'
 
     // ── 保存草稿 ──────────────────────────────────────────
 
@@ -129,11 +130,11 @@ export function useArticleActions(options: UseArticleActionsOptions) {
     // ── Wails Events 生命周期 ──────────────────────────────
 
     const setupEvents = () => {
-        EventsOff('click-menu-save')
+        EventsOff(saveMenuEvent)
         EventsOff('app-post-created')
         EventsOff('image-uploaded')
 
-        EventsOn('click-menu-save', () => {
+        EventsOn(saveMenuEvent, () => {
             normalSavePost()
         })
 
@@ -148,7 +149,7 @@ export function useArticleActions(options: UseArticleActionsOptions) {
     }
 
     const cleanupEvents = () => {
-        EventsOff('click-menu-save')
+        EventsOff(saveMenuEvent)
         EventsOff('app-post-created')
         EventsOff('image-uploaded')
     }

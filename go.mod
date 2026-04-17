@@ -15,7 +15,7 @@ require (
 	github.com/pkg/sftp v1.13.10
 	github.com/tdewolff/minify/v2 v2.24.10
 	github.com/typomedia/lessgo v0.1.1
-	github.com/wailsapp/wails/v2 v2.11.0
+	github.com/wailsapp/wails/v2 v2.12.0
 	github.com/yuin/goldmark v1.7.16
 	github.com/zalando/go-keyring v0.2.8
 	golang.org/x/crypto v0.48.0
@@ -27,6 +27,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
+	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect

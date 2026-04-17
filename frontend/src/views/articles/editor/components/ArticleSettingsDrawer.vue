@@ -10,8 +10,11 @@
                 <div class="space-y-2">
                     <Label>URL</Label>
                     <div class="flex gap-2">
-                        <Input v-model="form.fileName" class="flex-1"
-                            @change="(e: any) => $emit('fileNameChange', e)" />
+                        <Input
+                            :model-value="form.fileName"
+                            class="flex-1"
+                            @update:model-value="handleFileNameInput"
+                        />
                         <Button variant="outline" size="icon"
                             class="shrink-0 size-10 border-primary/20 text-primary/60 hover:text-primary hover:bg-primary/5 cursor-pointer"
                             :disabled="isGeneratingSlug"
@@ -29,7 +32,7 @@
                 <!-- Categories -->
                 <div class="space-y-2">
                     <Label>{{ $t('nav.category') }}</Label>
-                    <Select v-model="form.categoryId" @update:model-value="onCategoryChange">
+                    <Select :model-value="form.categoryId" @update:model-value="onCategoryChange">
                         <SelectTrigger class="w-full">
                             <SelectValue :placeholder="$t('memo.selectCategory')" />
                         </SelectTrigger>
@@ -134,13 +137,21 @@
                 <!-- Hide in List -->
                 <div class="flex items-center justify-between">
                     <Label>{{ $t('article.hideInList') }}</Label>
-                    <Switch v-model:checked="form.hideInList" size="sm" />
+                    <Switch
+                        :checked="form.hideInList"
+                        size="sm"
+                        @update:checked="(value) => $emit('update:hideInList', value)"
+                    />
                 </div>
 
                 <!-- Top Article -->
                 <div class="flex items-center justify-between">
                     <Label>{{ $t('article.top') }}</Label>
-                    <Switch v-model:checked="form.isTop" size="sm" />
+                    <Switch
+                        :checked="form.isTop"
+                        size="sm"
+                        @update:checked="(value) => $emit('update:isTop', value)"
+                    />
                 </div>
             </div>
 
@@ -180,7 +191,7 @@ const props = defineProps<{
     form: ArticleFormState
     tagInput: string
     availableTags: string[]
-    availableCategories: { name: string; slug: string }[]  // 分类对象列表
+    availableCategories: { name: string; slug: string; id: string }[]  // 分类对象列表
     dateValue: DateValue
     timeValue: string
     featureDisplayValue: string
@@ -190,30 +201,32 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'update:open': [value: boolean]
+    'update:fileName': [value: string]
     'update:tagInput': [value: string]
     'update:dateValue': [value: DateValue]
     'update:timeValue': [value: string]
     'update:featureDisplayValue': [value: string]
+    'update:hideInList': [value: boolean]
+    'update:isTop': [value: boolean]
     addTag: []
     removeTag: [tag: string]
     selectTag: [tag: string]
-    fileNameChange: [event: Event]
+    fileNameChange: [value: string]
+    categoryChange: [id: string]
     selectFeatureImage: []
     clearFeatureImage: []
     confirmPublish: []
     generateSlug: []
 }>()
 
-// 选择分类时同步更新 category（名称）和 categoryId（UUID）
 const onCategoryChange = (id: string) => {
-    if (id === '_none_') {
-        props.form.category = ''
-        props.form.categoryId = ''
-    } else {
-        const matched = props.availableCategories.find((c) => c.id === id)
-        props.form.category = matched ? matched.name : id
-        props.form.categoryId = id
-    }
+    emit('categoryChange', id)
+}
+
+const handleFileNameInput = (value: string | number) => {
+    const nextValue = typeof value === 'string' ? value : String(value ?? '')
+    emit('update:fileName', nextValue)
+    emit('fileNameChange', nextValue)
 }
 
 const openModel = computed({
