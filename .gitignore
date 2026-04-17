@@ -45,6 +45,7 @@ pnpm-debug.log*
 
 # Wails build output
 /wailsjs
+frontend/src/wailsjs
 
 
 # Go build output
