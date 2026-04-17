@@ -204,9 +204,8 @@ func Run(assets embed.FS, version string) {
 	menuQuitHandler = quitHandler
 	menuAppDir = appDir
 
-	// Windows/Linux 使用 Frameless 窗口，前端自绘窗口控制按钮
-	// macOS 保持原生标题栏 + 交通灯按钮
-	frameless := runtime.GOOS != "darwin"
+	// 所有平台使用原生窗口装饰
+	frameless := false
 
 	var appMenu *menu.Menu
 	if !frameless {

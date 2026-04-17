@@ -31,7 +31,6 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  Environment,
   WindowMinimise,
   WindowToggleMaximise,
   Quit,
@@ -44,12 +43,7 @@ const isMaximized = ref(false)
 const hovered = ref(false)
 
 onMounted(async () => {
-  try {
-    const env = await Environment()
-    showControls.value = env.platform !== 'darwin'
-  } catch {
-    showControls.value = false
-  }
+  showControls.value = false
 
   EventsOn('wails:window-maximised', () => {
     isMaximized.value = true
