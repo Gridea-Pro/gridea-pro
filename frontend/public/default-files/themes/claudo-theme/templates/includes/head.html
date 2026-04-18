@@ -14,38 +14,6 @@
 <link rel="icon" href="{{ .ThemeConfig.Domain }}/favicon.ico" type="image/x-icon">
 {{ end }}
 
-{{ if .Post.Title }}
-<meta name="description" content="{{ truncate 160 .Post.Description }}">
-{{ else }}
-<meta name="description" content="{{ .ThemeConfig.SiteDescription }}">
-{{ end }}
-
-<meta property="og:site_name" content="{{ .ThemeConfig.SiteName }}">
-{{ if .Post.Title }}
-<meta property="og:type" content="article">
-<meta property="og:title" content="{{ .Post.Title }} - {{ .ThemeConfig.SiteName }}">
-<meta property="og:description" content="{{ truncate 200 .Post.Description }}">
-<meta property="og:url" content="{{ .ThemeConfig.Domain }}{{ .Post.Link }}">
-{{ if .Post.Feature }}
-<meta property="og:image" content="{{ .Post.Feature }}">
-{{ end }}
-{{ else }}
-<meta property="og:type" content="website">
-<meta property="og:title" content="{{ .ThemeConfig.SiteName }}">
-<meta property="og:description" content="{{ .ThemeConfig.SiteDescription }}">
-<meta property="og:url" content="{{ .ThemeConfig.Domain }}">
-{{ end }}
-
-<meta name="twitter:card" content="summary_large_image">
-{{ if .Post.Title }}
-<meta name="twitter:title" content="{{ .Post.Title }} - {{ .ThemeConfig.SiteName }}">
-<meta name="twitter:description" content="{{ truncate 200 .Post.Description }}">
-{{ if .Post.Feature }}
-<meta name="twitter:image" content="{{ .Post.Feature }}">
-{{ end }}
-{{ else }}
-<meta name="twitter:title" content="{{ .ThemeConfig.SiteName }}">
-<meta name="twitter:description" content="{{ .ThemeConfig.SiteDescription }}">
-{{ end }}
+{{/* SEO/社交标签由 Gridea Pro 的 HtmlPostProcessor 统一注入 */}}
 
 <link rel="alternate" type="application/rss+xml" title="{{ .ThemeConfig.SiteName }}" href="/feed.xml">

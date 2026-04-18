@@ -40,7 +40,8 @@ func (r *seoSettingRepository) loadIfNeeded() error {
 	settingPath := filepath.Join(r.appDir, "config", "seo_setting.json")
 	var setting domain.SeoSetting
 	if err := LoadJSONFile(settingPath, &setting); err != nil {
-		r.cache = &domain.SeoSetting{}
+		def := domain.DefaultSeoSetting()
+		r.cache = &def
 		r.loaded = true
 		return nil
 	}

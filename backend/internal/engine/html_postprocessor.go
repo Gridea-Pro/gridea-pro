@@ -18,10 +18,11 @@ type HtmlPostProcessor struct {
 	siteName   string
 	siteDesc   string
 	language   string
+	avatar     string // 站点头像 URL，用作 og:image / JSON-LD logo 的兜底
 }
 
 // NewHtmlPostProcessor 创建后处理器
-func NewHtmlPostProcessor(seo *domain.SeoSetting, cdn *domain.CdnSetting, pwa *domain.PwaSetting, domain, siteName, siteDesc, language string) *HtmlPostProcessor {
+func NewHtmlPostProcessor(seo *domain.SeoSetting, cdn *domain.CdnSetting, pwa *domain.PwaSetting, domain, siteName, siteDesc, language, avatar string) *HtmlPostProcessor {
 	return &HtmlPostProcessor{
 		seoSetting: seo,
 		cdnSetting: cdn,
@@ -30,6 +31,7 @@ func NewHtmlPostProcessor(seo *domain.SeoSetting, cdn *domain.CdnSetting, pwa *d
 		siteName:   siteName,
 		siteDesc:   siteDesc,
 		language:   language,
+		avatar:     avatar,
 	}
 }
 
@@ -91,13 +93,17 @@ func (p *HtmlPostProcessor) injectSeo(html, pageType, pageURL string, post *temp
 
 	fullURL := strings.TrimRight(p.domain, "/") + pageURL
 
-	// Meta Description
+	// Meta Description：post.Description → post.Abstract → 内容前 160 字 → 站点描述
 	description := p.siteDesc
 	if post != nil && pageType == "post" {
-		if post.Description != "" {
+		switch {
+		case post.Description != "":
 			description = post.Description
-		} else {
-			// 取前 160 字符作为摘要
+		case post.Abstract != "":
+			if plain := strings.TrimSpace(stripHTML(string(post.Abstract))); plain != "" {
+				description = plain
+			}
+		default:
 			plain := stripHTML(string(post.Content))
 			if len([]rune(plain)) > 160 {
 				description = string([]rune(plain)[:160])
@@ -204,11 +210,15 @@ func (p *HtmlPostProcessor) buildJsonLD(pageType, fullURL string, post *template
 		if post.Feature != "" {
 			pairs = append(pairs, "image", post.Feature)
 		}
+		publisher := map[string]any{"@type": "Organization", "name": p.siteName}
+		if p.avatar != "" {
+			publisher["logo"] = map[string]any{"@type": "ImageObject", "url": p.avatar}
+		}
 		pairs = append(pairs,
 			"datePublished", post.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 			"dateModified", post.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 			"author", map[string]any{"@type": "Person", "name": p.siteName},
-			"publisher", map[string]any{"@type": "Organization", "name": p.siteName},
+			"publisher", publisher,
 		)
 		fmt.Fprintf(&sb, "<script type=\"application/ld+json\">%s</script>\n", orderedJSON(pairs...))
 
@@ -249,12 +259,14 @@ func (p *HtmlPostProcessor) buildOpenGraph(pageType, fullURL string, post *templ
 
 	title := p.siteName
 	ogType := "website"
-	image := ""
+	image := p.avatar // 非文章页默认站点头像
 
 	if pageType == "post" && post != nil {
 		title = post.Title
 		ogType = "article"
-		image = post.Feature
+		if post.Feature != "" {
+			image = post.Feature
+		}
 	}
 
 	sb.WriteString(fmt.Sprintf(`<meta property="og:title" content="%s">`+"\n", escapeAttr(title)))
@@ -268,6 +280,7 @@ func (p *HtmlPostProcessor) buildOpenGraph(pageType, fullURL string, post *templ
 
 	// Twitter Card
 	sb.WriteString(`<meta name="twitter:card" content="summary_large_image">` + "\n")
+	sb.WriteString(fmt.Sprintf(`<meta name="twitter:url" content="%s">`+"\n", escapeAttr(fullURL)))
 	sb.WriteString(fmt.Sprintf(`<meta name="twitter:title" content="%s">`+"\n", escapeAttr(title)))
 	sb.WriteString(fmt.Sprintf(`<meta name="twitter:description" content="%s">`+"\n", escapeAttr(description)))
 	if image != "" {

@@ -15,19 +15,4 @@
 {# Favicon #}
 <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
-{# SEO meta tags #}
-<meta name="description" content="{{ config.siteDescription|default:"" }}">
-<meta property="og:site_name" content="{{ config.siteName }}">
-<meta property="og:title" content="{% block og_title %}{{ config.siteName }}{% endblock %}">
-<meta property="og:description" content="{{ config.siteDescription|default:"" }}">
-{% if config.avatar %}
-<meta property="og:image" content="{{ config.avatar }}">
-{% endif %}
-<meta property="og:url" content="{{ config.domain }}">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{{ config.siteName }}">
-<meta name="twitter:description" content="{{ config.siteDescription|default:"" }}">
-{% if config.avatar %}
-<meta name="twitter:image" content="{{ config.avatar }}">
-{% endif %}
+{# SEO/社交标签由 Gridea Pro 的 HtmlPostProcessor 统一注入 #}

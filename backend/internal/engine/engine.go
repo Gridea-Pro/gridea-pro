@@ -240,12 +240,14 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 		if s.pwaSettingRepo != nil {
 			pwaSetting, _ = s.pwaSettingRepo.GetPwaSetting(ctx)
 		}
+		avatar, _ := templateData.Site.CustomConfig["avatar"].(string)
 		postProcessor = NewHtmlPostProcessor(
 			&seoSetting, &cdnSetting, &pwaSetting,
 			templateData.ThemeConfig.Domain,
 			templateData.ThemeConfig.SiteName,
 			templateData.ThemeConfig.SiteDescription,
 			templateData.ThemeConfig.Language,
+			avatar,
 		)
 		s.pageRenderer.SetPostProcessor(postProcessor)
 	}

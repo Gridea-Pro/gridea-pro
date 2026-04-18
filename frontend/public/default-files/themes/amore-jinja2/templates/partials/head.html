@@ -4,63 +4,7 @@
 <meta name="renderer" content="webkit">
 <meta name="format-detection" content="telephone=no, email=no, address=no">
 
-{% set keywords = theme_config.keywords | default:"" %}
-<meta name="keywords" content="{{ keywords }}" />
-<meta name="description" content="{{ description }}">
-
-{% if post %}
-<meta property="og:type" content="article">
-{% else %}
-<meta property="og:type" content="website">
-{% endif %}
-<meta property="og:title" content="{{ siteTitle }}">
-<meta property="og:description" content="{{ description }}">
-<meta property="og:image" content="{{ ogImage }}">
-<meta property="og:site_name" content="{{ config.siteName }}">
-
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:url" content="{{ currentUrl }}">
-<meta name="twitter:title" content="{{ siteTitle }}">
-<meta name="twitter:description" content="{{ description }}">
-<meta name="twitter:image" content="{{ ogImage }}">
-
-<!-- Structured Data (JSON-LD) -->
-{% if post %}
-{% set schema_type = "BlogPosting" %}
-{% else %}
-{% set schema_type = "WebSite" %}
-{% endif %}
-<script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "{{ schema_type }}",
-        "headline": "{{ siteTitle }}",
-        "description": "{{ description }}",
-        "image": "{{ ogImage }}",
-        "author": {
-            "@type": "Person",
-            "name": "{{ config.siteName }}"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "{{ config.siteName }}",
-            "logo": {
-                "@type": "ImageObject",
-                "url": "{{ theme_config.avatar }}"
-            }
-        }
-        {% if post %}
-        ,"datePublished": "{{ post.date }}",
-        "dateModified": "{{ post.date }}",
-        "mainEntityOfPage": {
-            "@type": "WebPage",
-            "@id": "{{ currentUrl }}"
-        }
-        {% else %}
-        ,"url": "{{ currentUrl }}"
-        {% endif %}
-    }
-    </script>
+{# SEO/社交/JSON-LD 统一由 Gridea Pro 的 HtmlPostProcessor 注入，此处不再重复输出 #}
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#292a2d" media="(prefers-color-scheme: dark)">
 
@@ -69,7 +13,12 @@
 {% else %}
 <link rel="shortcut icon" href="/media/images/favicon.ico">
 {% endif %}
+<link rel="stylesheet" href="/styles/icons.css">
 <link rel="stylesheet" href="/styles/main.css">
+
+{% if theme_config.accentColor %}
+<style>:root{--accent-color:{{ theme_config.accentColor }};}</style>
+{% endif %}
 
 {% include "partials/global-seo.html" %}
 {% include "partials/scripts.html" %}
@@ -83,4 +32,8 @@
     gtag('js', new Date());
     gtag('config', '{{ theme_config.ga }}');
 </script>
+{% endif %}
+
+{% if theme_config.customCss %}
+<style>{{ theme_config.customCss|safe }}</style>
 {% endif %}

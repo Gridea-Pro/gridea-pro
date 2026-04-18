@@ -9,91 +9,8 @@
     <meta name="format-detection" content="telephone=no, email=no, address=no">
 
     <title><%= siteTitle %></title>
-    
-    <% 
-    let keywords = site.customConfig.keywords || ''; 
-    if (site.tags && site.tags.length > 0) {
-        let sortedTags = site.tags.slice().sort((a, b) => b.count - a.count);
-        let topTags = sortedTags.slice(0, 20).map(tag => tag.name).join(',');
-        if (keywords && topTags) {
-            keywords += ',' + topTags;
-        } else if (topTags) {
-            keywords = topTags;
-        }
-    }
 
-    let description = site.customConfig.metaDescription || themeConfig.siteDescription;
-    if (typeof post !== 'undefined') {
-        if (post.description) {
-            description = post.description;
-        } else if (post.abstract) {
-            description = post.abstract;
-        }
-    }
-
-    let ogImage = site.customConfig.avatar;
-    if (typeof post !== 'undefined' && post.feature) {
-        ogImage = post.feature;
-    }
-
-    let currentUrl = themeConfig.domain;
-    if (typeof post !== 'undefined' && post.link) {
-        currentUrl = post.link;
-    }
-    %>
-    <meta name="keywords" content="<%= keywords %>" />
-    <meta name="description" content="<%= description %>">
-
-    <!-- Social Media Meta Tags -->
-    <meta property="og:type" content="<%= typeof post !== 'undefined' ? 'article' : 'website' %>">
-    <meta property="og:url" content="<%= currentUrl %>">
-    <meta property="og:title" content="<%= siteTitle %>">
-    <meta property="og:description" content="<%= description %>">
-    <meta property="og:image" content="<%= ogImage %>">
-    <meta property="og:site_name" content="<%= themeConfig.siteName %>">
-
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="<%= currentUrl %>">
-    <meta name="twitter:title" content="<%= siteTitle %>">
-    <meta name="twitter:description" content="<%= description %>">
-    <meta name="twitter:image" content="<%= ogImage %>">
-
-    <!-- Structured Data (JSON-LD) -->
-    <%
-    let schema = {
-        "@context": "https://schema.org",
-        "@type": typeof post !== 'undefined' ? "BlogPosting" : "WebSite",
-        "headline": siteTitle,
-        "description": description,
-        "image": ogImage,
-        "author": {
-            "@type": "Person",
-            "name": themeConfig.siteName
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": themeConfig.siteName,
-            "logo": {
-                "@type": "ImageObject",
-                "url": site.customConfig.avatar
-            }
-        }
-    };
-    if (typeof post !== 'undefined') {
-        const isoDate = new Date(post.date).toISOString();
-        schema.datePublished = isoDate;
-        schema.dateModified = isoDate;
-        schema.mainEntityOfPage = {
-            "@type": "WebPage",
-            "@id": currentUrl
-        };
-    } else {
-        schema.url = currentUrl;
-    }
-    %>
-    <script type="application/ld+json">
-        <%- JSON.stringify(schema) %>
-    </script>
+    <%# SEO/社交/JSON-LD 统一由 Gridea Pro 的 HtmlPostProcessor 注入，此处不再重复输出 %>
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#292a2d" media="(prefers-color-scheme: dark)">
 
@@ -102,8 +19,13 @@
     <% } else { %>
     <link rel="shortcut icon" href="/media/images/favicon.ico">
     <% } %>
+    <link rel="stylesheet" href="/styles/icons.css">
     <link rel="stylesheet" href="/styles/main.css">
-    
+
+    <% if (site.customConfig.accentColor) { %>
+    <%- '<style>:root{--accent-color:' + site.customConfig.accentColor + ';}<\/style>' %>
+    <% } %>
+
     <%- include('./global-seo') %>
     <%- include('./scripts') %>
 
@@ -116,5 +38,9 @@
       gtag('js', new Date());
       gtag('config', '<%= site.customConfig.ga %>');
     </script>
+    <% } %>
+
+    <% if (site.customConfig.customCss) { %>
+    <%- '<style>' + site.customConfig.customCss + '<\/style>' %>
     <% } %>
 </head>

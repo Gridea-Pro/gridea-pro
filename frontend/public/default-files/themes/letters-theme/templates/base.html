@@ -5,14 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}{{ config.siteName }}{% endblock %}</title>
-  <meta name="description" content="{% block description %}{{ config.siteDescription }}{% endblock %}">
-  <meta name="keywords" content="{% block keywords %}{{ config.siteName }}{% endblock %}">
 
-  {# Open Graph #}
-  <meta property="og:title" content="{% block og_title %}{{ config.siteName }}{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}{{ config.siteDescription }}{% endblock %}">
-  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-  <meta property="og:url" content="{{ config.domain }}">
+  {# SEO/Open Graph 标签由 Gridea Pro 的 HtmlPostProcessor 统一注入 #}
 
   {# Fonts #}
   <link rel="preconnect" href="https://fonts.googleapis.com">
