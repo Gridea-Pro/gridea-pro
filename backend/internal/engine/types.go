@@ -74,10 +74,12 @@ type sitemapImage struct {
 
 // sitemapURL Sitemap 链接条目
 type sitemapURL struct {
-	XMLName xml.Name      `xml:"url"`
-	Loc     string        `xml:"loc"`
-	LastMod string        `xml:"lastmod"`
-	Image   *sitemapImage `xml:"image:image,omitempty"`
+	XMLName    xml.Name      `xml:"url"`
+	Loc        string        `xml:"loc"`
+	LastMod    string        `xml:"lastmod"`
+	ChangeFreq string        `xml:"changefreq,omitempty"`
+	Priority   string        `xml:"priority,omitempty"`
+	Image      *sitemapImage `xml:"image:image,omitempty"`
 }
 
 // sitemapURLSet Sitemap 根元素

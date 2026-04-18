@@ -209,8 +209,10 @@ func (g *SeoGenerator) RenderSitemap(buildDir string, data *template.TemplateDat
 
 	// 1. 首页
 	urlset.Urls = append(urlset.Urls, sitemapURL{
-		Loc:     safeUrl(domainUrl + "/"),
-		LastMod: nowDate,
+		Loc:        safeUrl(domainUrl + "/"),
+		LastMod:    nowDate,
+		ChangeFreq: "daily",
+		Priority:   "1.0",
 	})
 
 	// 2. 文章页
@@ -234,38 +236,80 @@ func (g *SeoGenerator) RenderSitemap(buildDir string, data *template.TemplateDat
 		}
 
 		urlset.Urls = append(urlset.Urls, sitemapURL{
-			Loc:     safeUrl(link),
-			LastMod: post.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
-			Image:   imageNode,
+			Loc:        safeUrl(link),
+			LastMod:    post.UpdatedAt.Format("2006-01-02T15:04:05-07:00"),
+			ChangeFreq: "monthly",
+			Priority:   "0.9",
+			Image:      imageNode,
 		})
 	}
 
-	// 3. 标签页 (主标签列表)
+	// 3. 博客列表页
+	postPath := data.ThemeConfig.PostPath
+	if postPath == "" {
+		postPath = DefaultPostPath
+	}
+	urlset.Urls = append(urlset.Urls, sitemapURL{
+		Loc:        safeUrl(domainUrl + "/" + postPath + "/"),
+		LastMod:    nowDate,
+		ChangeFreq: "daily",
+		Priority:   "0.7",
+	})
+
+	// 4. 闪念页（有闪念内容时才加入）
+	if len(data.Memos) > 0 {
+		memosPath := data.ThemeConfig.MemosPath
+		if memosPath == "" {
+			memosPath = DefaultMemosPath
+		}
+		urlset.Urls = append(urlset.Urls, sitemapURL{
+			Loc:        safeUrl(domainUrl + "/" + memosPath + "/"),
+			LastMod:    nowDate,
+			ChangeFreq: "daily",
+			Priority:   "0.6",
+		})
+	}
+
+	// 5. 标签总览页
 	tagsPath := data.ThemeConfig.TagsPath
 	if tagsPath == "" {
 		tagsPath = DefaultTagsPath
 	}
 	urlset.Urls = append(urlset.Urls, sitemapURL{
-		Loc:     safeUrl(domainUrl + "/" + tagsPath + "/"),
-		LastMod: nowDate,
+		Loc:        safeUrl(domainUrl + "/" + tagsPath + "/"),
+		LastMod:    nowDate,
+		ChangeFreq: "weekly",
+		Priority:   "0.5",
 	})
 
-	// 4. 每个标签的文章列表页
+	// 6. 归档页
+	urlset.Urls = append(urlset.Urls, sitemapURL{
+		Loc:        safeUrl(domainUrl + "/" + DefaultArchivesPath + "/"),
+		LastMod:    nowDate,
+		ChangeFreq: "monthly",
+		Priority:   "0.5",
+	})
+
+	// 7. 个别标签页
 	for _, tag := range data.Tags {
 		urlset.Urls = append(urlset.Urls, sitemapURL{
-			Loc:     safeUrl(domainUrl + tag.Link),
-			LastMod: nowDate,
+			Loc:        safeUrl(domainUrl + tag.Link),
+			LastMod:    nowDate,
+			ChangeFreq: "weekly",
+			Priority:   "0.4",
 		})
 	}
 
-	// 5. 归档页
-	archivesPath := "archives"
-	if archivesPath == "" {
-		archivesPath = DefaultArchivesPath
+	// 8. 友链页
+	linkPath := data.ThemeConfig.LinkPath
+	if linkPath == "" {
+		linkPath = DefaultLinksPath
 	}
 	urlset.Urls = append(urlset.Urls, sitemapURL{
-		Loc:     safeUrl(domainUrl + "/" + archivesPath + "/"),
-		LastMod: nowDate,
+		Loc:        safeUrl(domainUrl + "/" + linkPath + "/"),
+		LastMod:    nowDate,
+		ChangeFreq: "monthly",
+		Priority:   "0.3",
 	})
 
 	sitemapData, err := xml.MarshalIndent(urlset, "", "  ")
