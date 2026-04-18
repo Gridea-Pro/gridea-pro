@@ -242,7 +242,7 @@ const {
 } = useEditorHelper(() => form.content)
 
 const handleTitleFocus = () => {
-  const editor = tiptapMarkdownEditor.value?.editor
+  const editor = tiptapMarkdownEditor.value?.getEditor() ?? null
   editor?.commands.blur()
 }
 

@@ -85,6 +85,8 @@ const focusEditor = () => {
   editor.value?.commands.focus()
 }
 
+const getEditor = () => editor.value ?? null
+
 const isMarkActive = (name: string) => editor.value?.isActive(name) ?? false
 const isNodeActive = (name: string, attrs?: Record<string, unknown>) => editor.value?.isActive(name, attrs) ?? false
 
@@ -143,7 +145,7 @@ onBeforeUnmount(() => {
 })
 
 defineExpose({
-  editor,
+  getEditor,
   focusEditor,
   toggleHeading,
   toggleBold,

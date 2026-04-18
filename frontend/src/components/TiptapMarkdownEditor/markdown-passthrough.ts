@@ -1,6 +1,7 @@
 const BLOCK_SENTINEL_PREFIX = '\uE000GRIDEA_RAW_BLOCK:'
 const INLINE_SENTINEL_PREFIX = '\uE000GRIDEA_RAW_INLINE:'
 const SENTINEL_SUFFIX = '\uE001'
+const GRIDEA_MORE_MARKER = '<!-- more -->'
 
 export type RawBlockKind = 'footnote-definition'
 export type RawInlineKind = 'html' | 'subscript'
@@ -70,7 +71,13 @@ const matchSentinel = <Kind extends string>(
 const replaceInlineMarkdownPassthrough = (segment: string) => {
   const withHtmlTokens = segment.replace(
     /<!--.*?-->|<\/?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*?)?>/g,
-    (match) => createInlineSentinel('html', match),
+    (match) => {
+      if (match === GRIDEA_MORE_MARKER) {
+        return match
+      }
+
+      return createInlineSentinel('html', match)
+    },
   )
 
   return withHtmlTokens.replace(

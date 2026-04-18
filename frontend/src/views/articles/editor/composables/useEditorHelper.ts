@@ -1,4 +1,4 @@
-import { computed, ref, type ShallowRef } from 'vue'
+import { ref, watchEffect } from 'vue'
 import type { Editor } from '@tiptap/core'
 
 import markdown from '@/helpers/markdown'
@@ -10,7 +10,7 @@ import { OpenImageDialog } from '@/wailsjs/go/app/App'
 import { domain } from '@/wailsjs/go/models'
 
 export type TiptapEditorRef = {
-  editor: ShallowRef<Editor | undefined>
+  getEditor: () => Editor | null
   focusEditor: () => void
   toggleHeading: (level: 1 | 2 | 3 | 4 | 5 | 6) => void
   toggleBold: () => void
@@ -29,10 +29,18 @@ export function useEditorHelper(content: () => string) {
 
   const previewVisible = ref(false)
   const entering = ref(false)
-  const previewHtml = computed(() => markdown.render(content()))
+  const previewHtml = ref('')
+
+  watchEffect(() => {
+    if (!previewVisible.value) {
+      return
+    }
+
+    previewHtml.value = markdown.render(content())
+  })
 
   const getEditor = () => {
-    return tiptapMarkdownEditor.value?.editor as Editor | undefined
+    return tiptapMarkdownEditor.value?.getEditor() ?? null
   }
 
   const insertMarkdownAtCursor = (rawMarkdown: string) => {
@@ -95,7 +103,13 @@ export function useEditorHelper(content: () => string) {
   }
 
   const insertMore = () => {
-    insertMarkdownAtCursor('<!-- more -->')
+    const editor = getEditor()
+    if (!editor) {
+      return
+    }
+
+    // 直接插入块节点，避免摘要分隔符落在段落中间时退化为普通文本。
+    editor.chain().focus().insertContent({ type: 'grideaMore' }).run()
     ga('Post', 'Post - click-add-more', '')
   }
 
