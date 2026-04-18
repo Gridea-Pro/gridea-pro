@@ -31,10 +31,11 @@ func (f *RendererFacade) RegisterEvents(ctx context.Context) {
 	registerSiteReloadEvent(ctx, f)
 }
 
-// registerSiteReloadEvent 注册站点重新加载事件监听器
+// registerSiteReloadEvent 注册站点重新加载事件监听器。
+// 实际的并发保护（串行化 + 合并）在 engine.RenderAll 内部，这里只负责转发事件。
 func registerSiteReloadEvent(ctx context.Context, rendererFacade *RendererFacade) {
 	runtime.EventsOn(ctx, "app-site-reload", func(data ...interface{}) {
-		// 触发重新渲染
+		rendererFacade.logger.Info("收到 app-site-reload 事件，触发渲染")
 		go func() {
 			if err := rendererFacade.RenderAll(); err != nil {
 				rendererFacade.logger.Error("站点重新加载失败", "error", err)

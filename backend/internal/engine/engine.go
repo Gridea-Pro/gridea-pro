@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -42,6 +43,15 @@ type Engine struct {
 	renderer     render.ThemeRenderer
 	currentTheme string
 	logger       *slog.Logger
+
+	// 渲染串行化 + 请求合并（single-flight / coalesce pattern）：
+	// - 同一时刻最多一个 renderAllImpl 在运行
+	// - 渲染期间到达的新请求不启动新渲染，仅将 pending 置 1
+	// - 当前渲染结束时若 pending=1，则再跑一次把累积请求一次性覆盖
+	// - N 个并发请求最多产生 2 次实际渲染（当前 + 合并一次）
+	// 调用方等待当前渲染（+合并渲染，如有）完成后返回，保证请求被覆盖
+	renderMu sync.Mutex
+	pending  atomic.Int32
 }
 
 func New(
@@ -140,7 +150,38 @@ func (s *Engine) SetTheme(themeName string) error {
 	return nil
 }
 
+// RenderAll 对外的渲染入口，提供 single-flight + coalesce 并发语义。
+//
+// 模式说明（经典的"pending 位 + Swap"合并模式）：
+//  1. 进入时先把 pending 置 1，表示"我需要一次渲染覆盖我"
+//  2. 拿到 renderMu 后 Swap(0)：
+//     - 返回 1 → 说明还没人覆盖我的请求，由我来渲染
+//     - 返回 0 → 说明前一个渲染者的 Swap(0) 之后我的 Store(1) 才到达，
+//       且在我等锁时已经有别的渲染者看见并处理了，可以安全跳过
+//  3. N 个并发请求最多产生 2 次实际渲染（首次 + 合并一次）
+//
+// 详见 Engine 结构体中 renderMu / pending 字段注释。
 func (s *Engine) RenderAll(ctx context.Context) error {
+	// 登记"我需要渲染"。这必须在 Lock 之前做，
+	// 确保在锁持有者的 Swap(0) 与我自己的 Swap(0) 之间的任何时刻 pending 都是 1。
+	s.pending.Store(1)
+
+	s.renderMu.Lock()
+	defer s.renderMu.Unlock()
+
+	// 把 pending 取走（Swap）：
+	// - 若拿到 1：需要实际渲染一次，这次渲染会覆盖所有在此之前 Store(1) 的请求
+	// - 若拿到 0：前面的渲染者已经把我们的请求一起覆盖了，直接返回
+	if s.pending.Swap(0) == 0 {
+		s.logger.Info("渲染请求已被上一次渲染覆盖，跳过")
+		return nil
+	}
+
+	return s.renderAllImpl(ctx)
+}
+
+// renderAllImpl 实际的渲染实现，由 RenderAll 在持有 renderMu 时调用
+func (s *Engine) renderAllImpl(ctx context.Context) error {
 	startTime := time.Now()
 	// 获取数据
 	posts, _, err := s.postRepo.List(ctx, 1, 10000)

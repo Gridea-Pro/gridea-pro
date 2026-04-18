@@ -82,22 +82,20 @@ func (w *ResourceWatcher) watchLoop() {
 				return
 			}
 
-			// Ignore temporary files, generated cache files, and setting files.
-			// Setting files are saved by the app itself (via write-to-tmp + rename),
-			// the frontend sends app-site-reload explicitly when a re-render is needed.
 			baseName := filepath.Base(event.Name)
-			if baseName == ".DS_Store" || baseName == "posts.json" ||
-				strings.HasPrefix(baseName, "setting.json") ||
-				strings.HasPrefix(baseName, "seo_setting.json") ||
-				strings.HasPrefix(baseName, "cdn_setting.json") {
+
+			// 1. 忽略 OS 垃圾文件
+			if baseName == ".DS_Store" {
+				continue
+			}
+
+			// 2. 忽略原子写临时文件（模式：*.tmp.*，覆盖所有 WriteFileAtomic 生成的临时文件）
+			if strings.Contains(baseName, ".tmp.") {
 				continue
 			}
 
 			// Determine event type based on path
 			isThemeChange := strings.Contains(event.Name, filepath.Join(w.appDir, "themes"))
-
-			// Calculate relative path for logging/debugging
-			// relPath, _ := filepath.Rel(w.appDir, event.Name)
 
 			if isThemeChange {
 				// Theme Logic:
@@ -112,21 +110,29 @@ func (w *ResourceWatcher) watchLoop() {
 				if themeDebounceTimer != nil {
 					themeDebounceTimer.Stop()
 				}
+				evtName := event.Name
 				themeDebounceTimer = time.AfterFunc(debounceDuration, func() {
-					log.Println("ResourceWatcher: Theme change detected, refreshing...", event.Name)
+					log.Printf("ResourceWatcher: theme change → emit app-site-reload (trigger: %s)", evtName)
 					runtime.EventsEmit(w.ctx, "theme-list-updated")
-					// Also reload site to ensure backend state is fresh (e.g. config.json in theme)
 					runtime.EventsEmit(w.ctx, "app-site-reload")
 				})
-
 			} else {
-				// Data Logic (Posts/Config):
-				// Trigger Data Update
+				// 3. Data 目录只接受外部工具放进来的 .md 文章变更。
+				//    所有 config/*.json 都由 app 自己通过原子写管理（包括 config.json
+				//    里的站点/主题配置），前端保存时会显式 emit app-site-reload，
+				//    watcher 不应该再重复触发，否则会形成"保存 → watcher → 再次渲染"
+				//    的叠加。用户若手动编辑 config/*.json，需要重启 app 才能生效
+				//    —— 这是罕见场景，可接受的折中。
+				if !strings.HasSuffix(baseName, ".md") {
+					continue
+				}
+
 				if dataDebounceTimer != nil {
 					dataDebounceTimer.Stop()
 				}
+				evtName := event.Name
 				dataDebounceTimer = time.AfterFunc(debounceDuration, func() {
-					log.Println("ResourceWatcher: Data change detected, reloading site...", event.Name)
+					log.Printf("ResourceWatcher: data change → emit app-site-reload (trigger: %s)", evtName)
 					runtime.EventsEmit(w.ctx, "app-site-reload")
 				})
 			}

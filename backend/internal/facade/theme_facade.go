@@ -54,56 +54,31 @@ func (f *ThemeFacade) UploadThemeCustomConfigImage(sourcePath string) (string, e
 	return f.internal.SaveThemeImage(ctx, sourcePath)
 }
 
-// SaveThemeConfigFromFrontend saves theme config and triggers render
+// SaveThemeConfigFromFrontend saves theme config.
+// 不在这里直接触发渲染——前端会在保存成功后 emit app-site-reload，
+// 由 RendererFacade 的事件监听器统一处理。避免重复渲染。
 func (f *ThemeFacade) SaveThemeConfigFromFrontend(config domain.ThemeConfig) error {
 	ctx := WailsContext
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	if err := f.internal.SaveThemeConfig(ctx, config); err != nil {
-		return err
-	}
-
-	// Trigger render
-	if f.renderer != nil {
-		go func() {
-			if err := f.renderer.RenderAll(); err != nil {
-				f.logger.Error("Error rendering after theme save", "error", err)
-			}
-		}()
-	}
-
-	return nil
+	return f.internal.SaveThemeConfig(ctx, config)
 }
 
-// SaveThemeCustomConfigFromFrontend saves custom config and triggers render
+// SaveThemeCustomConfigFromFrontend saves custom config.
+// 同 SaveThemeConfigFromFrontend，不在这里直接触发渲染，由前端 emit 的
+// app-site-reload 事件统一处理，避免重复渲染。
 func (f *ThemeFacade) SaveThemeCustomConfigFromFrontend(customConfig map[string]interface{}) error {
-	// 1. Load current config
 	currentConfig, err := f.LoadThemeConfig()
 	if err != nil {
 		return err
 	}
 
-	// 2. Update CustomConfig
 	currentConfig.CustomConfig = customConfig
 
-	// 3. Save config
 	ctx := WailsContext
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	if err := f.internal.SaveThemeConfig(ctx, currentConfig); err != nil {
-		return err
-	}
-
-	// 4. Trigger render
-	if f.renderer != nil {
-		go func() {
-			if err := f.renderer.RenderAll(); err != nil {
-				f.logger.Error("Error rendering after theme custom config save", "error", err)
-			}
-		}()
-	}
-
-	return nil
+	return f.internal.SaveThemeConfig(ctx, currentConfig)
 }
