@@ -74,6 +74,14 @@ jobs:
             platform: darwin/amd64
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
+      GITHUB_OAUTH_CLIENT_ID: ${{ secrets.GH_OAUTH_CLIENT_ID }}
+      GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
+      GITEE_CLIENT_ID: ${{ secrets.GITEE_CLIENT_ID }}
+      GITEE_CLIENT_SECRET: ${{ secrets.GITEE_CLIENT_SECRET }}
+      NETLIFY_CLIENT_ID: ${{ secrets.NETLIFY_CLIENT_ID }}
+      NETLIFY_CLIENT_SECRET: ${{ secrets.NETLIFY_CLIENT_SECRET }}
+      VERCEL_CLIENT_ID: ${{ secrets.VERCEL_CLIENT_ID }}
+      VERCEL_CLIENT_SECRET: ${{ secrets.VERCEL_CLIENT_SECRET }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -106,7 +114,18 @@ jobs:
           "
 
       - name: Build macOS ${{ matrix.arch }}
-        run: wails build -platform ${{ matrix.platform }} -clean -trimpath -ldflags "-X main.Version=${{ env.VERSION }}"
+        shell: bash
+        run: |
+          LDFLAGS="-X main.Version=${VERSION}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientID=${GITHUB_OAUTH_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientSecret=${GITHUB_OAUTH_CLIENT_SECRET}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientID=${GITEE_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientSecret=${GITEE_CLIENT_SECRET}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientID=${NETLIFY_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientSecret=${NETLIFY_CLIENT_SECRET}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.vercelClientID=${VERCEL_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.vercelClientSecret=${VERCEL_CLIENT_SECRET}"
+          wails build -platform ${{ matrix.platform }} -clean -trimpath -ldflags "${LDFLAGS}"
 
       - name: Build MCP server
         env:
@@ -183,6 +202,14 @@ jobs:
             inno_arch: arm64
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
+      GITHUB_OAUTH_CLIENT_ID: ${{ secrets.GH_OAUTH_CLIENT_ID }}
+      GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
+      GITEE_CLIENT_ID: ${{ secrets.GITEE_CLIENT_ID }}
+      GITEE_CLIENT_SECRET: ${{ secrets.GITEE_CLIENT_SECRET }}
+      NETLIFY_CLIENT_ID: ${{ secrets.NETLIFY_CLIENT_ID }}
+      NETLIFY_CLIENT_SECRET: ${{ secrets.NETLIFY_CLIENT_SECRET }}
+      VERCEL_CLIENT_ID: ${{ secrets.VERCEL_CLIENT_ID }}
+      VERCEL_CLIENT_SECRET: ${{ secrets.VERCEL_CLIENT_SECRET }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -220,7 +247,18 @@ jobs:
           Invoke-WebRequest -Uri $langUrl -OutFile "$langDir\ChineseSimplified.isl"
 
       - name: Build Windows ${{ matrix.arch }}
-        run: wails build -platform windows/${{ matrix.arch }} -clean -trimpath -ldflags "-X main.Version=${{ env.VERSION }}"
+        shell: bash
+        run: |
+          LDFLAGS="-X main.Version=${VERSION}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientID=${GITHUB_OAUTH_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientSecret=${GITHUB_OAUTH_CLIENT_SECRET}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientID=${GITEE_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientSecret=${GITEE_CLIENT_SECRET}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientID=${NETLIFY_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientSecret=${NETLIFY_CLIENT_SECRET}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.vercelClientID=${VERCEL_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.vercelClientSecret=${VERCEL_CLIENT_SECRET}"
+          wails build -platform windows/${{ matrix.arch }} -clean -trimpath -ldflags "${LDFLAGS}"
 
       - name: Build MCP server
         env:
@@ -317,6 +355,14 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
+      GITHUB_OAUTH_CLIENT_ID: ${{ secrets.GH_OAUTH_CLIENT_ID }}
+      GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
+      GITEE_CLIENT_ID: ${{ secrets.GITEE_CLIENT_ID }}
+      GITEE_CLIENT_SECRET: ${{ secrets.GITEE_CLIENT_SECRET }}
+      NETLIFY_CLIENT_ID: ${{ secrets.NETLIFY_CLIENT_ID }}
+      NETLIFY_CLIENT_SECRET: ${{ secrets.NETLIFY_CLIENT_SECRET }}
+      VERCEL_CLIENT_ID: ${{ secrets.VERCEL_CLIENT_ID }}
+      VERCEL_CLIENT_SECRET: ${{ secrets.VERCEL_CLIENT_SECRET }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -360,7 +406,18 @@ jobs:
         run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
 
       - name: Build Linux binary
-        run: wails build -platform linux/amd64 -clean -trimpath -tags webkit2_41 -ldflags "-X main.Version=${{ env.VERSION }}"
+        shell: bash
+        run: |
+          LDFLAGS="-X main.Version=${VERSION}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientID=${GITHUB_OAUTH_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientSecret=${GITHUB_OAUTH_CLIENT_SECRET}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientID=${GITEE_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientSecret=${GITEE_CLIENT_SECRET}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientID=${NETLIFY_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientSecret=${NETLIFY_CLIENT_SECRET}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.vercelClientID=${VERCEL_CLIENT_ID}"
+          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.vercelClientSecret=${VERCEL_CLIENT_SECRET}"
+          wails build -platform linux/amd64 -clean -trimpath -tags webkit2_41 -ldflags "${LDFLAGS}"
 
       - name: Build MCP server
         env:
