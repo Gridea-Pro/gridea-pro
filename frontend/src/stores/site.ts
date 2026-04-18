@@ -72,6 +72,7 @@ const defaultThemeConfig: ITheme = {
   tagUrlFormat: 'SLUG',
   dateFormat: 'YYYY-MM-DD',
   language: 'zh-cn',
+  feedEnabled: true,
   feedCount: DEFAULT_FEED_COUNT,
   feedFullText: true,
   postPath: DEFAULT_POST_PATH,
@@ -200,6 +201,9 @@ export const useSiteStore = defineStore('site', () => {
           feedCount: siteData.themeConfig?.feedCount || DEFAULT_FEED_COUNT,
           postPath: siteData.themeConfig?.postPath || DEFAULT_POST_PATH,
           tagPath: siteData.themeConfig?.tagPath || DEFAULT_TAG_PATH,
+          feedEnabled: typeof siteData.themeConfig?.feedEnabled === 'boolean'
+            ? siteData.themeConfig.feedEnabled
+            : true,
           feedFullText: typeof siteData.themeConfig?.feedFullText === 'boolean'
             ? siteData.themeConfig.feedFullText
             : true,

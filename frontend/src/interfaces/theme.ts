@@ -37,6 +37,7 @@ export interface ITheme {
   tagUrlFormat: string
   dateFormat: string
   language: string
+  feedEnabled: boolean
   feedFullText: boolean
   feedCount: number
   postPath: string

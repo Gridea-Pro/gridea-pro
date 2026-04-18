@@ -25,19 +25,22 @@ func NewSeoGenerator() *SeoGenerator {
 	}
 }
 
-// RenderRobotsTxt 自动生成 robots.txt
-func (g *SeoGenerator) RenderRobotsTxt(buildDir string, data *template.TemplateData) error {
-	domainUrl := strings.TrimRight(data.ThemeConfig.Domain, "/")
-
-	var content strings.Builder
-	content.WriteString("User-agent: *\n")
-	content.WriteString("Allow: /\n")
-
-	if domainUrl != "" {
-		content.WriteString(fmt.Sprintf("\nSitemap: %s/sitemap.xml\n", domainUrl))
+// RenderRobotsTxt 自动生成 robots.txt。
+// custom 非空时直接以其作为完整内容（用户接管 robots.txt 全部内容）；为空时使用默认模板。
+func (g *SeoGenerator) RenderRobotsTxt(buildDir string, data *template.TemplateData, custom string) error {
+	var content string
+	if strings.TrimSpace(custom) != "" {
+		content = strings.TrimRight(custom, "\n") + "\n"
+	} else {
+		var sb strings.Builder
+		sb.WriteString("User-agent: *\n")
+		sb.WriteString("Allow: /\n")
+		if domainUrl := strings.TrimRight(data.ThemeConfig.Domain, "/"); domainUrl != "" {
+			sb.WriteString(fmt.Sprintf("\nSitemap: %s/sitemap.xml\n", domainUrl))
+		}
+		content = sb.String()
 	}
-
-	return os.WriteFile(filepath.Join(buildDir, "robots.txt"), []byte(content.String()), 0644)
+	return os.WriteFile(filepath.Join(buildDir, "robots.txt"), []byte(content), 0644)
 }
 
 // getMimeType 根据图片后缀返回 MIME

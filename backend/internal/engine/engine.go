@@ -228,8 +228,8 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 	// 4. 初始化 HTML 后处理器（SEO + CDN + PWA）
 	var postProcessor *HtmlPostProcessor
 	var pwaSetting domain.PwaSetting
+	var seoSetting domain.SeoSetting
 	{
-		var seoSetting domain.SeoSetting
 		var cdnSetting domain.CdnSetting
 		if s.seoSettingRepo != nil {
 			seoSetting, _ = s.seoSettingRepo.GetSeoSetting(ctx)
@@ -301,9 +301,24 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 		{"闪念页", func() error { return s.pageRenderer.RenderMemos(ctx, buildDir, templateData) }},
 		{"404页面", func() error { return s.pageRenderer.Render404(buildDir, templateData) }},
 		{"搜索数据(search.json)", func() error { return s.searchBuilder.RenderSearchJSON(buildDir, templateData) }},
-		{"RSS订阅(feed.xml)", func() error { return s.seoGenerator.RenderRSS(buildDir, templateData) }},
-		{"站点地图(sitemap.xml)", func() error { return s.seoGenerator.RenderSitemap(buildDir, templateData) }},
-		{"Robots(robots.txt)", func() error { return s.seoGenerator.RenderRobotsTxt(buildDir, templateData) }},
+		{"RSS订阅(feed.xml)", func() error {
+			if !templateData.ThemeConfig.FeedEnabled {
+				return nil
+			}
+			return s.seoGenerator.RenderRSS(buildDir, templateData)
+		}},
+		{"站点地图(sitemap.xml)", func() error {
+			if !seoSetting.SitemapEnabled {
+				return nil
+			}
+			return s.seoGenerator.RenderSitemap(buildDir, templateData)
+		}},
+		{"Robots(robots.txt)", func() error {
+			if !seoSetting.RobotsEnabled {
+				return nil
+			}
+			return s.seoGenerator.RenderRobotsTxt(buildDir, templateData, seoSetting.RobotsCustom)
+		}},
 		{"PWA Manifest(manifest.json)", func() error {
 			if pwaSetting.Enabled {
 				return s.pwaGenerator.RenderManifest(buildDir, &pwaSetting, templateData.ThemeConfig.SiteName, templateData.ThemeConfig.Language)

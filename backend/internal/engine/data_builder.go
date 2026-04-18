@@ -265,6 +265,7 @@ func (b *TemplateDataBuilder) Build(ctx context.Context, posts []domain.Post, co
 			TagUrlFormat:     config.TagUrlFormat,
 			DateFormat:       config.DateFormat,
 			Language:         config.Language,
+			FeedEnabled:      config.FeedEnabled,
 			FeedFullText:     config.FeedFullText,
 			FeedCount:        config.FeedCount,
 			PostPath:         config.PostPath,

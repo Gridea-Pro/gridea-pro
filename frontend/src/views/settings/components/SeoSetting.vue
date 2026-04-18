@@ -1,91 +1,70 @@
 <template>
-  <div class="pb-20 max-w-4xl mx-auto pt-4">
-    <div class="space-y-6">
-      <!-- 结构化数据 -->
-      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.seo.jsonLD') }}</label>
-        <div class="flex items-center gap-3">
-          <Switch :checked="form.enableJsonLD" @update:checked="(v: boolean) => form.enableJsonLD = v" size="sm" />
-          <span class="text-xs text-muted-foreground">{{ t('settings.seo.jsonLDDesc') }}</span>
-        </div>
-      </div>
+  <div class="pb-24 pt-4 pl-32">
+    <div class="flex flex-col md:flex-row gap-8">
+      <!-- Sidebar -->
+      <aside class="w-full md:w-48 flex-shrink-0 md:border-r md:border-border md:pr-6">
+        <nav class="space-y-1 sticky top-0">
+          <button v-for="g in groups" :key="g.key" :class="[
+            'w-full h-12 text-left px-3 py-2 text-sm rounded-md transition-colors',
+            activeGroup === g.key
+              ? 'text-primary bg-primary/10 font-medium cursor-pointer'
+              : 'text-muted-foreground hover:bg-primary/10 hover:text-foreground cursor-pointer'
+          ]" @click="activeGroup = g.key">
+            {{ g.label }}
+          </button>
+        </nav>
+      </aside>
 
-      <!-- 社交分享 -->
-      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.seo.openGraph') }}</label>
-        <div class="flex items-center gap-3">
-          <Switch :checked="form.enableOpenGraph" @update:checked="(v: boolean) => form.enableOpenGraph = v" size="sm" />
-          <span class="text-xs text-muted-foreground">{{ t('settings.seo.openGraphDesc') }}</span>
-        </div>
-      </div>
+      <!-- Right Content -->
+      <div class="flex-1 min-w-0">
+        <div class="space-y-6 max-w-2xl">
+          <div v-for="field in activeFields" :key="field.name" class="space-y-2">
+            <!-- Switch -->
+            <template v-if="field.type === 'switch'">
+              <div class="flex justify-between items-center max-w-sm">
+                <label class="text-sm font-medium text-foreground">{{ field.label }}</label>
+                <Switch :checked="!!form[field.name]" @update:checked="(v: boolean) => form[field.name] = v" size="sm" />
+              </div>
+              <div v-if="field.desc" class="text-xs text-muted-foreground">{{ field.desc }}</div>
+            </template>
 
-      <!-- Canonical URL -->
-      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.seo.canonicalURL') }}</label>
-        <div class="flex items-center gap-3">
-          <Switch :checked="form.enableCanonicalURL" @update:checked="(v: boolean) => form.enableCanonicalURL = v" size="sm" />
-          <span class="text-xs text-muted-foreground">{{ t('settings.seo.canonicalURLDesc') }}</span>
-        </div>
-      </div>
+            <!-- Input -->
+            <template v-else-if="field.type === 'input'">
+              <label class="block text-sm font-medium text-foreground">{{ field.label }}</label>
+              <div class="max-w-sm">
+                <Input v-model="form[field.name]" :placeholder="field.placeholder" />
+              </div>
+              <div v-if="field.desc" class="text-xs text-muted-foreground">{{ field.desc }}</div>
+            </template>
 
-      <!-- Meta Keywords -->
-      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.seo.metaKeywords') }}</label>
-        <div class="max-w-sm">
-          <Input v-model="form.metaKeywords" :placeholder="t('settings.seo.metaKeywordsPlaceholder')" />
+            <!-- Textarea -->
+            <template v-else-if="field.type === 'textarea'">
+              <label class="block text-sm font-medium text-foreground">{{ field.label }}</label>
+              <div class="max-w-sm">
+                <Textarea v-model="form[field.name]" :placeholder="field.placeholder" :rows="field.rows || 4" />
+              </div>
+              <div v-if="field.desc" class="text-xs text-muted-foreground">{{ field.desc }}</div>
+            </template>
+          </div>
         </div>
-      </div>
 
-      <!-- Google Analytics -->
-      <div class="grid grid-cols-[180px_1fr] items-start gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ t('settings.seo.googleAnalytics') }}</label>
-        <div class="max-w-sm">
-          <Input v-model="form.googleAnalyticsId" placeholder="G-XXXXXXXXXX" />
-          <div class="text-xs text-muted-foreground mt-1.5">{{ t('settings.seo.googleAnalyticsDesc') }}</div>
-        </div>
-      </div>
-
-      <!-- Google Search Console -->
-      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.seo.googleSearchConsole') }}</label>
-        <div class="max-w-sm">
-          <Input v-model="form.googleSearchConsoleCode" :placeholder="t('settings.seo.googleSearchConsolePlaceholder')" />
-        </div>
-      </div>
-
-      <!-- 百度统计 -->
-      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground">{{ t('settings.seo.baiduAnalytics') }}</label>
-        <div class="max-w-sm">
-          <Input v-model="form.baiduAnalyticsId" :placeholder="t('settings.seo.baiduAnalyticsPlaceholder')" />
-        </div>
-      </div>
-
-      <!-- 自定义 Head 代码 -->
-      <div class="grid grid-cols-[180px_1fr] items-start gap-4">
-        <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ t('settings.seo.customHeadCode') }}</label>
-        <div class="max-w-sm">
-          <Textarea v-model="form.customHeadCode" :placeholder="t('settings.seo.customHeadCodePlaceholder')" rows="4" />
-          <div class="text-xs text-muted-foreground mt-1.5">{{ t('settings.seo.customHeadCodeDesc') }}</div>
-        </div>
+        <footer-box>
+          <div class="flex justify-end items-center w-full">
+            <Button
+              variant="default"
+              class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
+              @click="submit">
+              {{ t('common.save') }}
+            </Button>
+          </div>
+        </footer-box>
       </div>
     </div>
-
-    <footer-box>
-      <div class="flex justify-end items-center w-full">
-        <Button
-          variant="default"
-          class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
-          @click="submit">
-          {{ t('common.save') }}
-        </Button>
-      </div>
-    </footer-box>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from '@/helpers/toast'
 import FooterBox from '@/components/FooterBox/index.vue'
@@ -98,29 +77,141 @@ import { domain } from '@/wailsjs/go/models'
 
 const { t } = useI18n()
 
-const form = reactive({
-  enableJsonLD: false,
-  enableOpenGraph: false,
-  enableCanonicalURL: false,
+type FieldType = 'switch' | 'input' | 'textarea'
+interface FieldDef {
+  group: string
+  name: string
+  type: FieldType
+  label: string
+  placeholder?: string
+  desc?: string
+  rows?: number
+}
+
+const groups = computed(() => [
+  { key: 'basic', label: t('settings.seo.groupBasic') },
+  { key: 'social', label: t('settings.seo.groupSocial') },
+  { key: 'jsonld', label: t('settings.seo.groupJsonLd') },
+  { key: 'verification', label: t('settings.seo.groupVerification') },
+  { key: 'analytics', label: t('settings.seo.groupAnalytics') },
+  { key: 'indexing', label: t('settings.seo.groupIndexing') },
+  { key: 'custom', label: t('settings.seo.groupCustom') },
+])
+
+const fields = computed<FieldDef[]>(() => [
+  // —— 基础 SEO ——
+  { group: 'basic', name: 'metaKeywords', type: 'input',
+    label: t('settings.seo.metaKeywords'), placeholder: t('settings.seo.metaKeywordsPlaceholder'),
+    desc: t('settings.seo.metaKeywordsDesc') },
+  { group: 'basic', name: 'enableCanonicalURL', type: 'switch',
+    label: t('settings.seo.canonicalURL'), desc: t('settings.seo.canonicalURLDesc') },
+  { group: 'basic', name: 'ogDefaultImage', type: 'input',
+    label: t('settings.seo.ogDefaultImage'), placeholder: t('settings.seo.ogDefaultImagePlaceholder'),
+    desc: t('settings.seo.ogDefaultImageDesc') },
+
+  // —— 社交分享 ——
+  { group: 'social', name: 'enableOpenGraph', type: 'switch',
+    label: t('settings.seo.openGraph'), desc: t('settings.seo.openGraphDesc') },
+  { group: 'social', name: 'twitterSite', type: 'input',
+    label: t('settings.seo.twitterSite'), placeholder: '@yoursite', desc: t('settings.seo.twitterSiteDesc') },
+  { group: 'social', name: 'twitterCreator', type: 'input',
+    label: t('settings.seo.twitterCreator'), placeholder: '@author', desc: t('settings.seo.twitterCreatorDesc') },
+
+  // —— 结构化数据 ——
+  { group: 'jsonld', name: 'enableJsonLD', type: 'switch',
+    label: t('settings.seo.jsonLD'), desc: t('settings.seo.jsonLDDesc') },
+
+  // —— 站长平台验证 ——
+  { group: 'verification', name: 'googleSearchConsoleCode', type: 'input',
+    label: t('settings.seo.googleSearchConsole'), placeholder: t('settings.seo.googleSearchConsolePlaceholder'),
+    desc: t('settings.seo.googleSearchConsoleDesc') },
+  { group: 'verification', name: 'bingVerificationCode', type: 'input',
+    label: t('settings.seo.bingVerification'), desc: t('settings.seo.bingVerificationDesc') },
+  { group: 'verification', name: 'baiduVerificationCode', type: 'input',
+    label: t('settings.seo.baiduVerification'), desc: t('settings.seo.baiduVerificationDesc') },
+  { group: 'verification', name: '360VerificationCode', type: 'input',
+    label: t('settings.seo.so360Verification'), desc: t('settings.seo.so360VerificationDesc') },
+  { group: 'verification', name: 'yandexVerificationCode', type: 'input',
+    label: t('settings.seo.yandexVerification'), desc: t('settings.seo.yandexVerificationDesc') },
+
+  // —— 网站分析统计 ——
+  { group: 'analytics', name: 'googleAnalyticsId', type: 'input',
+    label: t('settings.seo.googleAnalytics'), placeholder: 'G-XXXXXXXXXX',
+    desc: t('settings.seo.googleAnalyticsDesc') },
+  { group: 'analytics', name: 'baiduAnalyticsId', type: 'input',
+    label: t('settings.seo.baiduAnalytics'), placeholder: t('settings.seo.baiduAnalyticsPlaceholder'),
+    desc: t('settings.seo.baiduAnalyticsDesc') },
+  { group: 'analytics', name: 'plausibleDomain', type: 'input',
+    label: t('settings.seo.plausibleDomain'), placeholder: 'example.com',
+    desc: t('settings.seo.plausibleDomainDesc') },
+  { group: 'analytics', name: 'umamiWebsiteId', type: 'input',
+    label: t('settings.seo.umamiWebsiteId'), desc: t('settings.seo.umamiWebsiteIdDesc') },
+  { group: 'analytics', name: 'umamiScriptUrl', type: 'input',
+    label: t('settings.seo.umamiScriptUrl'), placeholder: 'https://analytics.example.com/script.js',
+    desc: t('settings.seo.umamiScriptUrlDesc') },
+  { group: 'analytics', name: 'cloudflareWebAnalyticsToken', type: 'input',
+    label: t('settings.seo.cloudflareWebAnalytics'), desc: t('settings.seo.cloudflareWebAnalyticsDesc') },
+
+  // —— 站点索引 ——
+  { group: 'indexing', name: 'sitemapEnabled', type: 'switch',
+    label: t('settings.seo.sitemapEnabled'), desc: t('settings.seo.sitemapEnabledDesc') },
+  { group: 'indexing', name: 'robotsEnabled', type: 'switch',
+    label: t('settings.seo.robotsEnabled'), desc: t('settings.seo.robotsEnabledDesc') },
+  { group: 'indexing', name: 'robotsCustom', type: 'textarea', rows: 6,
+    label: t('settings.seo.robotsCustom'), placeholder: t('settings.seo.robotsCustomPlaceholder'),
+    desc: t('settings.seo.robotsCustomDesc') },
+
+  // —— 自定义代码 ——
+  { group: 'custom', name: 'customHeadCode', type: 'textarea',
+    label: t('settings.seo.customHeadCode'), placeholder: t('settings.seo.customHeadCodePlaceholder'),
+    desc: t('settings.seo.customHeadCodeDesc') },
+  { group: 'custom', name: 'customBodyStartCode', type: 'textarea',
+    label: t('settings.seo.customBodyStartCode'), placeholder: t('settings.seo.customBodyStartCodePlaceholder'),
+    desc: t('settings.seo.customBodyStartCodeDesc') },
+  { group: 'custom', name: 'customBodyEndCode', type: 'textarea',
+    label: t('settings.seo.customBodyEndCode'), placeholder: t('settings.seo.customBodyEndCodePlaceholder'),
+    desc: t('settings.seo.customBodyEndCodeDesc') },
+])
+
+const activeGroup = ref('basic')
+const activeFields = computed(() => fields.value.filter(f => f.group === activeGroup.value))
+
+const form = reactive<Record<string, any>>({
   metaKeywords: '',
-  googleAnalyticsId: '',
+  enableCanonicalURL: false,
+  ogDefaultImage: '',
+  enableOpenGraph: false,
+  twitterSite: '',
+  twitterCreator: '',
+  enableJsonLD: false,
   googleSearchConsoleCode: '',
+  bingVerificationCode: '',
+  baiduVerificationCode: '',
+  '360VerificationCode': '',
+  yandexVerificationCode: '',
+  googleAnalyticsId: '',
   baiduAnalyticsId: '',
+  plausibleDomain: '',
+  umamiWebsiteId: '',
+  umamiScriptUrl: '',
+  cloudflareWebAnalyticsToken: '',
+  sitemapEnabled: false,
+  robotsEnabled: false,
+  robotsCustom: '',
   customHeadCode: '',
+  customBodyStartCode: '',
+  customBodyEndCode: '',
 })
 
 onMounted(async () => {
   try {
-    const setting = await GetSeoSetting()
+    const setting = await GetSeoSetting() as Record<string, any>
     if (setting) {
-      form.enableJsonLD = setting.enableJsonLD || false
-      form.enableOpenGraph = setting.enableOpenGraph || false
-      form.enableCanonicalURL = setting.enableCanonicalURL || false
-      form.metaKeywords = setting.metaKeywords || ''
-      form.googleAnalyticsId = setting.googleAnalyticsId || ''
-      form.googleSearchConsoleCode = setting.googleSearchConsoleCode || ''
-      form.baiduAnalyticsId = setting.baiduAnalyticsId || ''
-      form.customHeadCode = setting.customHeadCode || ''
+      Object.keys(form).forEach((k) => {
+        if (setting[k] !== undefined && setting[k] !== null) {
+          form[k] = setting[k]
+        }
+      })
     }
   } catch (e) {
     console.error('Failed to load SEO settings', e)

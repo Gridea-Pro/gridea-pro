@@ -94,6 +94,7 @@ func (r *themeRepository) loadConfigIfNeeded() error {
 			PostUrlFormat:    "SLUG",
 			TagUrlFormat:     "SLUG",
 			DateFormat:       "YYYY-MM-DD",
+			FeedEnabled:      true,
 			FeedFullText:     true,
 			FeedCount:        20,
 			PostPath:         "post",

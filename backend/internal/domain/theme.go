@@ -35,6 +35,7 @@ type ThemeConfig struct {
 	TagUrlFormat     string                 `json:"tagUrlFormat"`
 	DateFormat       string                 `json:"dateFormat"`
 	Language         string                 `json:"language"`
+	FeedEnabled      bool                   `json:"feedEnabled"`
 	FeedFullText     bool                   `json:"feedFullText"`
 	FeedCount        int                    `json:"feedCount"`
 	PostPath         string                 `json:"postPath"`

@@ -115,6 +115,14 @@
         </div>
       </div>
 
+      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
+        <label class="text-sm font-medium text-right text-muted-foreground">{{ $t('settings.basic.feedEnabled') }}</label>
+        <div class="flex items-center gap-3">
+          <Switch :checked="!!form.feedEnabled" @update:checked="(v: boolean) => form.feedEnabled = v" size="sm" />
+          <span class="text-xs text-muted-foreground">{{ $t('settings.basic.feedEnabledDesc') }}</span>
+        </div>
+      </div>
+
       <div class="grid grid-cols-[180px_1fr] items-start gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('article.feedFormat') }}</label>
         <div class="w-full max-w-sm">
@@ -191,6 +199,7 @@ const form = reactive({
   postUrlFormat: 'SLUG',
   tagUrlFormat: 'SLUG',
   dateFormat: 'YYYY-MM-DD',
+  feedEnabled: true,
   feedFullText: true,
   feedCount: DEFAULT_FEED_COUNT,
   postPath: DEFAULT_POST_PATH,
@@ -273,6 +282,7 @@ onMounted(() => {
   form.postUrlFormat = config.postUrlFormat
   form.tagUrlFormat = config.tagUrlFormat
   form.dateFormat = config.dateFormat
+  form.feedEnabled = typeof config.feedEnabled === 'boolean' ? config.feedEnabled : true
   form.feedFullText = config.feedFullText
   form.feedCount = config.feedCount || DEFAULT_FEED_COUNT
   form.postPath = config.postPath || DEFAULT_POST_PATH

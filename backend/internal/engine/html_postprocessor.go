@@ -53,6 +53,9 @@ func (p *HtmlPostProcessor) Process(html, pageType, pageURL string, post *templa
 	// PWA meta 标签注入
 	html = p.injectPwa(html)
 
+	// 自定义 body 代码注入
+	html = p.injectBody(html)
+
 	// CDN URL 重写
 	html = p.rewriteCdnURLs(html)
 
@@ -143,9 +146,21 @@ func (p *HtmlPostProcessor) injectSeo(html, pageType, pageURL string, post *temp
 		sb.WriteString(fmt.Sprintf(`<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','%s');</script>`+"\n", gaID))
 	}
 
-	// Google Search Console
+	// 站长平台验证 meta
 	if p.seoSetting.GoogleSearchConsoleCode != "" {
 		sb.WriteString(fmt.Sprintf(`<meta name="google-site-verification" content="%s">`+"\n", escapeAttr(p.seoSetting.GoogleSearchConsoleCode)))
+	}
+	if p.seoSetting.BingVerificationCode != "" {
+		sb.WriteString(fmt.Sprintf(`<meta name="msvalidate.01" content="%s">`+"\n", escapeAttr(p.seoSetting.BingVerificationCode)))
+	}
+	if p.seoSetting.BaiduVerificationCode != "" {
+		sb.WriteString(fmt.Sprintf(`<meta name="baidu-site-verification" content="%s">`+"\n", escapeAttr(p.seoSetting.BaiduVerificationCode)))
+	}
+	if p.seoSetting.The360VerificationCode != "" {
+		sb.WriteString(fmt.Sprintf(`<meta name="360-site-verification" content="%s">`+"\n", escapeAttr(p.seoSetting.The360VerificationCode)))
+	}
+	if p.seoSetting.YandexVerificationCode != "" {
+		sb.WriteString(fmt.Sprintf(`<meta name="yandex-verification" content="%s">`+"\n", escapeAttr(p.seoSetting.YandexVerificationCode)))
 	}
 
 	// 百度统计
@@ -154,7 +169,24 @@ func (p *HtmlPostProcessor) injectSeo(html, pageType, pageURL string, post *temp
 		sb.WriteString(fmt.Sprintf(`<script>var _hmt=_hmt||[];(function(){var hm=document.createElement("script");hm.src="https://hm.baidu.com/hm.js?%s";var s=document.getElementsByTagName("script")[0];s.parentNode.insertBefore(hm,s);})();</script>`+"\n", baiduID))
 	}
 
-	// 自定义代码
+	// Plausible Analytics
+	if p.seoSetting.PlausibleDomain != "" {
+		sb.WriteString(fmt.Sprintf(`<script defer data-domain="%s" src="https://plausible.io/js/script.js"></script>`+"\n", escapeAttr(p.seoSetting.PlausibleDomain)))
+	}
+
+	// Umami Analytics
+	if p.seoSetting.UmamiWebsiteID != "" && p.seoSetting.UmamiScriptURL != "" {
+		sb.WriteString(fmt.Sprintf(`<script defer src="%s" data-website-id="%s"></script>`+"\n",
+			escapeAttr(p.seoSetting.UmamiScriptURL), escapeAttr(p.seoSetting.UmamiWebsiteID)))
+	}
+
+	// Cloudflare Web Analytics
+	if p.seoSetting.CloudflareWebAnalyticsToken != "" {
+		token := escapeAttr(p.seoSetting.CloudflareWebAnalyticsToken)
+		sb.WriteString(fmt.Sprintf(`<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"%s"}'></script>`+"\n", token))
+	}
+
+	// 自定义 head 代码
 	if p.seoSetting.CustomHeadCode != "" {
 		sb.WriteString(p.seoSetting.CustomHeadCode + "\n")
 	}
@@ -259,7 +291,13 @@ func (p *HtmlPostProcessor) buildOpenGraph(pageType, fullURL string, post *templ
 
 	title := p.siteName
 	ogType := "website"
-	image := p.avatar // 非文章页默认站点头像
+	// 图片优先级：文章特色图 → SEO 设置默认图 → 站点头像
+	image := ""
+	if p.seoSetting != nil && p.seoSetting.OgDefaultImage != "" {
+		image = p.seoSetting.OgDefaultImage
+	} else if p.avatar != "" {
+		image = p.avatar
+	}
 
 	if pageType == "post" && post != nil {
 		title = post.Title
@@ -286,8 +324,43 @@ func (p *HtmlPostProcessor) buildOpenGraph(pageType, fullURL string, post *templ
 	if image != "" {
 		sb.WriteString(fmt.Sprintf(`<meta name="twitter:image" content="%s">`+"\n", escapeAttr(image)))
 	}
+	if p.seoSetting != nil && p.seoSetting.TwitterSite != "" {
+		sb.WriteString(fmt.Sprintf(`<meta name="twitter:site" content="%s">`+"\n", escapeAttr(p.seoSetting.TwitterSite)))
+	}
+	if p.seoSetting != nil && p.seoSetting.TwitterCreator != "" {
+		sb.WriteString(fmt.Sprintf(`<meta name="twitter:creator" content="%s">`+"\n", escapeAttr(p.seoSetting.TwitterCreator)))
+	}
 
 	return sb.String()
+}
+
+// injectBody 在 <body> 之后与 </body> 之前注入用户自定义代码（如 GTM、客服挂件等）
+func (p *HtmlPostProcessor) injectBody(html string) string {
+	if p.seoSetting == nil {
+		return html
+	}
+
+	// </body> 之前注入 customBodyEndCode（先注入这个，让 startCode 后注入时位置不受 endCode 偏移影响）
+	if p.seoSetting.CustomBodyEndCode != "" {
+		idx := strings.LastIndex(strings.ToLower(html), "</body>")
+		if idx != -1 {
+			html = html[:idx] + p.seoSetting.CustomBodyEndCode + "\n" + html[idx:]
+		}
+	}
+
+	// <body[...]> 之后注入 customBodyStartCode
+	if p.seoSetting.CustomBodyStartCode != "" {
+		lowerHTML := strings.ToLower(html)
+		// 找开 <body 标签的位置；body 可能带属性，需要找 > 关闭
+		if start := strings.Index(lowerHTML, "<body"); start != -1 {
+			if end := strings.Index(lowerHTML[start:], ">"); end != -1 {
+				insertAt := start + end + 1
+				html = html[:insertAt] + "\n" + p.seoSetting.CustomBodyStartCode + html[insertAt:]
+			}
+		}
+	}
+
+	return html
 }
 
 // rewriteCdnURLs 将静态资源路径替换为 CDN 地址
