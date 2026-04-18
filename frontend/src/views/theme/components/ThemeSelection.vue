@@ -15,7 +15,7 @@
                   class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="" />
               </template>
               <template v-else>
-                <div class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                <div class="w-full h-full flex flex-col items-center justify-center transition-transform duration-500 group-hover:scale-105">
                   <PhotoIcon class="w-12 h-12 mb-2" />
                   <span class="text-[10px] uppercase tracking-wider font-medium">No Preview</span>
                 </div>
@@ -124,7 +124,7 @@
               </template>
               <template v-else>
                 <div
-                  class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 text-muted-foreground/30 transition-transform duration-500 group-hover:scale-105">
+                  class="w-full h-full flex flex-col items-center justify-center transition-transform duration-500 group-hover:scale-105">
                   <PhotoIcon class="w-8 h-8 mb-1" />
                   <span class="text-[10px] uppercase tracking-wider font-medium">No Preview</span>
                 </div>
