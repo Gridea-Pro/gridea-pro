@@ -228,9 +228,11 @@ Gridea Pro 实现了 [MCP（Model Context Protocol）](https://modelcontextproto
 |------|--------|
 | macOS | `.dmg` |
 | Windows | `.exe` |
-| Linux | `.AppImage` / `.deb` |
+| Linux | `.AppImage` / `.deb` / `.rpm` |
 
 下载后双击安装，打开即可开始写作。
+
+> **AppImage 注意事项**：部分 Linux 发行版（如新版 Fedora）默认未预装 FUSE。如遇到 "AppImages require FUSE" 报错，请手动安装：`sudo dnf install fuse-libs`（Fedora）或 `sudo apt install libfuse2`（Ubuntu）。
 
 **从旧版 Gridea 迁移**：在应用内将「站点目录」指向原来的 Gridea 数据目录，启动后自动迁移，无需手动操作。
 

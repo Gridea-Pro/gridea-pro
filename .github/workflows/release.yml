@@ -404,6 +404,11 @@ jobs:
           depends:
             - libwebkit2gtk-4.1-0
             - libgtk-3-0
+          overrides:
+            rpm:
+              depends:
+                - webkit2gtk4.1
+                - gtk3
           contents:
             - src: "build/bin/${{ env.BIN_NAME }}"
               dst: "/usr/bin/${SLUG}"
@@ -452,6 +457,7 @@ jobs:
           SELF=\$(readlink -f "\$0")
           HERE=\${SELF%/*}
           export PATH="\${HERE}/usr/bin:\${PATH}"
+          export APPIMAGE_EXTRACT_AND_RUN=1
           exec "\${HERE}/usr/bin/${SLUG}" "\$@"
           EOF
           chmod +x AppDir/AppRun

@@ -216,9 +216,11 @@ Download the installer for your platform from the [Releases](https://github.com/
 |----------|---------|
 | macOS | `.dmg` |
 | Windows | `.exe` |
-| Linux | `.AppImage` / `.deb` |
+| Linux | `.AppImage` / `.deb` / `.rpm` |
 
 Double-click to install and start writing.
+
+> **AppImage Note**: Some Linux distributions (e.g., newer Fedora) do not ship with FUSE by default. If you encounter an "AppImages require FUSE" error, install it manually: `sudo dnf install fuse-libs` (Fedora) or `sudo apt install libfuse2` (Ubuntu).
 
 **Migrating from Gridea**: Point the "Site Directory" setting to your existing Gridea data folder. Gridea Pro will migrate your data automatically on first launch — no manual steps required.
 
