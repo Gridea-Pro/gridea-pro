@@ -15,6 +15,11 @@
 {# Favicon #}
 <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
+{# 主题变量覆盖：将站长配置的热力图主色注入到 CSS 变量 #}
+{% if theme_config.heatmapColor %}
+<style>:root { --heatmap-color: {{ theme_config.heatmapColor }}; }</style>
+{% endif %}
+
 {# 主题色初始化：优先用本地存储，否则使用站长在主题外观里选择的默认主题，避免深浅模式闪屏 #}
 <script>
   (function () {

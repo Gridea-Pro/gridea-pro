@@ -8,19 +8,141 @@
   </div>
 
   {% if memos|length > 0 %}
+
+  {% if theme_config.showHeatmap %}
+  <div class="heatmap-wrap">
+    <div id="heatmap-root"></div>
+    <div class="heatmap-footer">
+      <span id="heatmap-total"></span>
+      <div class="heatmap-legend">
+        <span>少</span>
+        <span class="heatmap-legend-cell" data-level="0"></span>
+        <span class="heatmap-legend-cell" data-level="1"></span>
+        <span class="heatmap-legend-cell" data-level="2"></span>
+        <span class="heatmap-legend-cell" data-level="3"></span>
+        <span class="heatmap-legend-cell" data-level="4"></span>
+        <span>多</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="memo-timeline">
     {% for memo in memos %}
-    <div class="memo-item">
+    <div class="memo-item" data-created="{{ memo.createdAt }}">
       <div class="memo-item__marker"></div>
       <div class="memo-item__card">
         <div class="memo-item__content article-content">
           {{ memo.content|safe }}
         </div>
-        <time class="memo-item__date meta-text">{{ memo.date }}</time>
+        <time class="memo-item__date meta-text">{{ memo.dateFormat }}</time>
       </div>
     </div>
     {% endfor %}
   </div>
+
+  {% if theme_config.showHeatmap %}
+  <script>
+    (function () {
+      var items = document.querySelectorAll('.memo-item');
+      if (!items.length) return;
+
+      var heatmapData = {};
+      items.forEach(function (item) {
+        var d = item.getAttribute('data-created');
+        if (d) {
+          var dateStr = d.substring(0, 10);
+          heatmapData[dateStr] = (heatmapData[dateStr] || 0) + 1;
+        }
+      });
+
+      var MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+      var DAYS = ['日', '一', '二', '三', '四', '五', '六'];
+
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var endDay = today.getDay();
+      var totalDays = 52 * 7 + endDay + 1;
+      var startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - totalDays + 1);
+      startDate.setDate(startDate.getDate() - startDate.getDay());
+
+      var totalWeeks = Math.ceil(totalDays / 7);
+
+      var weeks = [];
+      for (var w = 0; w < totalWeeks; w++) {
+        var week = [];
+        for (var d = 0; d < 7; d++) {
+          var cellDate = new Date(startDate);
+          cellDate.setDate(cellDate.getDate() + w * 7 + d);
+          var key = cellDate.getFullYear() + '-' + String(cellDate.getMonth() + 1).padStart(2, '0') + '-' + String(cellDate.getDate()).padStart(2, '0');
+          var count = heatmapData[key] || 0;
+          var level = count === 0 ? 0 : count === 1 ? 1 : count <= 3 ? 2 : count <= 5 ? 3 : 4;
+          var future = cellDate > today;
+          week.push({ date: cellDate, key: key, count: count, level: level, future: future, month: cellDate.getMonth() });
+        }
+        weeks.push(week);
+      }
+
+      var monthLabels = [];
+      var lastMonth = -1;
+      for (var w = 0; w < weeks.length; w++) {
+        var firstDay = weeks[w][0];
+        if (!firstDay.future && firstDay.month !== lastMonth) {
+          monthLabels.push({ weekIndex: w, label: MONTHS[firstDay.month] });
+          lastMonth = firstDay.month;
+        }
+      }
+      // 过滤 colspan 小于 2 的月份标签（避免两端出现 1 列宽的残月）
+      monthLabels = monthLabels.filter(function (m, i) {
+        var next = i + 1 < monthLabels.length ? monthLabels[i + 1].weekIndex : weeks.length;
+        return next - m.weekIndex >= 2;
+      });
+
+      var html = '<table>';
+      html += '<tr><td class="heatmap-day-label"></td>';
+      var monthColIdx = 0;
+      for (var w = 0; w < totalWeeks; w++) {
+        if (monthColIdx < monthLabels.length && monthLabels[monthColIdx].weekIndex === w) {
+          var nextIdx = monthColIdx + 1 < monthLabels.length ? monthLabels[monthColIdx + 1].weekIndex : totalWeeks;
+          var span = nextIdx - w;
+          html += '<td colspan="' + span + '" class="heatmap-month-label">' + monthLabels[monthColIdx].label + '</td>';
+          w += span - 1;
+          monthColIdx++;
+        } else {
+          html += '<td class="heatmap-month-label"></td>';
+        }
+      }
+      html += '</tr>';
+
+      for (var d = 0; d < 7; d++) {
+        html += '<tr>';
+        html += '<td class="heatmap-day-label">' + DAYS[d] + '</td>';
+        for (var w = 0; w < weeks.length; w++) {
+          var c = weeks[w][d];
+          if (c.future) {
+            html += '<td class="cell" data-level="0"></td>';
+          } else {
+            html += '<td class="cell" data-level="' + c.level + '" title="' + c.key + '：' + c.count + ' 条闪念"></td>';
+          }
+        }
+        html += '</tr>';
+      }
+      html += '</table>';
+
+      var root = document.getElementById('heatmap-root');
+      if (root) root.innerHTML = html;
+      var totalEl = document.getElementById('heatmap-total');
+      if (totalEl) totalEl.textContent = '过去一年共 ' + items.length + ' 条闪念';
+
+      setTimeout(function () {
+        var wrap = document.querySelector('.heatmap-wrap');
+        if (wrap) wrap.scrollLeft = wrap.scrollWidth;
+      }, 100);
+    })();
+  </script>
+  {% endif %}
+
   {% else %}
   <div class="empty-state">
     <p class="empty-state__text">暂无闪念</p>

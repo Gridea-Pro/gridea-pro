@@ -106,6 +106,14 @@
       "note": "默认亮黄色"
     },
     {
+      "name": "heatmapColor",
+      "label": "热力图主色",
+      "group": "外观设置",
+      "type": "input",
+      "value": "#39d353",
+      "note": "闪念热力图最深色块，其余等级按比例向背景混合"
+    },
+    {
       "name": "showSearch",
       "label": "显示搜索",
       "group": "功能开关",
@@ -132,6 +140,14 @@
       "group": "功能开关",
       "type": "toggle",
       "value": false
+    },
+    {
+      "name": "showHeatmap",
+      "label": "闪念热力图",
+      "group": "功能开关",
+      "type": "toggle",
+      "value": true,
+      "note": "在闪念页顶部显示过去一年的发布频次热力图"
     },
     {
       "name": "githubUrl",
