@@ -92,6 +92,7 @@ type AssetManager struct {
 	appDir             string
 	themeConfigService *ThemeConfigService
 	logger             *slog.Logger
+	manifest           *RenderManifest
 }
 
 // NewAssetManager creates a new AssetManager instance
@@ -101,6 +102,11 @@ func NewAssetManager(appDir string, themeConfigService *ThemeConfigService) *Ass
 		themeConfigService: themeConfigService,
 		logger:             slog.Default(),
 	}
+}
+
+// SetManifest 设置渲染产物跟踪器
+func (m *AssetManager) SetManifest(mf *RenderManifest) {
+	m.manifest = mf
 }
 
 // CopyThemeAssets 复制主题静态资源
@@ -116,7 +122,7 @@ func (m *AssetManager) CopyThemeAssets(buildDir, themeName string) error {
 	if cachedTheme, err := os.ReadFile(themeCacheFile); err != nil || string(cachedTheme) != themeName {
 		_ = os.RemoveAll(filepath.Join(buildDir, DirStyles))
 	}
-	_ = os.WriteFile(themeCacheFile, []byte(themeName), 0644)
+	_ = m.manifest.WriteFile(themeCacheFile, []byte(themeName), 0644)
 
 	// 1. 检查并编译 LESS 文件
 	lessPath := filepath.Join(assetsPath, DirStyles, FileMainLess)
@@ -130,7 +136,7 @@ func (m *AssetManager) CopyThemeAssets(buildDir, themeName string) error {
 
 	// 2. 复制其他静态资源
 	destPath := filepath.Join(buildDir)
-	if err := copyDir(assetsPath, destPath); err != nil {
+	if err := m.manifest.CopyDir(assetsPath, destPath); err != nil {
 		return err
 	}
 
@@ -150,7 +156,7 @@ func (m *AssetManager) CopyThemeAssets(buildDir, themeName string) error {
 						m.logger.Warn("读取 CSS 文件失败", "error", err)
 					} else {
 						cssContent = append(cssContent, []byte("\n/* style-override */\n"+customCSS)...)
-						if err := os.WriteFile(cssPath, cssContent, 0644); err != nil {
+						if err := m.manifest.WriteFile(cssPath, cssContent, 0644); err != nil {
 							m.logger.Warn("写入 CSS 文件失败", "error", err)
 						} else {
 							m.logger.Info("纯 CSS 主题自定义样式应用成功")
@@ -190,7 +196,7 @@ func (m *AssetManager) compileLess(lessPath, buildDir string) error {
 	cachePath := m.lessCachePath(themeName)
 	if cachePath != "" {
 		if cacheInfo, err := os.Stat(cachePath); err == nil && !latestMtime.After(cacheInfo.ModTime()) {
-			if err := copyFile(cachePath, cssPath); err == nil {
+			if err := m.manifest.CopyFile(cachePath, cssPath); err == nil {
 				m.logger.Info("LESS 缓存命中，跳过编译", "theme", themeName)
 				return nil
 			}
@@ -228,7 +234,7 @@ func (m *AssetManager) compileLess(lessPath, buildDir string) error {
 	}
 
 	// 写入输出目录
-	if err := os.WriteFile(cssPath, []byte(cssContent), 0644); err != nil {
+	if err := m.manifest.WriteFile(cssPath, []byte(cssContent), 0644); err != nil {
 		return fmt.Errorf("写入 CSS 文件失败: %w", err)
 	}
 
@@ -365,7 +371,7 @@ func (m *AssetManager) CopySiteAssets(buildDir string) error {
 	// 复制 images 目录
 	imagesPath := filepath.Join(m.appDir, DirImages)
 	if _, err := os.Stat(imagesPath); err == nil {
-		if err := copyDir(imagesPath, filepath.Join(buildDir, DirImages)); err != nil {
+		if err := m.manifest.CopyDir(imagesPath, filepath.Join(buildDir, DirImages)); err != nil {
 			return err
 		}
 	}
@@ -373,7 +379,7 @@ func (m *AssetManager) CopySiteAssets(buildDir string) error {
 	// 复制 media 目录
 	mediaPath := filepath.Join(m.appDir, DirMedia)
 	if _, err := os.Stat(mediaPath); err == nil {
-		if err := copyDir(mediaPath, filepath.Join(buildDir, DirMedia)); err != nil {
+		if err := m.manifest.CopyDir(mediaPath, filepath.Join(buildDir, DirMedia)); err != nil {
 			return err
 		}
 	}
@@ -381,7 +387,7 @@ func (m *AssetManager) CopySiteAssets(buildDir string) error {
 	// 复制 post-images 目录
 	postImagesPath := filepath.Join(m.appDir, DirPostImages)
 	if _, err := os.Stat(postImagesPath); err == nil {
-		if err := copyDir(postImagesPath, filepath.Join(buildDir, DirPostImages)); err != nil {
+		if err := m.manifest.CopyDir(postImagesPath, filepath.Join(buildDir, DirPostImages)); err != nil {
 			return err
 		}
 	}
@@ -389,7 +395,7 @@ func (m *AssetManager) CopySiteAssets(buildDir string) error {
 	// 复制 favicon.ico
 	faviconSrc := filepath.Join(m.appDir, "favicon.ico")
 	if _, err := os.Stat(faviconSrc); err == nil {
-		if err := copyFile(faviconSrc, filepath.Join(buildDir, "favicon.ico")); err != nil {
+		if err := m.manifest.CopyFile(faviconSrc, filepath.Join(buildDir, "favicon.ico")); err != nil {
 			return err
 		}
 	}
@@ -521,7 +527,7 @@ func (m *AssetManager) BundleCSS(buildDir, themePath string) error {
 
 	// 4. 写入 main.bundle.css
 	bundlePath := filepath.Join(stylesDir, FileMainBundleCSS)
-	if err := os.WriteFile(bundlePath, minified, 0644); err != nil {
+	if err := m.manifest.WriteFile(bundlePath, minified, 0644); err != nil {
 		return fmt.Errorf("写入 %s 失败: %w", FileMainBundleCSS, err)
 	}
 	m.logger.Info(fmt.Sprintf("CSS 合并压缩完成: %d 个文件 → %s (%d bytes)", len(cssFiles), FileMainBundleCSS, len(minified)))
@@ -550,7 +556,7 @@ func (m *AssetManager) BundleCSS(buildDir, themePath string) error {
 		}
 		newContent := blockRe.ReplaceAll(htmlContent, []byte(replacement))
 		if !bytes.Equal(htmlContent, newContent) {
-			_ = os.WriteFile(path, newContent, 0644)
+			_ = m.manifest.WriteFile(path, newContent, 0644)
 		}
 		return nil
 	})

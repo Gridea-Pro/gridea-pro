@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"gridea-pro/backend/internal/domain"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"time"
 )
 
 // PwaGenerator 生成 PWA 相关文件（manifest.json、sw.js、offline.html）
 type PwaGenerator struct {
-	appDir string
-	logger *slog.Logger
+	appDir   string
+	logger   *slog.Logger
+	manifest *RenderManifest
 }
 
 func NewPwaGenerator(appDir string) *PwaGenerator {
@@ -21,6 +21,11 @@ func NewPwaGenerator(appDir string) *PwaGenerator {
 		appDir: appDir,
 		logger: slog.Default(),
 	}
+}
+
+// SetManifest 设置渲染产物跟踪器
+func (g *PwaGenerator) SetManifest(m *RenderManifest) {
+	g.manifest = m
 }
 
 type manifestIcon struct {
@@ -117,7 +122,7 @@ func (g *PwaGenerator) RenderManifest(buildDir string, setting *domain.PwaSettin
 		return fmt.Errorf("生成 manifest.json 失败: %w", err)
 	}
 
-	if err := os.WriteFile(filepath.Join(buildDir, "manifest.json"), data, 0644); err != nil {
+	if err := g.manifest.WriteFile(filepath.Join(buildDir, "manifest.json"), data, 0644); err != nil {
 		return fmt.Errorf("写入 manifest.json 失败: %w", err)
 	}
 
@@ -228,7 +233,7 @@ function isStaticAsset(url) {
 }
 `, cacheVersion)
 
-	if err := os.WriteFile(filepath.Join(buildDir, "sw.js"), []byte(swContent), 0644); err != nil {
+	if err := g.manifest.WriteFile(filepath.Join(buildDir, "sw.js"), []byte(swContent), 0644); err != nil {
 		return fmt.Errorf("写入 sw.js 失败: %w", err)
 	}
 
@@ -269,7 +274,7 @@ button:hover{opacity:.85}
 </body>
 </html>`, escapeAttr(siteName), escapeAttr(themeColor))
 
-	if err := os.WriteFile(filepath.Join(buildDir, "offline.html"), []byte(html), 0644); err != nil {
+	if err := g.manifest.WriteFile(filepath.Join(buildDir, "offline.html"), []byte(html), 0644); err != nil {
 		return fmt.Errorf("写入 offline.html 失败: %w", err)
 	}
 

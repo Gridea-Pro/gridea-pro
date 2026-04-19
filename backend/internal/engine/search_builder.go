@@ -15,7 +15,8 @@ import (
 
 // SearchIndexBuilder 负责生成搜索索引数据
 type SearchIndexBuilder struct {
-	logger *slog.Logger
+	logger   *slog.Logger
+	manifest *RenderManifest
 }
 
 // NewSearchIndexBuilder 创建 SearchIndexBuilder
@@ -23,6 +24,11 @@ func NewSearchIndexBuilder() *SearchIndexBuilder {
 	return &SearchIndexBuilder{
 		logger: slog.Default(),
 	}
+}
+
+// SetManifest 设置渲染产物跟踪器
+func (b *SearchIndexBuilder) SetManifest(m *RenderManifest) {
+	b.manifest = m
 }
 
 // RenderSearchJSON 生成搜索数据 /api/search.json
@@ -65,7 +71,7 @@ func (b *SearchIndexBuilder) RenderSearchJSON(buildDir string, data *template.Te
 	}
 
 	b.logger.Info(fmt.Sprintf("✅ 搜索数据生成成功 (%d 篇文章)", len(entries)))
-	return os.WriteFile(filepath.Join(apiDir, "search.json"), jsonData, 0644)
+	return b.manifest.WriteFile(filepath.Join(apiDir, "search.json"), jsonData, 0644)
 }
 
 // stripHTMLForSearch 移除 HTML 标签，返回纯文本（用于搜索索引）。

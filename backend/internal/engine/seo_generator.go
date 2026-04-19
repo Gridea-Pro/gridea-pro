@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -15,7 +14,8 @@ import (
 
 // SeoGenerator 负责生成 SEO 相关文件（RSS、Sitemap、Robots.txt）
 type SeoGenerator struct {
-	logger *slog.Logger
+	logger   *slog.Logger
+	manifest *RenderManifest
 }
 
 // NewSeoGenerator 创建 SeoGenerator
@@ -23,6 +23,11 @@ func NewSeoGenerator() *SeoGenerator {
 	return &SeoGenerator{
 		logger: slog.Default(),
 	}
+}
+
+// SetManifest 设置渲染产物跟踪器
+func (g *SeoGenerator) SetManifest(m *RenderManifest) {
+	g.manifest = m
 }
 
 // RenderRobotsTxt 自动生成 robots.txt。
@@ -40,7 +45,7 @@ func (g *SeoGenerator) RenderRobotsTxt(buildDir string, data *template.TemplateD
 		}
 		content = sb.String()
 	}
-	return os.WriteFile(filepath.Join(buildDir, "robots.txt"), []byte(content), 0644)
+	return g.manifest.WriteFile(filepath.Join(buildDir, "robots.txt"), []byte(content), 0644)
 }
 
 // getMimeType 根据图片后缀返回 MIME
@@ -190,7 +195,7 @@ func (g *SeoGenerator) RenderRSS(buildDir string, data *template.TemplateData) e
 	finalOutput := []byte(xml.Header + string(rssData))
 
 	g.logger.Info(fmt.Sprintf("✅ RSS (feed.xml) 生成成功 (%d 篇文章)", len(feed.Channel.Items)))
-	return os.WriteFile(filepath.Join(buildDir, "feed.xml"), finalOutput, 0644)
+	return g.manifest.WriteFile(filepath.Join(buildDir, "feed.xml"), finalOutput, 0644)
 }
 
 // RenderSitemap 渲染站点地图 (sitemap.xml)
@@ -320,5 +325,5 @@ func (g *SeoGenerator) RenderSitemap(buildDir string, data *template.TemplateDat
 	finalOutput := []byte(xml.Header + string(sitemapData))
 
 	g.logger.Info(fmt.Sprintf("✅ Sitemap (sitemap.xml) 生成成功 (%d 个链接)", len(urlset.Urls)))
-	return os.WriteFile(filepath.Join(buildDir, "sitemap.xml"), finalOutput, 0644)
+	return g.manifest.WriteFile(filepath.Join(buildDir, "sitemap.xml"), finalOutput, 0644)
 }

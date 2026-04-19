@@ -52,6 +52,9 @@ type Engine struct {
 	// 调用方等待当前渲染（+合并渲染，如有）完成后返回，保证请求被覆盖
 	renderMu sync.Mutex
 	pending  atomic.Int32
+
+	// 渲染产物跟踪器（单次渲染内共享）
+	manifest *RenderManifest
 }
 
 func New(
@@ -201,9 +204,27 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 
 	buildDir := filepath.Join(s.appDir, DirOutput)
 
-	// 清理旧的输出文件，避免已删除的文章残留 HTML
-	_ = os.RemoveAll(buildDir)
+	// 基于上次 manifest 的增量清理：
+	// - 首次渲染（无 manifest）：使用一次 RemoveAll 兜底，保证从旧版本升级上来不残留
+	// - 非首次：延后到渲染结束后按 manifest diff 精确清理孤儿，
+	//   期间保留用户放在 output 里的自定义文件（CNAME、ads.txt 等）
+	previousManifest, err := LoadPreviousManifest(s.appDir)
+	if err != nil {
+		s.logger.Warn("读取上次渲染 manifest 失败，降级为全量清理", "error", err)
+		previousManifest = nil
+	}
+	if previousManifest == nil {
+		_ = os.RemoveAll(buildDir)
+	}
 	_ = os.MkdirAll(buildDir, 0755)
+
+	// 初始化本次渲染的 tracker，注入到各子模块
+	s.manifest = NewRenderManifest(buildDir)
+	s.pageRenderer.SetManifest(s.manifest)
+	s.assetManager.SetManifest(s.manifest)
+	s.seoGenerator.SetManifest(s.manifest)
+	s.pwaGenerator.SetManifest(s.manifest)
+	s.searchBuilder.SetManifest(s.manifest)
 
 	var errs error
 
@@ -379,6 +400,19 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 	themePath := filepath.Join(s.appDir, DirThemes, themeConfig.ThemeName)
 	if err := s.assetManager.BundleCSS(buildDir, themePath); err != nil {
 		s.logger.Warn("CSS bundle 失败，使用原始文件", "error", err)
+	}
+
+	// 基于 manifest diff 精确清理上次有、本次没的孤儿文件
+	// （用户放在 output 里的自定义文件不在 manifest 中，永远不会被触碰）
+	if previousManifest != nil {
+		if removed := CleanOrphans(buildDir, previousManifest, s.manifest); removed > 0 {
+			s.logger.Info(fmt.Sprintf("已清理 %d 个不再需要的旧渲染产物", removed))
+		}
+	}
+
+	// 保存本次 manifest，下次渲染开始时据此做 diff
+	if err := s.manifest.Save(s.appDir); err != nil {
+		s.logger.Warn("保存渲染 manifest 失败", "error", err)
 	}
 
 	totalDuration := time.Since(startTime)

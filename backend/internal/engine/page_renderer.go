@@ -23,6 +23,7 @@ type PageRenderer struct {
 	appDir        string
 	logger        *slog.Logger
 	postProcessor *HtmlPostProcessor
+	manifest      *RenderManifest
 }
 
 // NewPageRenderer 创建 PageRenderer
@@ -42,6 +43,11 @@ func (r *PageRenderer) SetRenderer(renderer render.ThemeRenderer) {
 // SetPostProcessor 设置 HTML 后处理器
 func (r *PageRenderer) SetPostProcessor(pp *HtmlPostProcessor) {
 	r.postProcessor = pp
+}
+
+// SetManifest 设置渲染产物跟踪器
+func (r *PageRenderer) SetManifest(m *RenderManifest) {
+	r.manifest = m
 }
 
 // postProcess 对渲染后的 HTML 进行后处理
@@ -177,7 +183,7 @@ func (r *PageRenderer) renderPaginated(ctx context.Context, cfg paginatedRenderC
 		buf := bufferPool.Get().(*bytes.Buffer)
 		buf.Reset()
 		buf.WriteString(html)
-		writeErr := os.WriteFile(filepath.Join(outDir, FileIndexHTML), buf.Bytes(), 0644)
+		writeErr := r.manifest.WriteFile(filepath.Join(outDir, FileIndexHTML), buf.Bytes(), 0644)
 		bufferPool.Put(buf)
 		if writeErr != nil {
 			return writeErr
@@ -304,7 +310,7 @@ func (r *PageRenderer) RenderPost(buildDir string, post domain.Post, baseData *t
 
 	buf.WriteString(html)
 	indexPath := filepath.Join(postDir, FileIndexHTML)
-	if err := os.WriteFile(indexPath, buf.Bytes(), 0644); err != nil {
+	if err := r.manifest.WriteFile(indexPath, buf.Bytes(), 0644); err != nil {
 		return err
 	}
 
@@ -383,7 +389,7 @@ func (r *PageRenderer) RenderTags(ctx context.Context, buildDir string, data *te
 	}
 
 	r.logger.Info("✅ 标签列表页渲染成功")
-	return os.WriteFile(filepath.Join(tagsDir, FileIndexHTML), buf.Bytes(), 0644)
+	return r.manifest.WriteFile(filepath.Join(tagsDir, FileIndexHTML), buf.Bytes(), 0644)
 }
 
 // RenderTagPages 渲染每个标签的文章列表页（支持分页）
@@ -596,7 +602,7 @@ func (r *PageRenderer) RenderFriends(ctx context.Context, buildDir string, data 
 	}
 
 	r.logger.Info("✅ 友链页渲染成功")
-	return os.WriteFile(filepath.Join(friendsDir, FileIndexHTML), buf.Bytes(), 0644)
+	return r.manifest.WriteFile(filepath.Join(friendsDir, FileIndexHTML), buf.Bytes(), 0644)
 }
 
 // RenderMemos 渲染闪念页
@@ -630,7 +636,7 @@ func (r *PageRenderer) RenderMemos(ctx context.Context, buildDir string, data *t
 	}
 
 	r.logger.Info("✅ 闪念页渲染成功")
-	return os.WriteFile(filepath.Join(memosDir, FileIndexHTML), buf.Bytes(), 0644)
+	return r.manifest.WriteFile(filepath.Join(memosDir, FileIndexHTML), buf.Bytes(), 0644)
 }
 
 // Render404 渲染 404 页面
@@ -649,7 +655,7 @@ func (r *PageRenderer) Render404(buildDir string, data *template.TemplateData) e
 	buf.WriteString(html)
 
 	r.logger.Info("✅ 404 页面渲染成功")
-	return os.WriteFile(filepath.Join(buildDir, "404.html"), buf.Bytes(), 0644)
+	return r.manifest.WriteFile(filepath.Join(buildDir, "404.html"), buf.Bytes(), 0644)
 }
 
 // renderSimpleIndex 渲染简单首页（备用）
@@ -697,7 +703,7 @@ func (r *PageRenderer) renderSimpleIndex(buildDir string, data *template.Templat
 </html>`, data.ThemeConfig.SiteName, data.ThemeConfig.SiteName, data.ThemeConfig.SiteDescription,
 		postListHTML.String(), data.ThemeConfig.FooterInfo)
 
-	return os.WriteFile(filepath.Join(buildDir, FileIndexHTML), buf.Bytes(), 0644)
+	return r.manifest.WriteFile(filepath.Join(buildDir, FileIndexHTML), buf.Bytes(), 0644)
 }
 
 // renderSimplePost 渲染简单文章页（备用）
@@ -737,7 +743,7 @@ func (r *PageRenderer) renderSimplePost(postDir string, data *template.TemplateD
 </html>`, data.SiteTitle, data.Post.Title, data.Post.DateFormat, data.Post.Content, data.ThemeConfig.FooterInfo)
 
 	indexPath := filepath.Join(postDir, FileIndexHTML)
-	if err := os.WriteFile(indexPath, buf.Bytes(), 0644); err != nil {
+	if err := r.manifest.WriteFile(indexPath, buf.Bytes(), 0644); err != nil {
 		return err
 	}
 
