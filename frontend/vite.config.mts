@@ -41,7 +41,17 @@ export default defineConfig({
         manualChunks: {
           'vendor': ['vue', 'vue-router', 'pinia'],
           'markdown': ['markdown-it'],
-          'editor': ['monaco-markdown'],
+          'editor': ['monaco-editor', 'monaco-markdown'],
+          'rich-editor': [
+            '@tiptap/core',
+            '@tiptap/vue-3',
+            '@tiptap/starter-kit',
+            '@tiptap/markdown',
+            '@tiptap/extensions',
+            '@tiptap/extension-table',
+            '@tiptap/extension-list',
+            '@tiptap/extension-image',
+          ],
         },
       },
     },
@@ -53,7 +63,11 @@ export default defineConfig({
       'vue-router',
       'pinia',
       'monaco-editor',
-      'monaco-markdown'
+      'monaco-markdown',
+      '@tiptap/core',
+      '@tiptap/vue-3',
+      '@tiptap/starter-kit',
+      '@tiptap/markdown',
     ],
   }
 })
