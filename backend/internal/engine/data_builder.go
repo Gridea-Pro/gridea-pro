@@ -487,10 +487,12 @@ func (b *TemplateDataBuilder) convertPost(post domain.Post, config domain.ThemeC
 	}
 	formattedUpdatedAt := formatDate(updatedAt, dateFormat)
 
-	// 生成摘要
+	// 生成摘要：按 rune 截取，避免切断 UTF-8 多字节字符（中文为 3 字节）
 	abstract := post.Abstract
-	if abstract == "" && len(post.Content) > 200 {
-		abstract = post.Content[:200] + "..."
+	if abstract == "" {
+		if runes := []rune(post.Content); len(runes) > 200 {
+			abstract = string(runes[:200]) + "..."
+		}
 	}
 
 	// 将 Markdown 内容转换为 HTML
