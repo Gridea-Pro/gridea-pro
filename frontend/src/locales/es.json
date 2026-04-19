@@ -32,6 +32,17 @@
         "syncSuccess": "¡Sincronización exitosa!",
         "syncError1": "Lo sentimos, la sincronización encontró un error, consulta"
     },
+    "update": {
+        "title": "Una nueva versión de Gridea Pro está disponible",
+        "viewOnGithub": "Ver release",
+        "later": "Más tarde",
+        "skip": "Omitir",
+        "install": "Instalar ahora",
+        "restart": "Reiniciar",
+        "retry": "Reintentar",
+        "readyToRestart": "Descarga completa. Reinicia para aplicar la actualización.",
+        "mockApplied": "Actualización simulada aplicada (sin reinicio real)"
+    },
     "article": {
         "new": "Nuevo",
         "title": "Título",

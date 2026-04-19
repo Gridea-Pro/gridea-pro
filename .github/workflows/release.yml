@@ -6,13 +6,17 @@
 #   2. 手动触发（workflow_dispatch）→ 仅测试构建，不创建 Release
 #
 # 构建产物（统一命名：Gridea.Pro_{version}_{os}_{arch}.{ext}）：
-#   macOS   → Gridea.Pro_v1.0.0_macos_arm64.dmg   (Apple Silicon)
-#             Gridea.Pro_v1.0.0_macos_amd64.dmg   (Intel)
-#   Windows → Gridea.Pro_v1.0.0_windows_amd64_setup.exe    (安装版)
-#             Gridea.Pro_v1.0.0_windows_arm64_setup.exe    (安装版)
+#   macOS   → Gridea.Pro_v1.0.0_macos_arm64.dmg   (首次安装，Apple Silicon)
+#             Gridea.Pro_v1.0.0_macos_arm64.zip   (自动更新，Apple Silicon)
+#             Gridea.Pro_v1.0.0_macos_amd64.dmg   (首次安装，Intel)
+#             Gridea.Pro_v1.0.0_macos_amd64.zip   (自动更新，Intel)
+#   Windows → Gridea.Pro_v1.0.0_windows_amd64_setup.exe    (首次安装，Inno 安装器)
+#             Gridea.Pro_v1.0.0_windows_amd64_portable.exe (自动更新，便携版)
+#             Gridea.Pro_v1.0.0_windows_arm64_setup.exe    (首次安装)
+#             Gridea.Pro_v1.0.0_windows_arm64_portable.exe (自动更新)
 #   Linux   → Gridea.Pro_v1.0.0_linux_amd64.deb    (Ubuntu 24.04+, webkit2gtk-4.1)
 #             Gridea.Pro_v1.0.0_linux_amd64.rpm    (Fedora 39+, webkit2gtk-4.1)
-#             Gridea.Pro_v1.0.0_linux_amd64.AppImage (通用，兼容旧系统)
+#             Gridea.Pro_v1.0.0_linux_amd64.AppImage (首次安装 + 自动更新)
 #
 # 发版用法：
 #   git tag -a v1.0.0 -m "Gridea Pro v1.0.0 — 发布说明"
@@ -181,10 +185,24 @@ jobs:
           # 清理临时目录，避免被 upload-artifact 误传
           rm -rf dmg-src dmg-background.tiff
 
+      - name: Create update-zip (for in-app auto-update)
+        shell: bash
+        run: |
+          # .zip（含 .app）专门供自更新器使用，.dmg 保留给首次下载
+          # 用 ditto 保留资源分叉 + 扩展属性，解压后 macOS 视为完整的 app bundle
+          cd build/bin
+          OUTPUT="${{ env.RELEASE_PREFIX }}_${VERSION}_macos_${{ matrix.arch }}.zip"
+          rm -f "$OUTPUT"
+          ditto -c -k --sequesterRsrc --keepParent \
+            "${{ env.BIN_NAME }}.app" "$OUTPUT"
+          ls -lh "$OUTPUT"
+
       - uses: actions/upload-artifact@v4
         with:
           name: macos-build-${{ matrix.arch }}
-          path: build/bin/*.dmg
+          path: |
+            build/bin/*.dmg
+            build/bin/*.zip
           if-no-files-found: error
 
   # ===========================================================================
@@ -340,11 +358,21 @@ jobs:
           # 编译安装包
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer.iss"
 
+      - name: Package portable exe (for in-app auto-update)
+        shell: pwsh
+        run: |
+          # 便携 .exe 专供自更新器使用（selfupdate 直接原地替换当前可执行）
+          # Inno Setup 安装器给首次下载用户
+          $portable = "build\bin\${{ env.RELEASE_PREFIX }}_${{ env.VERSION }}_windows_${{ matrix.arch }}_portable.exe"
+          Copy-Item "build\bin\${{ env.BIN_NAME }}.exe" $portable -Force
+          Get-ChildItem build\bin\*.exe | Select-Object Name, Length
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-build-${{ matrix.arch }}
           path: |
             build/bin/${{ env.RELEASE_PREFIX }}_*_setup.exe
+            build/bin/${{ env.RELEASE_PREFIX }}_*_portable.exe
           if-no-files-found: error
 
   # ===========================================================================

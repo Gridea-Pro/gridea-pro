@@ -36,7 +36,12 @@
         "title": "A new Gridea Pro is available",
         "viewOnGithub": "View Release",
         "later": "Later",
-        "download": "Download"
+        "skip": "Skip",
+        "install": "Install Now",
+        "restart": "Restart",
+        "retry": "Retry",
+        "readyToRestart": "Download complete. Restart to apply update.",
+        "mockApplied": "Mock update applied (no real restart)"
     },
     "article": {
         "new": "New",

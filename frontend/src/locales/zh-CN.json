@@ -36,7 +36,12 @@
     "title": "Gridea Pro 已发布新版本",
     "viewOnGithub": "查看 Release",
     "later": "稍后再说",
-    "download": "前往下载"
+    "skip": "跳过",
+    "install": "立即更新",
+    "restart": "立即重启",
+    "retry": "重试",
+    "readyToRestart": "下载完成，重启以应用更新",
+    "mockApplied": "模拟更新完成（未触发真实重启）"
   },
   "article": {
     "new": "新文章",

@@ -32,6 +32,17 @@
         "syncSuccess": "同期が完了しました！",
         "syncError1": "同期中にエラーが発生しました。こちらをご確認ください"
     },
+    "update": {
+        "title": "Gridea Pro の新しいバージョンがあります",
+        "viewOnGithub": "リリースを見る",
+        "later": "あとで",
+        "skip": "スキップ",
+        "install": "今すぐ更新",
+        "restart": "再起動",
+        "retry": "再試行",
+        "readyToRestart": "ダウンロード完了。再起動して更新を適用",
+        "mockApplied": "模擬更新完了（実際の再起動は行われません）"
+    },
     "article": {
         "new": "新規記事",
         "title": "タイトル",

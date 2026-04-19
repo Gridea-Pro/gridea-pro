@@ -32,6 +32,17 @@
         "syncSuccess": "동기화 성공!",
         "syncError1": "동기화 오류가 발생했습니다. 참조하세요"
     },
+    "update": {
+        "title": "새로운 Gridea Pro 버전이 있습니다",
+        "viewOnGithub": "릴리스 보기",
+        "later": "나중에",
+        "skip": "건너뛰기",
+        "install": "지금 업데이트",
+        "restart": "재시작",
+        "retry": "다시 시도",
+        "readyToRestart": "다운로드 완료. 재시작하여 업데이트 적용",
+        "mockApplied": "모의 업데이트 완료 (실제 재시작 없음)"
+    },
     "article": {
         "new": "새 글",
         "title": "제목",

@@ -80,9 +80,7 @@ class="opacity-75" fill="currentColor"
           </template>
         </Button>
 
-        <div
-class="flex items-center justify-center gap-6 text-muted-foreground w-[80%] relative"
-          :class="{ 'after:content-[\'\'] after:block after:w-1.5 after:h-1.5 after:bg-[#fa5c5c] after:rounded-full after:absolute after:top-0 after:right-5': hasUpdate }">
+        <div class="flex items-center justify-center gap-6 text-muted-foreground w-[80%]">
           <GlobeAltIcon
 v-if="siteStore.currentDomain" class="size-4 cursor-pointer hover:text-primary transition-colors duration-300"
             @click="goWeb" />
@@ -101,6 +99,12 @@ fill-rule="evenodd" clip-rule="evenodd"
                 d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.335 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
             </svg>
           </div>
+
+          <ArrowUpCircleIcon
+            v-if="hasUpdate"
+            :title="t('update.title')"
+            class="update-indicator size-4 cursor-pointer text-primary hover:text-primary/80 transition-colors duration-300"
+            @click="openUpdateDialog" />
         </div>
       </div>
     </aside>
@@ -149,29 +153,104 @@ fill-rule="evenodd" clip-rule="evenodd"
           <div class="release-notes text-sm text-foreground/90 leading-relaxed" v-html="updateContent"></div>
         </div>
 
+        <!-- Progress (downloading / ready / error) -->
+        <div
+          v-if="updateState !== 'idle'"
+          class="px-6 pt-3 pb-1 border-t border-border/60">
+          <div v-if="updateState === 'downloading'" class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] text-muted-foreground font-mono">
+              <span>{{ formatBytes(downloadReceived) }} / {{ formatBytes(downloadTotal) }}</span>
+              <span>{{ downloadPercent.toFixed(1) }}%</span>
+            </div>
+            <div class="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+              <div
+                class="h-full bg-primary rounded-full transition-[width] duration-150 ease-out"
+                :style="{ width: downloadPercent + '%' }"></div>
+            </div>
+          </div>
+          <div v-else-if="updateState === 'ready'" class="flex items-center gap-2 text-xs text-primary">
+            <CheckCircleIcon class="size-4" />
+            <span>{{ t('update.readyToRestart') }}</span>
+          </div>
+          <div v-else-if="updateState === 'error'" class="flex items-start gap-2 text-xs text-destructive">
+            <ExclamationCircleIcon class="size-4 flex-shrink-0 mt-0.5" />
+            <span class="break-all">{{ updateError }}</span>
+          </div>
+        </div>
+
         <!-- Footer -->
         <div class="px-6 py-4 border-t border-border/60 bg-muted/30 flex items-center justify-between gap-3">
-          <button
-            :title="t('update.viewOnGithub')"
-            class="size-7 grid place-items-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-            @click="openInBrowser('https://github.com/Gridea-Pro/gridea-pro/releases')">
-            <svg viewBox="0 0 24 24" aria-hidden="true" class="size-4 fill-current">
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.335 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-            </svg>
-          </button>
           <div class="flex items-center gap-3">
-            <Button
-              variant="outline"
-              class="w-20 h-8 text-xs justify-center rounded-full border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
-              @click="updateModalVisible = false">
-              {{ t('update.later') }}
-            </Button>
-            <Button
-              variant="default"
-              class="w-24 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
-              @click="openInBrowser('https://gridea.pro')">
-              {{ t('update.download') }}
-            </Button>
+            <button
+              :title="t('update.viewOnGithub')"
+              class="size-7 grid place-items-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              @click="openInBrowser('https://github.com/Gridea-Pro/gridea-pro/releases')">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="size-4 fill-current">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.335 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+            </button>
+            <button
+              v-if="updateState === 'idle'"
+              class="text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer focus:outline-none"
+              @click="skipThisVersion">
+              {{ t('update.skip') }}
+            </button>
+          </div>
+          <div class="flex items-center gap-3">
+            <!-- idle: 稍后再说 + 立即更新 -->
+            <template v-if="updateState === 'idle'">
+              <Button
+                variant="outline"
+                class="w-20 h-8 text-xs justify-center rounded-full border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
+                @click="updateModalVisible = false">
+                {{ t('update.later') }}
+              </Button>
+              <Button
+                variant="default"
+                class="w-24 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
+                @click="startUpdate">
+                {{ t('update.install') }}
+              </Button>
+            </template>
+            <!-- downloading: 取消下载 -->
+            <template v-else-if="updateState === 'downloading'">
+              <Button
+                variant="outline"
+                class="w-20 h-8 text-xs justify-center rounded-full border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
+                @click="cancelUpdate">
+                {{ t('common.cancel') }}
+              </Button>
+            </template>
+            <!-- ready: 稍后 + 立即重启 -->
+            <template v-else-if="updateState === 'ready'">
+              <Button
+                variant="outline"
+                class="w-20 h-8 text-xs justify-center rounded-full border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
+                @click="updateModalVisible = false">
+                {{ t('update.later') }}
+              </Button>
+              <Button
+                variant="default"
+                class="w-24 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
+                @click="applyUpdate">
+                {{ t('update.restart') }}
+              </Button>
+            </template>
+            <!-- error: 关闭 + 重试 -->
+            <template v-else-if="updateState === 'error'">
+              <Button
+                variant="outline"
+                class="w-20 h-8 text-xs justify-center rounded-full border border-primary/20 text-primary/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
+                @click="updateModalVisible = false">
+                {{ t('update.later') }}
+              </Button>
+              <Button
+                variant="default"
+                class="w-24 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
+                @click="startUpdate">
+                {{ t('update.retry') }}
+              </Button>
+            </template>
           </div>
         </div>
       </DialogContent>
@@ -212,7 +291,14 @@ import AppSystem from '@/views/preferences/index.vue'
 import { Button } from '@/components/ui/button'
 import { EventsEmit, EventsOn, BrowserOpenURL } from '@/wailsjs/runtime'
 import { DeployToGit } from '@/wailsjs/go/facade/DeployFacade'
-import { CheckUpdate, MockUpdate } from '@/wailsjs/go/facade/UpdateFacade'
+import {
+  CheckUpdate,
+  MockUpdate,
+  StartDownload,
+  StartMockDownload,
+  CancelDownload,
+  ApplyUpdate,
+} from '@/wailsjs/go/facade/UpdateFacade'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import WindowControls from '@/components/WindowControls/index.vue'
 import {
@@ -231,6 +317,9 @@ import {
   CogIcon,
   LightBulbIcon,
   ArrowRightIcon,
+  ArrowUpCircleIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
 } from '@heroicons/vue/24/outline'
 import pkg from '../../package.json'
 
@@ -247,6 +336,25 @@ const publishLoading = ref(false)
 const hasUpdate = ref(false)
 const newVersion = ref('')
 const currentVersion = ref(pkg.version)
+
+type UpdateState = 'idle' | 'downloading' | 'ready' | 'error'
+const updateState = ref<UpdateState>('idle')
+const downloadReceived = ref(0)
+const downloadTotal = ref(0)
+const downloadPercent = ref(0)
+const updateError = ref('')
+
+const formatBytes = (n: number) => {
+  if (!n || n <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  let i = 0
+  let v = n
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024
+    i++
+  }
+  return `${v.toFixed(i === 0 ? 0 : 1)} ${units[i]}`
+}
 const updateModalVisible = ref(false)
 const systemModalVisible = ref(false)
 const updateContent = ref('')
@@ -363,21 +471,48 @@ const openInBrowser = (url: string) => {
 // 演示开关：打开后不访问网络，直接展示模拟更新数据（弹窗 + 红点）
 const SIMULATE_UPDATE = true
 
-const applyUpdateInfo = (info: any, { openDialog = false } = {}) => {
+// 「跳过此版本」持久化：记录用户明确选择忽略的版本号
+// 命中时：启动/轮询不亮红点、不弹窗；手动点菜单仍强制展示
+const IGNORED_VERSION_KEY = 'gridea-pro:ignored-update-version'
+const getIgnoredVersion = (): string => {
+  try { return localStorage.getItem(IGNORED_VERSION_KEY) || '' } catch { return '' }
+}
+const setIgnoredVersion = (v: string) => {
+  try { localStorage.setItem(IGNORED_VERSION_KEY, v) } catch (_) { /* noop */ }
+}
+
+const applyUpdateInfo = (info: any, { openDialog = false, manual = false } = {}) => {
   if (!info) return
-  hasUpdate.value = !!info.hasUpdate
+  const ignored = getIgnoredVersion()
+  const isIgnored = !manual && !!info.latestVersion && info.latestVersion === ignored
+
   newVersion.value = info.latestVersion || ''
   currentVersion.value = info.currentVersion || pkg.version
   updateContent.value = info.bodyHtml || ''
-  if (openDialog && hasUpdate.value) {
+  hasUpdate.value = !!info.hasUpdate && !isIgnored
+
+  if (openDialog && info.hasUpdate && !isIgnored) {
+    // 打开弹窗时重置下载状态，避免上次残留
+    resetDownloadState()
     updateModalVisible.value = true
   }
+}
+
+const skipThisVersion = () => {
+  if (newVersion.value) setIgnoredVersion(newVersion.value)
+  hasUpdate.value = false
+  updateModalVisible.value = false
+}
+
+const openUpdateDialog = () => {
+  resetDownloadState()
+  updateModalVisible.value = true
 }
 
 const checkUpdate = async ({ manual = false } = {}) => {
   try {
     const info = SIMULATE_UPDATE ? await MockUpdate() : await CheckUpdate()
-    applyUpdateInfo(info, { openDialog: manual || SIMULATE_UPDATE })
+    applyUpdateInfo(info, { openDialog: manual || SIMULATE_UPDATE, manual })
   } catch (err) {
     console.error('[checkUpdate] failed:', err)
     if (manual) {
@@ -387,6 +522,54 @@ const checkUpdate = async ({ manual = false } = {}) => {
         duration: 3000,
       })
     }
+  }
+}
+
+const resetDownloadState = () => {
+  updateState.value = 'idle'
+  downloadReceived.value = 0
+  downloadTotal.value = 0
+  downloadPercent.value = 0
+  updateError.value = ''
+}
+
+const startUpdate = async () => {
+  resetDownloadState()
+  updateState.value = 'downloading'
+  try {
+    if (SIMULATE_UPDATE) {
+      await StartMockDownload()
+    } else {
+      await StartDownload()
+    }
+  } catch (err: any) {
+    updateState.value = 'error'
+    updateError.value = String(err?.message || err)
+  }
+}
+
+const cancelUpdate = async () => {
+  try { await CancelDownload() } catch (_) { /* noop */ }
+  resetDownloadState()
+}
+
+const applyUpdate = async () => {
+  try {
+    await ApplyUpdate()
+    // SIMULATE 模式下后端直接返回成功，不会真的重启。给用户一个提示后关弹窗
+    if (SIMULATE_UPDATE) {
+      EventsEmit('app:toast', {
+        message: t('update.mockApplied'),
+        type: 'success',
+        duration: 3000,
+      })
+      updateModalVisible.value = false
+      resetDownloadState()
+    }
+    // 非模拟模式下后端会自行重启应用，前端不需要额外处理
+  } catch (err: any) {
+    updateState.value = 'error'
+    updateError.value = String(err?.message || err)
   }
 }
 
@@ -481,6 +664,21 @@ onMounted(() => {
     checkUpdate({ manual: true })
   })
 
+  // 下载进度事件
+  EventsOn('update:progress', (payload: any) => {
+    downloadReceived.value = payload?.received || 0
+    downloadTotal.value = payload?.total || 0
+    downloadPercent.value = payload?.percent || 0
+  })
+  EventsOn('update:ready', () => {
+    updateState.value = 'ready'
+    downloadPercent.value = 100
+  })
+  EventsOn('update:error', (payload: any) => {
+    updateState.value = 'error'
+    updateError.value = payload?.message || 'Unknown error'
+  })
+
   // 原生菜单调用部署
   EventsOn('publish-site', () => {
     publish()
@@ -502,8 +700,14 @@ onMounted(() => {
     }
   }, 10000)
 
+  // 每小时静默检查一次更新（跳过的版本不会弹窗）
+  const updateInterval = setInterval(() => {
+    checkUpdate()
+  }, 60 * 60 * 1000)
+
   onUnmounted(() => {
     clearInterval(commentInterval)
+    clearInterval(updateInterval)
   })
 })
 
@@ -598,6 +802,28 @@ onMounted(() => {
 .release-notes :deep(hr) {
   margin: 1rem 0;
   border-color: var(--border);
+}
+
+/* 侧边栏「有新版本」呼吸指示器 —— 温和版 */
+@keyframes update-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.75;
+  }
+}
+
+.update-indicator {
+  animation: update-breathe 1.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.update-indicator:hover {
+  animation: none;
 }
 
 /* 自定义滚动条 */

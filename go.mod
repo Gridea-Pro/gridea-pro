@@ -11,6 +11,7 @@ require (
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/mark3labs/mcp-go v0.43.2
 	github.com/matoous/go-nanoid/v2 v2.1.0
+	github.com/minio/selfupdate v0.6.0
 	github.com/mozillazg/go-pinyin v0.21.0
 	github.com/pkg/sftp v1.13.10
 	github.com/tdewolff/minify/v2 v2.24.10
@@ -26,6 +27,7 @@ require (
 )
 
 require (
+	aead.dev/minisign v0.2.0 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
