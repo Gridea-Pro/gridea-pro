@@ -106,10 +106,21 @@
 }
 
 /* ── Theme toggle icon swap (visible icon = 下一步将切换到的状态) ── */
-.theme-toggle-sun { display: flex; }
-.theme-toggle-moon { display: none; }
-:root.theme-light .theme-toggle-sun { display: none; }
-:root.theme-light .theme-toggle-moon { display: flex; }
+.theme-toggle-sun {
+  display: flex;
+}
+
+.theme-toggle-moon {
+  display: none;
+}
+
+:root.theme-light .theme-toggle-sun {
+  display: none;
+}
+
+:root.theme-light .theme-toggle-moon {
+  display: flex;
+}
 
 /* 深色模式下的太阳图标：默认点亮为金色，hover 时更亮（仅底色效果继承 .theme-toggle:hover） */
 .theme-toggle-sun {
@@ -121,9 +132,17 @@
 }
 
 /* ── Right-side action order：主题切换永远在搜索之前 ── */
-.theme-toggle { order: 0; }
-.search-btn { order: 1; }
-.btn-nav-toggle { order: 2; }
+.theme-toggle {
+  order: 0;
+}
+
+.search-btn {
+  order: 1;
+}
+
+.btn-nav-toggle {
+  order: 2;
+}
 
 .nav-toggle {
   display: none;
@@ -315,5 +334,3 @@
 .footer-powered a:hover {
   color: var(--color-text-primary);
 }
-
-
