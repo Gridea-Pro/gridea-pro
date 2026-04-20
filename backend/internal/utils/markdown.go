@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 
+	"github.com/FurqanSoftware/goldmark-katex"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
@@ -16,21 +17,19 @@ var (
 )
 
 func init() {
-	// 1. 初始化安全实例
 	mdSafe = goldmark.New(
-		goldmark.WithExtensions(extension.GFM, extension.Typographer),
+		goldmark.WithExtensions(extension.GFM, extension.Typographer, &katex.Extender{}),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		goldmark.WithRendererOptions(html.WithHardWraps(), html.WithXHTML()),
 	)
 
-	// 2. 初始化非安全实例 (允许 Raw HTML)
 	mdUnsafe = goldmark.New(
-		goldmark.WithExtensions(extension.GFM, extension.Typographer),
+		goldmark.WithExtensions(extension.GFM, extension.Typographer, &katex.Extender{}),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		goldmark.WithRendererOptions(
 			html.WithHardWraps(),
 			html.WithXHTML(),
-			html.WithUnsafe(), // 关键差异
+			html.WithUnsafe(),
 		),
 	)
 }

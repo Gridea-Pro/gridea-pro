@@ -124,8 +124,9 @@ func (s *Engine) SetTheme(themeName string) error {
 		return fmt.Errorf("检测引擎类型失败: %w", err)
 	}
 
-	// 缓存检查：主题未变更 且 引擎类型一致时，直接返回
+	// 缓存检查：主题未变更 且 引擎类型一致时，清除缓存后返回
 	if s.renderer != nil && s.currentTheme == themeName && s.renderer.GetEngineType() == engineType {
+		s.renderer.ClearCache()
 		return nil
 	}
 
