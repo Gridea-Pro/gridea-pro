@@ -40,7 +40,8 @@
         "install": "지금 업데이트",
         "restart": "재시작",
         "retry": "다시 시도",
-        "readyToRestart": "다운로드 완료. 재시작하여 업데이트 적용"
+        "readyToRestart": "다운로드 완료. 재시작하여 업데이트 적용",
+        "upToDate": "이미 최신 버전입니다"
     },
     "article": {
         "new": "새 글",

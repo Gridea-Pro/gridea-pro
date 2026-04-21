@@ -40,7 +40,8 @@
         "install": "Install Now",
         "restart": "Restart",
         "retry": "Retry",
-        "readyToRestart": "Download complete. Restart to apply update."
+        "readyToRestart": "Download complete. Restart to apply update.",
+        "upToDate": "You're on the latest version"
     },
     "article": {
         "new": "New",

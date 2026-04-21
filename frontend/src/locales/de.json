@@ -40,7 +40,8 @@
         "install": "Jetzt installieren",
         "restart": "Neu starten",
         "retry": "Erneut versuchen",
-        "readyToRestart": "Download abgeschlossen. Neu starten, um das Update anzuwenden."
+        "readyToRestart": "Download abgeschlossen. Neu starten, um das Update anzuwenden.",
+        "upToDate": "Bereits auf dem neuesten Stand"
     },
     "article": {
         "new": "Neu",

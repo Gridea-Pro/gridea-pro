@@ -508,6 +508,15 @@ const checkUpdate = async ({ manual = false, autoOpen = false } = {}) => {
   try {
     const info = await CheckUpdate()
     applyUpdateInfo(info, { openDialog: manual || autoOpen, manual })
+    // 菜单手动触发、且后端确认无可用更新时，显式提示已是最新版，
+    // 避免用户点击「检查更新」后完全没有反馈。
+    if (manual && info && !info.hasUpdate) {
+      EventsEmit('app:toast', {
+        message: t('update.upToDate'),
+        type: 'success',
+        duration: 3000,
+      })
+    }
   } catch (err) {
     console.error('[checkUpdate] failed:', err)
     if (manual) {

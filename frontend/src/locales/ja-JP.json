@@ -40,7 +40,8 @@
         "install": "今すぐ更新",
         "restart": "再起動",
         "retry": "再試行",
-        "readyToRestart": "ダウンロード完了。再起動して更新を適用"
+        "readyToRestart": "ダウンロード完了。再起動して更新を適用",
+        "upToDate": "すでに最新バージョンです"
     },
     "article": {
         "new": "新規記事",

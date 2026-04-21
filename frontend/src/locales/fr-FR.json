@@ -40,7 +40,8 @@
         "install": "Installer maintenant",
         "restart": "Redémarrer",
         "retry": "Réessayer",
-        "readyToRestart": "Téléchargement terminé. Redémarrez pour appliquer la mise à jour."
+        "readyToRestart": "Téléchargement terminé. Redémarrez pour appliquer la mise à jour.",
+        "upToDate": "Vous êtes à jour"
     },
     "article": {
         "new": "Nouveau",
