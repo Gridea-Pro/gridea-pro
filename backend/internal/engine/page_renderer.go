@@ -180,12 +180,15 @@ func (r *PageRenderer) renderPaginated(ctx context.Context, cfg paginatedRenderC
 			}
 		}
 
-		buf := bufferPool.Get().(*bytes.Buffer)
-		buf.Reset()
-		buf.WriteString(html)
-		writeErr := r.manifest.WriteFile(filepath.Join(outDir, FileIndexHTML), buf.Bytes(), 0644)
-		bufferPool.Put(buf)
-		if writeErr != nil {
+		// 用 IIFE 限定 buf 的作用域，让 defer bufferPool.Put 在每一页写完后立即触发，
+		// panic 安全且与 RenderPost/RenderTags/RenderFriends 等其他位置风格一致。
+		if writeErr := func() error {
+			buf := bufferPool.Get().(*bytes.Buffer)
+			defer bufferPool.Put(buf)
+			buf.Reset()
+			buf.WriteString(html)
+			return r.manifest.WriteFile(filepath.Join(outDir, FileIndexHTML), buf.Bytes(), 0644)
+		}(); writeErr != nil {
 			return writeErr
 		}
 	}
