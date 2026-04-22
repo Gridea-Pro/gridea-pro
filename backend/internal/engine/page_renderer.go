@@ -301,7 +301,7 @@ func (r *PageRenderer) RenderPost(buildDir string, post domain.Post, baseData *t
 	html, err := r.renderer.Render(templateName, &postData)
 	if err != nil {
 		r.logger.Error(fmt.Sprintf("文章模板渲染失败: %v，使用简单模板", err))
-		return r.renderSimplePost(postDir, &postData)
+		return r.renderSimplePost(postDir, &postData, isSpecialPage)
 	}
 
 	// 后处理：SEO 注入 + CDN URL 重写
@@ -658,20 +658,86 @@ func (r *PageRenderer) Render404(buildDir string, data *template.TemplateData) e
 	return r.manifest.WriteFile(filepath.Join(buildDir, "404.html"), buf.Bytes(), 0644)
 }
 
-// renderSimpleIndex 渲染简单首页（备用）
+// fallbackBannerHTML 所有降级视图顶部展示的醒目提示，帮助用户意识到主题模板
+// 渲染失败，而非误以为是终态样式。
+const fallbackBannerHTML = `<div class="fallback-banner" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; padding:12px 16px; margin:0 0 24px; border-radius:4px; font-size:14px;">` +
+	`⚠️ <strong>降级视图</strong>：主题模板渲染失败，当前为临时兜底页面，请检查主题配置或模板语法。` +
+	`</div>`
+
+// renderSimpleIndex 渲染简单首页（备用）。
+// 与主流程一致地按 PostPageSize 分页输出，保证访问 /page/N/ 仍可落地，
+// 避免原实现只写 page 1 导致 manifest 把旧的 page/N/ 目录当孤儿清掉后 404。
 func (r *PageRenderer) renderSimpleIndex(buildDir string, data *template.TemplateData) error {
+	listPosts := getVisiblePosts(data.Posts)
+	ps := pageSize(data.ThemeConfig.PostPageSize, 10)
+	total := len(listPosts)
+	totalPages := (total + ps - 1) / ps
+	if totalPages < 1 {
+		totalPages = 1
+	}
+
+	for page := 1; page <= totalPages; page++ {
+		start := (page - 1) * ps
+		end := start + ps
+		if end > total {
+			end = total
+		}
+		var pagePosts []template.PostView
+		if total > 0 {
+			pagePosts = listPosts[start:end]
+		}
+
+		var outDir string
+		if page == 1 {
+			outDir = buildDir
+		} else {
+			outDir = filepath.Join(buildDir, "page", fmt.Sprintf("%d", page))
+			if err := os.MkdirAll(outDir, 0755); err != nil {
+				return err
+			}
+		}
+
+		html := r.buildSimpleIndexHTML(data, pagePosts, page, totalPages)
+		if err := r.manifest.WriteFile(filepath.Join(outDir, FileIndexHTML), []byte(html), 0644); err != nil {
+			return err
+		}
+	}
+
+	r.logger.Info(fmt.Sprintf("🛟 首页降级视图已生成（共 %d 页）", totalPages))
+	return nil
+}
+
+// buildSimpleIndexHTML 构建单个简单首页的完整 HTML，含分页导航。
+// baseURL 固定为 "/"（与 RenderIndex 一致）。
+func (r *PageRenderer) buildSimpleIndexHTML(data *template.TemplateData, posts []template.PostView, page, totalPages int) string {
 	buf := bufferPool.Get().(*bytes.Buffer)
 	buf.Reset()
 	defer bufferPool.Put(buf)
 
 	var postListHTML strings.Builder
-	for _, p := range data.Posts {
+	for _, p := range posts {
 		postListHTML.WriteString(fmt.Sprintf(`
 			<article class="post">
 				<h2 class="post-title"><a href="%s">%s</a></h2>
 				<div class="post-meta">%s</div>
 			</article>
 		`, p.Link, p.Title, p.DateFormat))
+	}
+
+	pagination := buildPagination(page, totalPages, len(data.Posts), "/")
+	var paginationHTML string
+	if totalPages > 1 {
+		var sb strings.Builder
+		sb.WriteString(`<nav class="pagination" style="text-align:center; margin:40px 0; padding:20px 0; border-top:1px solid #eee;">`)
+		if pagination.HasPrev {
+			sb.WriteString(fmt.Sprintf(`<a href="%s" style="margin:0 12px; color:#0066cc; text-decoration:none;">← 上一页</a>`, pagination.PrevURL))
+		}
+		sb.WriteString(fmt.Sprintf(`<span style="color:#999;">%d / %d</span>`, page, totalPages))
+		if pagination.HasNext {
+			sb.WriteString(fmt.Sprintf(`<a href="%s" style="margin:0 12px; color:#0066cc; text-decoration:none;">下一页 →</a>`, pagination.NextURL))
+		}
+		sb.WriteString(`</nav>`)
+		paginationHTML = sb.String()
 	}
 
 	fmt.Fprintf(buf, `<!DOCTYPE html>
@@ -693,24 +759,36 @@ func (r *PageRenderer) renderSimpleIndex(buildDir string, data *template.Templat
 	</style>
 </head>
 <body>
+	%s
 	<header class="site-header">
 		<h1 class="site-title">%s</h1>
 		<p class="site-description">%s</p>
 	</header>
 	<main class="site-main">%s</main>
+	%s
 	<footer style="text-align: center; padding: 40px 0; color: #999;">%s</footer>
 </body>
-</html>`, data.ThemeConfig.SiteName, data.ThemeConfig.SiteName, data.ThemeConfig.SiteDescription,
-		postListHTML.String(), data.ThemeConfig.FooterInfo)
+</html>`, data.ThemeConfig.SiteName, fallbackBannerHTML, data.ThemeConfig.SiteName, data.ThemeConfig.SiteDescription,
+		postListHTML.String(), paginationHTML, data.ThemeConfig.FooterInfo)
 
-	return r.manifest.WriteFile(filepath.Join(buildDir, FileIndexHTML), buf.Bytes(), 0644)
+	return buf.String()
 }
 
-// renderSimplePost 渲染简单文章页（备用）
-func (r *PageRenderer) renderSimplePost(postDir string, data *template.TemplateData) error {
+// renderSimplePost 渲染简单文章页（备用）。
+// isSpecialPage = true 时去掉"返回首页"链接与日期元信息，更贴近静态页（about / privacy）的语义。
+func (r *PageRenderer) renderSimplePost(postDir string, data *template.TemplateData, isSpecialPage bool) error {
 	buf := bufferPool.Get().(*bytes.Buffer)
 	buf.Reset()
 	defer bufferPool.Put(buf)
+
+	metaLine := ""
+	backLink := `<a href="/" class="back-link">← 返回首页</a>`
+	if isSpecialPage {
+		// about / privacy 之类的页面：没有发布日期的语义，也通常通过导航访问，不需要"返回首页"
+		backLink = ""
+	} else {
+		metaLine = fmt.Sprintf(`<div class="post-meta">%s</div>`, data.Post.DateFormat)
+	}
 
 	fmt.Fprintf(buf, `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -730,22 +808,19 @@ func (r *PageRenderer) renderSimplePost(postDir string, data *template.TemplateD
 	</style>
 </head>
 <body>
+	%s
 	<article class="post">
 		<header class="post-header">
 			<h1 class="post-title">%s</h1>
-			<div class="post-meta">%s</div>
+			%s
 		</header>
 		<div class="post-content">%s</div>
 	</article>
-	<a href="/" class="back-link">← 返回首页</a>
+	%s
 	<footer style="text-align: center; padding: 40px 0; color: #999;">%s</footer>
 </body>
-</html>`, data.SiteTitle, data.Post.Title, data.Post.DateFormat, data.Post.Content, data.ThemeConfig.FooterInfo)
+</html>`, data.SiteTitle, fallbackBannerHTML, data.Post.Title, metaLine, data.Post.Content, backLink, data.ThemeConfig.FooterInfo)
 
 	indexPath := filepath.Join(postDir, FileIndexHTML)
-	if err := r.manifest.WriteFile(indexPath, buf.Bytes(), 0644); err != nil {
-		return err
-	}
-
-	return nil
+	return r.manifest.WriteFile(indexPath, buf.Bytes(), 0644)
 }
