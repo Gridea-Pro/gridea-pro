@@ -132,8 +132,11 @@ type githubContentsResponse struct {
 	SHA string `json:"sha"`
 }
 
-// uploadToGitHub 通过 GitHub Contents API 上传单个文件
-func (s *CdnUploadService) uploadToGitHub(ctx context.Context, setting domain.CdnSetting, localFilePath, remotePath string) error {
+// uploadToGitHub 通过 GitHub Contents API 上传单个文件。
+// manifest 非 nil 时走本地 manifest 缓存（#45）：若 remotePath 在上次成功上传后
+// 仍是同一个 SHA，直接跳过整个 API 往返；否则仍需一次 GET 查远端 SHA 做增量。
+// 成功上传后向 manifest 记录新的 (remotePath → localSHA)。
+func (s *CdnUploadService) uploadToGitHub(ctx context.Context, setting domain.CdnSetting, localFilePath, remotePath string, manifest *cdnManifest) error {
 	// 读取本地文件
 	data, err := os.ReadFile(localFilePath)
 	if err != nil {
@@ -148,10 +151,21 @@ func (s *CdnUploadService) uploadToGitHub(ctx context.Context, setting domain.Cd
 	// 计算本地文件 SHA（git blob SHA1）
 	localSHA := gitBlobSHA(data)
 
-	// 检查文件是否已存在
+	// 快速路径：本地 manifest 命中且 SHA 未变，直接跳过 API。
+	// 放开这条后大部分"重复部署"场景都不再调用 GitHub API，配额保留给真正的变更。
+	if manifest != nil {
+		if cached, ok := manifest.hit(remotePath); ok && cached == localSHA {
+			return nil
+		}
+	}
+
+	// 慢路径：manifest 未命中或 SHA 变更，还需一次 GET 拿远端 SHA 做增量更新
 	existingSHA, err := s.getGithubFileSHA(ctx, setting, remotePath, branch)
 	if err == nil && existingSHA == localSHA {
-		// 文件内容相同，跳过
+		// 文件内容相同，跳过上传，但补录到 manifest 避免下次再 GET
+		if manifest != nil {
+			manifest.record(remotePath, localSHA)
+		}
 		return nil
 	}
 
@@ -207,6 +221,10 @@ func (s *CdnUploadService) uploadToGitHub(ctx context.Context, setting domain.Cd
 		}
 	}
 
+	// 成功：把新 SHA 写入 manifest，后续部署可以直接走快速路径
+	if manifest != nil {
+		manifest.record(remotePath, localSHA)
+	}
 	return nil
 }
 
@@ -286,8 +304,8 @@ func (s *CdnUploadService) TestUpload(ctx context.Context) (string, error) {
 	}
 	remotePath := ResolveSavePath(savePath, "gridea-test.txt")
 
-	// 上传
-	if err := s.uploadToGitHub(ctx, setting, tmpFile.Name(), remotePath); err != nil {
+	// 上传（测试场景不走 manifest 缓存：每次都实际触达 API 以便验证配置）
+	if err := s.uploadToGitHub(ctx, setting, tmpFile.Name(), remotePath, nil); err != nil {
 		return "", err
 	}
 
@@ -306,6 +324,15 @@ func (s *CdnUploadService) UploadMediaForDeploy(ctx context.Context, appDir stri
 	if !setting.Enabled || setting.GithubToken == "" {
 		return nil
 	}
+
+	// 加载本地 manifest：命中的文件跳过整轮 API 调用（#45）
+	manifest := loadCdnManifest(appDir)
+	defer func() {
+		// 无论成功失败都持久化已有进度，单文件失败不影响其它文件的快路径
+		if err := manifest.save(appDir); err != nil {
+			logger(fmt.Sprintf("警告：写入 CDN manifest 失败（下次将重新全量检查）: %v", err))
+		}
+	}()
 
 	// 需要扫描的目录
 	mediaDirs := []string{"post-images", "images", "media"}
@@ -367,7 +394,7 @@ func (s *CdnUploadService) UploadMediaForDeploy(ctx context.Context, appDir stri
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			if err := s.uploadToGitHub(gCtx, setting, f.localPath, f.remotePath); err != nil {
+			if err := s.uploadToGitHub(gCtx, setting, f.localPath, f.remotePath, manifest); err != nil {
 				logger(fmt.Sprintf("上传 %s 失败: %v", f.remotePath, err))
 				return nil // 单个文件失败不中断整个上传
 			}
@@ -383,7 +410,90 @@ func (s *CdnUploadService) UploadMediaForDeploy(ctx context.Context, appDir stri
 		return fmt.Errorf("上传媒体文件失败: %w", err)
 	}
 
+	// 清理孤儿：manifest 中有、但本次扫描不存在的 remotePath。
+	// 只基于 manifest 做对比，不做"列整库 diff"，天然安全：
+	// 如果用户在同一个 CDN 仓库里还有其它非 Gridea 上传的文件，不会被误删。
+	localSet := make(map[string]struct{}, len(filesToUpload))
+	for _, f := range filesToUpload {
+		localSet[f.remotePath] = struct{}{}
+	}
+	var orphans []string
+	for remotePath := range manifest.Entries {
+		if _, exists := localSet[remotePath]; !exists {
+			orphans = append(orphans, remotePath)
+		}
+	}
+	if len(orphans) > 0 {
+		logger(fmt.Sprintf("检测到 %d 个 CDN 孤儿文件（本地已删除但 CDN 仍存在），开始清理...", len(orphans)))
+		deleted := 0
+		for _, remotePath := range orphans {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if err := s.deleteFromGitHub(ctx, setting, remotePath); err != nil {
+				// 单文件删除失败不阻塞：下次部署还会再尝试
+				logger(fmt.Sprintf("清理 %s 失败（将下次重试）: %v", remotePath, err))
+				continue
+			}
+			manifest.mu.Lock()
+			delete(manifest.Entries, remotePath)
+			manifest.mu.Unlock()
+			deleted++
+		}
+		logger(fmt.Sprintf("CDN 孤儿清理完成：成功删除 %d / %d 个文件", deleted, len(orphans)))
+	}
+
 	logger(fmt.Sprintf("CDN 上传完成，共上传 %d 个文件", uploadCount))
+	return nil
+}
+
+// deleteFromGitHub 从 GitHub CDN 仓库里删除一个已上传的文件。
+// 先 GET 当前 SHA，再 DELETE（Contents API 要求提供 sha 防覆盖冲突）。
+func (s *CdnUploadService) deleteFromGitHub(ctx context.Context, setting domain.CdnSetting, remotePath string) error {
+	branch := setting.GithubBranch
+	if branch == "" {
+		branch = "main"
+	}
+
+	// 1. 拿远端 SHA；404 认为已经不存在，视作删除成功
+	sha, err := s.getGithubFileSHA(ctx, setting, remotePath, branch)
+	if err != nil {
+		// getGithubFileSHA 把"文件不存在"当成 error —— 这里视作孤儿已消失
+		return nil
+	}
+
+	// 2. DELETE 请求
+	body := map[string]any{
+		"message": fmt.Sprintf("Delete orphan %s via Gridea Pro", remotePath),
+		"sha":     sha,
+		"branch":  branch,
+	}
+	bodyJSON, _ := json.Marshal(body)
+
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s",
+		setting.GithubUser, setting.GithubRepo, remotePath)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, strings.NewReader(string(bodyJSON)))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+setting.GithubToken)
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.httpClient(ctx).Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		if resp.StatusCode == http.StatusNotFound {
+			return nil // 已消失
+		}
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
+	}
 	return nil
 }
 
