@@ -73,16 +73,18 @@ func (p *FtpProvider) Deploy(ctx context.Context, outputDir string, setting *dom
 
 	logger("FTP 连接成功")
 
-	// 4. 清理远程目录
-	logger(fmt.Sprintf("正在清理远程目录: %s", remotePath))
-	p.cleanRemoteDir(conn, remotePath)
+	// 4. 原子切换策略（issue #40）：先上传到 <remotePath>.new-<ts>，成功后 rename。
+	//    FTP 的 Rename 由 RNFR/RNTO 组合实现，大多数服务器都支持；同卷下接近原子。
+	ts := time.Now().Format("20060102-150405")
+	stagingPath := remotePath + ".new-" + ts
+	backupPath := remotePath + ".old-" + ts
 
-	// 确保远程目录存在
-	_ = conn.MakeDir(remotePath)
+	logger(fmt.Sprintf("正在上传到暂存目录: %s（旧站点保持可用）", stagingPath))
+	p.mkdirAll(conn, stagingPath)
 
-	// 5. 上传文件
+	// 5. 上传文件到 staging
 	fileCount := 0
-	err = filepath.Walk(outputDir, func(localPath string, info os.FileInfo, walkErr error) error {
+	uploadErr := filepath.Walk(outputDir, func(localPath string, info os.FileInfo, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
@@ -111,7 +113,7 @@ func (p *FtpProvider) Deploy(ctx context.Context, outputDir string, setting *dom
 		if err != nil {
 			return err
 		}
-		remoteFile := path.Join(remotePath, filepath.ToSlash(relPath))
+		remoteFile := path.Join(stagingPath, filepath.ToSlash(relPath))
 
 		// 创建远程目录
 		remoteDir := path.Dir(remoteFile)
@@ -130,8 +132,41 @@ func (p *FtpProvider) Deploy(ctx context.Context, outputDir string, setting *dom
 		return nil
 	})
 
-	if err != nil {
-		return err
+	if uploadErr != nil {
+		logger(fmt.Sprintf("上传失败，正在清理暂存目录 %s...", stagingPath))
+		p.cleanRemoteDir(conn, stagingPath)
+		_ = conn.RemoveDir(stagingPath)
+		return uploadErr
+	}
+
+	// 6. 原子切换：先看旧目录是否存在
+	logger("上传完成，正在切换到新版本（FTP rename）...")
+	oldExists := true
+	if err := conn.ChangeDir(remotePath); err != nil {
+		oldExists = false
+	} else {
+		_ = conn.ChangeDir("/") // 切回根目录
+	}
+	if oldExists {
+		if err := conn.Rename(remotePath, backupPath); err != nil {
+			p.cleanRemoteDir(conn, stagingPath)
+			_ = conn.RemoveDir(stagingPath)
+			return fmt.Errorf("重命名旧目录失败: %w", err)
+		}
+	}
+	if err := conn.Rename(stagingPath, remotePath); err != nil {
+		if oldExists {
+			_ = conn.Rename(backupPath, remotePath)
+		}
+		p.cleanRemoteDir(conn, stagingPath)
+		_ = conn.RemoveDir(stagingPath)
+		return fmt.Errorf("重命名新目录失败: %w", err)
+	}
+
+	// 7. 清理旧备份（best-effort）
+	if oldExists {
+		p.cleanRemoteDir(conn, backupPath)
+		_ = conn.RemoveDir(backupPath)
 	}
 
 	logger(fmt.Sprintf("✅ FTP 部署成功！共上传 %d 个文件到 %s", fileCount, remotePath))
