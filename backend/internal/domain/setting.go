@@ -297,6 +297,30 @@ func (s *Setting) SetPlatformConfig(platform, key string, value any) {
 	s.PlatformConfigs[platform] = m
 }
 
+// Clone 返回 Setting 的深拷贝，特别地把嵌套的 PlatformConfigs map 也一并克隆。
+//
+// 原因：Setting 是值类型，但 PlatformConfigs (map[string]map[string]any) 以及
+// 其内嵌的 map[string]any 都是引用类型。任何"看似值传递"的拷贝都会让调用方
+// 拿到同一份 inner map 的引用 —— 在 Keychain 凭证注入路径上这会反向污染
+// repository 缓存，导致敏感字段泄漏给前端（见 issue #39）。
+//
+// 所有"要在 Setting 之上做修改"的下游（InjectCredentials / ExtractSensitiveFields /
+// 测试连接 / 模板渲染）都应先 Clone 再改。
+func (s Setting) Clone() Setting {
+	cp := s
+	if s.PlatformConfigs != nil {
+		cp.PlatformConfigs = make(map[string]map[string]any, len(s.PlatformConfigs))
+		for platform, inner := range s.PlatformConfigs {
+			m := make(map[string]any, len(inner))
+			for k, v := range inner {
+				m[k] = v
+			}
+			cp.PlatformConfigs[platform] = m
+		}
+	}
+	return cp
+}
+
 // SettingRepository 定义配置存储接口
 type SettingRepository interface {
 	GetSetting(ctx context.Context) (Setting, error)
