@@ -352,8 +352,45 @@ func (f *UpdateFacade) emitError(err error) {
 	})
 }
 
+// extRule 描述合法发布包后缀及其自更新优先级。
+type extRule struct {
+	ext string
+	pri int
+}
+
+// binaryAssetRules 定义可作为自更新候选的 asset 后缀白名单。
+// 按长度降序排列，避免 .tar.gz 被更短的 .gz 抢先匹配（预留扩展）。
+// 优先级：.zip/.exe/.AppImage 这类可直接替换主程序的打包 > .dmg/.msi 安装器 > .deb/.rpm 包管理格式。
+var binaryAssetRules = []extRule{
+	{".AppImage", 4},
+	{".tar.gz", 3},
+	{".tar.xz", 2},
+	{".zip", 4},
+	{".exe", 4},
+	{".dmg", 3},
+	{".msi", 3},
+	{".deb", 1},
+	{".rpm", 1},
+}
+
+// matchAssetExt 返回 name 匹配的二进制后缀及其优先级；未命中返回空串与 0。
+func matchAssetExt(name string) (string, int, bool) {
+	lower := strings.ToLower(name)
+	for _, r := range binaryAssetRules {
+		if strings.HasSuffix(lower, strings.ToLower(r.ext)) {
+			return r.ext, r.pri, true
+		}
+	}
+	return "", 0, false
+}
+
 // pickAsset 按当前 GOOS/GOARCH 找到匹配的 asset。
-// 命名约定宽松：只要同时包含平台和架构关键字即可命中。
+//
+// 匹配条件：
+//  1. 文件名（lowercase）需包含当前平台关键字
+//  2. 文件名后缀必须在二进制发布包白名单内（避免 changelog.md / notes.txt 等附件被误选）
+//  3. 当指定平台有架构关键字集时，未带架构关键字的包允许匹配但权重降一档
+//  4. setup/installer 命名降权，避免自更新流程去拉交互式安装器
 func pickAsset(assets []githubAsset, goos, goarch string) *githubAsset {
 	osKeys := map[string][]string{
 		"darwin":  {"darwin", "mac", "macos", "osx"},
@@ -364,14 +401,6 @@ func pickAsset(assets []githubAsset, goos, goarch string) *githubAsset {
 		"amd64": {"amd64", "x86_64", "x64", "intel"},
 		"arm64": {"arm64", "aarch64", "apple"},
 	}
-	// 扩展名优先级（同平台匹配多个时取优先级高的）
-	// macOS 自更新优先 .zip（installer 可直接解压 .app），.dmg 留给首次下载
-	// Windows 自更新优先便携 .exe（selfupdate 可直接替换），.msi 安装器吃不下
-	extPriority := map[string]int{
-		".zip": 4, ".dmg": 3, // macOS
-		".exe": 4, ".msi": 3, // windows
-		".AppImage": 4, ".tar.gz": 3, ".tar.xz": 2, // linux
-	}
 
 	var best *githubAsset
 	bestPri := -1
@@ -381,15 +410,13 @@ func pickAsset(assets []githubAsset, goos, goarch string) *githubAsset {
 		if !containsAny(name, osKeys[goos]) {
 			continue
 		}
-		if keys, ok := archKeys[goarch]; ok && !containsAny(name, keys) {
-			// 没带架构关键字的通用包也允许，但优先级降一档
+		_, pri, ok := matchAssetExt(name)
+		if !ok {
+			continue
 		}
-		pri := 0
-		for ext, p := range extPriority {
-			if strings.HasSuffix(name, strings.ToLower(ext)) {
-				pri = p
-				break
-			}
+		// 没带架构关键字的通用包允许匹配，但权重降一档，优先选明确匹配架构的包
+		if keys, ok := archKeys[goarch]; ok && !containsAny(name, keys) {
+			pri--
 		}
 		// 安装器类资源自更新无法直接替换二进制，降权避免被 selfupdate 选中
 		if strings.Contains(name, "setup") || strings.Contains(name, "installer") {
