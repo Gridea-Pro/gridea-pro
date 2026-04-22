@@ -64,7 +64,10 @@ func (r *settingRepository) GetSetting(ctx context.Context) (domain.Setting, err
 	if r.cache == nil {
 		return domain.Setting{}, nil
 	}
-	return *r.cache, nil
+	// 深拷贝：PlatformConfigs / 内嵌 map 是引用类型，调用方若在其上写入
+	// 敏感字段（见 DeployService 的 InjectCredentials），会反向污染 cache。
+	// 修复 issue #39：凭证反向泄漏到前端。
+	return r.cache.Clone(), nil
 }
 
 func (r *settingRepository) SaveSetting(ctx context.Context, setting domain.Setting) error {
@@ -76,7 +79,9 @@ func (r *settingRepository) SaveSetting(ctx context.Context, setting domain.Sett
 		return err
 	}
 
-	r.cache = &setting
+	// 同样深拷贝再存入 cache，避免调用方后续修改入参 map 影响缓存一致性。
+	cached := setting.Clone()
+	r.cache = &cached
 	r.loaded = true
 	return nil
 }

@@ -69,6 +69,9 @@ func (s *DeployService) DeployToRemote(ctx context.Context) error {
 		s.log(ctx, fmt.Sprintf("Failed to load settings: %v", err))
 		return err
 	}
+	// 双保险：即使上游 GetSetting 未返回深拷贝，这里也再 Clone 一次，
+	// 避免 InjectCredentials 写入 PlatformConfigs 反向污染 repo cache（issue #39）
+	setting = setting.Clone()
 	if s.oauthService != nil {
 		creds := s.oauthService.GetAllCredentials()
 		setting.InjectCredentials(creds)
