@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"gridea-pro/backend/internal/deploy"
 	"gridea-pro/backend/internal/domain"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
@@ -174,15 +175,20 @@ func (s *CdnUploadService) uploadToGitHub(ctx context.Context, setting domain.Cd
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/contents/%s",
 		setting.GithubUser, setting.GithubRepo, remotePath)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, strings.NewReader(string(bodyJSON)))
-	if err != nil {
-		return fmt.Errorf("创建请求失败: %w", err)
+	// GitHub Contents API 的 PUT 是内容寻址（带 sha），幂等可安全重试（#46）。
+	// 5xx / 429 / 瞬时网络错误自动退避 3 次；429 会尊重 Retry-After 头。
+	buildReq := func() (*http.Request, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, strings.NewReader(string(bodyJSON)))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+setting.GithubToken)
+		req.Header.Set("Accept", "application/vnd.github.v3+json")
+		req.Header.Set("Content-Type", "application/json")
+		return req, nil
 	}
-	req.Header.Set("Authorization", "Bearer "+setting.GithubToken)
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := s.httpClient(ctx).Do(req)
+	resp, err := deploy.DoHTTPWithRetry(ctx, s.httpClient(ctx), buildReq, deploy.HTTPRetryPolicy{MaxAttempts: 3}, nil)
 	if err != nil {
 		return fmt.Errorf("上传失败: %w", err)
 	}
