@@ -377,6 +377,29 @@
                 </SelectContent>
               </Select>
             </FormField>
+            <!-- FTP 加密模式：仅当选择 FTP 时可见 -->
+            <FormField v-if="drawerForm.transferProtocol === 'ftp'" label="FTP 加密模式">
+              <Select :model-value="drawerForm.ftpMode || 'ftps-explicit'" @update:model-value="drawerForm.ftpMode = $event">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ftps-explicit">FTPS（显式 TLS，推荐）</SelectItem>
+                  <SelectItem value="ftps-implicit">FTPS（隐式 TLS / 990 端口）</SelectItem>
+                  <SelectItem value="ftp">明文 FTP（不安全）</SelectItem>
+                </SelectContent>
+              </Select>
+              <template v-if="drawerForm.ftpMode === 'ftp'" #hint>
+                <span class="text-red-500">⚠️ 明文 FTP 会泄漏密码和站点内容，仅供内网测试</span>
+              </template>
+            </FormField>
+            <FormField v-if="drawerForm.transferProtocol === 'ftp' && (drawerForm.ftpMode === 'ftps-explicit' || drawerForm.ftpMode === 'ftps-implicit')"
+              label="允许不安全 TLS 证书">
+              <Switch :checked="!!drawerForm.allowInsecureTLS" @update:checked="drawerForm.allowInsecureTLS = $event" />
+              <template #hint>
+                <span>仅在 NAS 自签证书等受控场景下开启；默认关闭</span>
+              </template>
+            </FormField>
             <FormField :label="t('settings.network.server')">
               <Input v-model="drawerForm.server" placeholder="192.168.1.100" />
             </FormField>
@@ -551,6 +574,8 @@ const drawerForm = reactive<Record<string, any>>({
   token: '',
   cname: '',
   transferProtocol: 'sftp',
+  ftpMode: 'ftps-explicit',
+  allowInsecureTLS: false,
   port: '',
   server: '',
   password: '',
@@ -930,7 +955,7 @@ function buildSettingForPlatform(platformId: string) {
     coding: ['domain', 'repository', 'branch', 'username', 'email', 'tokenUsername', 'token', 'cname'],
     netlify: ['domain', 'netlifySiteId', 'netlifyAccessToken'],
     vercel: ['domain', 'repository', 'token', 'cname'],
-    sftp: ['domain', 'transferProtocol', 'server', 'port', 'username', 'password', 'privateKey', 'remotePath'],
+    sftp: ['domain', 'transferProtocol', 'ftpMode', 'allowInsecureTLS', 'server', 'port', 'username', 'password', 'privateKey', 'remotePath'],
   }
 
   const fields = platformFieldMap[platformId] || []
@@ -938,6 +963,9 @@ function buildSettingForPlatform(platformId: string) {
   for (const f of fields) {
     if (f === 'domain') {
       cfg.domain = domain
+    } else if (f === 'allowInsecureTLS') {
+      // 保留为 bool，不要强转空串
+      cfg[f] = !!drawerForm[f]
     } else {
       cfg[f] = drawerForm[f] || ''
     }
