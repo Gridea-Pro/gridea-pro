@@ -18,11 +18,21 @@ import (
 )
 
 // SftpProvider 实现了 SFTP 文件上传部署策略
-type SftpProvider struct{}
+type SftpProvider struct {
+	// knownHostsPath 用于 TOFU 形式的 HostKey 校验；为空时走内存级 TOFU（降级）。
+	// 通过 NewSftpProviderWithKnownHosts 注入，生产路径应为 AppConfigDir/known_hosts。
+	knownHostsPath string
+}
 
-// NewSftpProvider 创建 SftpProvider
+// NewSftpProvider 创建默认 SftpProvider（无 known_hosts 持久化，仅进程内 TOFU）。
+// 生产路径请用 NewSftpProviderWithKnownHosts。
 func NewSftpProvider() *SftpProvider {
 	return &SftpProvider{}
+}
+
+// NewSftpProviderWithKnownHosts 注入 known_hosts 文件路径，启用跨会话的 HostKey 校验。
+func NewSftpProviderWithKnownHosts(knownHostsPath string) *SftpProvider {
+	return &SftpProvider{knownHostsPath: knownHostsPath}
 }
 
 // Deploy 实现 Provider 接口
@@ -62,11 +72,12 @@ func (p *SftpProvider) Deploy(ctx context.Context, outputDir string, setting *do
 		return fmt.Errorf(domain.ErrSftpConfigMissing)
 	}
 
-	// 3. SSH 连接
+	// 3. SSH 连接：使用 TOFU 形式的 HostKey 校验替代 InsecureIgnoreHostKey。
+	//    首次连接会把指纹写入 known_hosts；后续任何指纹变化都会被硬拒绝（防 MITM）。
 	sshConfig := &ssh.ClientConfig{
 		User:            username,
 		Auth:            authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: TrustOnFirstUseHostKeyCallback(p.knownHostsPath, logger),
 		Timeout:         15 * time.Second,
 	}
 

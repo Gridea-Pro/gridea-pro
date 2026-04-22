@@ -19,6 +19,7 @@ type DeployService struct {
 	cdnUploadService *CdnUploadService
 	oauthService     *OAuthService // 用于从 Keychain 补全凭证
 	appDir           string
+	knownHostsPath   string // SFTP HostKey TOFU 校验文件路径（跨站点共享，见 #37）
 	mu               sync.Mutex
 	isDeploying      bool
 }
@@ -28,6 +29,12 @@ func NewDeployService(settingRepo domain.SettingRepository, appDir string) *Depl
 		settingRepo: settingRepo,
 		appDir:      appDir,
 	}
+}
+
+// SetKnownHostsPath 注入 known_hosts 路径，生产环境应在 bootstrap 时设置为
+// AppConfigDir/known_hosts，以便 SFTP Provider 做 HostKey TOFU 校验。
+func (s *DeployService) SetKnownHostsPath(path string) {
+	s.knownHostsPath = path
 }
 
 // SetOAuthService 注入 OAuthService（用于从 Keychain 读取凭证）
@@ -124,7 +131,7 @@ func (s *DeployService) DeployToRemote(ctx context.Context) error {
 		if setting.TransferProtocol() == "ftp" {
 			provider = deploy.NewFtpProvider()
 		} else {
-			provider = deploy.NewSftpProvider()
+			provider = deploy.NewSftpProviderWithKnownHosts(s.knownHostsPath)
 		}
 	default:
 		provider = deploy.NewGitProvider()
