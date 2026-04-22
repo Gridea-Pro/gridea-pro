@@ -328,7 +328,7 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 		errs = errors.Join(errs, err)
 	}
 
-	// 完全独立、无依赖的页面与元数据生成，运用 errgroup 并发执行
+	// 完全独立、无依赖的页面与元数据生成
 	asyncTasks := []renderTask{
 		{"友链页", func() error { return s.pageRenderer.RenderFriends(ctx, buildDir, templateData) }},
 		{"闪念页", func() error { return s.pageRenderer.RenderMemos(ctx, buildDir, templateData) }},
@@ -366,36 +366,38 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 		}},
 	}
 
-	asyncGroup, asyncCtx := errgroup.WithContext(ctx)
-	asyncGroup.SetLimit(10)
-
-	var asyncErrs error
-	var errsMu sync.Mutex
+	// 并发跑独立任务：刻意不使用 errgroup，避免单个任务失败通过 errgroup.WithContext
+	// 取消其他任务（asyncTasks 里任一任务失败不影响其余的渲染产物）。
+	// 限流 10 并发，错误各自聚合后一次性加入 errs。
+	const asyncConcurrency = 10
+	var (
+		asyncWG sync.WaitGroup
+		asyncMu sync.Mutex
+		sem     = make(chan struct{}, asyncConcurrency)
+	)
 
 	for _, task := range asyncTasks {
 		t := task
-		asyncGroup.Go(func() error {
+		asyncWG.Go(func() {
 			select {
-			case <-asyncCtx.Done():
-				return asyncCtx.Err()
-			default:
+			case <-ctx.Done():
+				asyncMu.Lock()
+				errs = errors.Join(errs, ctx.Err())
+				asyncMu.Unlock()
+				return
+			case sem <- struct{}{}:
 			}
+			defer func() { <-sem }()
+
 			if err := t.fn(); err != nil {
 				s.logger.Error(fmt.Sprintf("警告：%s并发生成失败: %v", t.name, err))
-				errsMu.Lock()
-				asyncErrs = errors.Join(asyncErrs, fmt.Errorf("%s失败: %w", t.name, err))
-				errsMu.Unlock()
+				asyncMu.Lock()
+				errs = errors.Join(errs, fmt.Errorf("%s失败: %w", t.name, err))
+				asyncMu.Unlock()
 			}
-			return nil
 		})
 	}
-
-	if err := asyncGroup.Wait(); err != nil {
-		errs = errors.Join(errs, err)
-	}
-	if asyncErrs != nil {
-		errs = errors.Join(errs, asyncErrs)
-	}
+	asyncWG.Wait()
 
 	// CSS 合并压缩（后处理）
 	themePath := filepath.Join(s.appDir, DirThemes, themeConfig.ThemeName)
