@@ -26,10 +26,24 @@ func ensureTagID(tag *domain.Tag) {
 
 func (r *tagRepository) Create(ctx context.Context, tag *domain.Tag) error {
 	ensureTagID(tag)
+	existing, err := r.List(ctx)
+	if err != nil {
+		return err
+	}
+	if err := checkTagUniqueness(existing, *tag, tag.ID); err != nil {
+		return err
+	}
 	return r.Add(ctx, *tag)
 }
 
 func (r *tagRepository) Update(ctx context.Context, tag *domain.Tag) error {
+	existing, err := r.List(ctx)
+	if err != nil {
+		return err
+	}
+	if err := checkTagUniqueness(existing, *tag, tag.ID); err != nil {
+		return err
+	}
 	return r.BaseJSONRepository.Update(ctx, tag.ID, *tag)
 }
 

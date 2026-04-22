@@ -9,6 +9,7 @@ import (
 	"gridea-pro/backend/internal/repository"
 	"gridea-pro/backend/internal/service"
 	"gridea-pro/backend/internal/service/credential"
+	"log/slog"
 	"path/filepath"
 	"sync"
 )
@@ -87,6 +88,16 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	seoSettingRepo := repository.NewSeoSettingRepository(appDir)
 	cdnSettingRepo := repository.NewCdnSettingRepository(appDir)
 	pwaSettingRepo := repository.NewPwaSettingRepository(appDir)
+
+	// 1.1 扫描历史数据中的 Name / Slug 重复（通常是用户手工编辑 JSON 引入的），
+	//     仅记录告警，不阻止启动 —— 数据层 Create/Update 会拒绝新的冲突。
+	auditCtx := context.Background()
+	for _, c := range repository.AuditTagUniqueness(auditCtx, tagRepo) {
+		slog.Warn("检测到标签数据重复，渲染层可能出现覆盖，请修复 config/tags.json", "conflict", c)
+	}
+	for _, c := range repository.AuditCategoryUniqueness(auditCtx, categoryRepo) {
+		slog.Warn("检测到分类数据重复，渲染层可能出现覆盖，请修复 config/categories.json", "conflict", c)
+	}
 	// AI 配置和调用计数器使用应用级目录（跨站点共享，避免敏感信息泄露到站点目录）
 	cm, _ := config.NewConfigManager()
 	aiSettingRepo := repository.NewAISettingRepository(cm)

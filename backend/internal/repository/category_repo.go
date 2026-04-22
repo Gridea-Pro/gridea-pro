@@ -28,12 +28,26 @@ func ensureCategoryID(category *domain.Category) {
 
 func (r *categoryRepository) Create(ctx context.Context, category *domain.Category) error {
 	ensureCategoryID(category)
+	existing, err := r.List(ctx)
+	if err != nil {
+		return err
+	}
+	if err := checkCategoryUniqueness(existing, *category, category.ID); err != nil {
+		return err
+	}
 	return r.Add(ctx, *category)
 }
 
 func (r *categoryRepository) Update(ctx context.Context, id string, category *domain.Category) error {
 	// 保持 ID 不变
 	category.ID = id
+	existing, err := r.List(ctx)
+	if err != nil {
+		return err
+	}
+	if err := checkCategoryUniqueness(existing, *category, id); err != nil {
+		return err
+	}
 	return r.BaseJSONRepository.Update(ctx, id, *category)
 }
 
