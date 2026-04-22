@@ -137,6 +137,8 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	deployService.SetCdnUploadService(cdnUploadService)
 	deployService.SetRenderer(rendererService)
 	deployService.SetOAuthService(oauthService)
+	// SFTP HostKey TOFU 校验文件位置：app 级目录跨站点共享（#37）
+	deployService.SetKnownHostsPath(filepath.Join(cm.AppConfigDir(), "known_hosts"))
 	aiService := service.NewAIService(aiSettingRepo, settingRepo, aiUsageRepo)
 
 	// 3. Wrap with Facades
