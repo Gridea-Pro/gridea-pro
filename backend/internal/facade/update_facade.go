@@ -131,6 +131,14 @@ func (f *UpdateFacade) StartDownload() error {
 		f.mu.Unlock()
 		return errors.New("已经有下载任务在运行")
 	}
+	// 清理上一轮可能遗留的 ready 状态：避免"上一次下载成功但用户没点立即更新
+	// 之后这一次下载失败"的组合下，ApplyUpdate 误用上一次的旧包。
+	// 同时尝试删除磁盘上的旧临时文件（容忍失败，文件可能被系统清理）。
+	if f.readyPath != "" {
+		_ = os.Remove(f.readyPath)
+	}
+	f.readyPath = ""
+	f.readyAssetName = ""
 	ctx, cancel := context.WithCancel(context.Background())
 	f.downloadCancel = cancel
 	f.mu.Unlock()
