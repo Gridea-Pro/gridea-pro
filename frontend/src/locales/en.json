@@ -84,7 +84,11 @@
         "previewServiceFailed": "Failed to get preview service",
         "selectLocalImage": "Click to select a local image",
         "contextMenuTip": "Right-click in the editor to open the context menu",
-        "editorPlaceholder": "Write something..."
+        "editorPlaceholder": "Write something...",
+        "todayArticles": "Today",
+        "monthArticles": "This Month",
+        "allArticles": "All Articles",
+        "allCategories": "All Categories"
     },
     "tag": {
         "new": "New",

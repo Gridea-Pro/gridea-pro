@@ -84,7 +84,11 @@
         "previewServiceFailed": "Vorschau-Dienst konnte nicht gestartet werden",
         "selectLocalImage": "Klicken Sie, um ein lokales Bild auszuwählen",
         "contextMenuTip": "Rechtsklick im Editor öffnet das Kontextmenü",
-        "editorPlaceholder": "Schreiben Sie etwas..."
+        "editorPlaceholder": "Schreiben Sie etwas...",
+        "todayArticles": "Heute",
+        "monthArticles": "Diesen Monat",
+        "allArticles": "Alle Artikel",
+        "allCategories": "Alle Kategorien"
     },
     "tag": {
         "new": "Neu",

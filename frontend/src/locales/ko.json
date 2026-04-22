@@ -84,7 +84,11 @@
         "previewServiceFailed": "미리보기 서비스 획득 실패",
         "selectLocalImage": "로컬 이미지를 선택하려면 클릭",
         "contextMenuTip": "편집 영역에서 오른쪽 클릭하면 컨텍스트 메뉴가 나타납니다",
-        "editorPlaceholder": "무엇이든 써보세요..."
+        "editorPlaceholder": "무엇이든 써보세요...",
+        "todayArticles": "오늘 글",
+        "monthArticles": "이번 달 글",
+        "allArticles": "전체 글",
+        "allCategories": "전체 카테고리"
     },
     "tag": {
         "new": "새 태그",

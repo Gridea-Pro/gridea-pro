@@ -84,7 +84,11 @@
         "previewServiceFailed": "預覽服務取得失敗",
         "selectLocalImage": "點選選擇本機圖片",
         "contextMenuTip": "在編輯區域按右鍵可開啟快捷選單",
-        "editorPlaceholder": "隨便寫點什麼..."
+        "editorPlaceholder": "隨便寫點什麼...",
+        "todayArticles": "今日文章",
+        "monthArticles": "本月文章",
+        "allArticles": "全部文章",
+        "allCategories": "全部分類"
     },
     "tag": {
         "new": "新增標籤",

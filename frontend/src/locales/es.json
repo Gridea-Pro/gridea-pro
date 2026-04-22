@@ -84,7 +84,11 @@
         "previewServiceFailed": "Error al obtener el servicio de vista previa",
         "selectLocalImage": "Haz clic para seleccionar una imagen local",
         "contextMenuTip": "Haz clic derecho en el editor para abrir el menú contextual",
-        "editorPlaceholder": "Escribe algo..."
+        "editorPlaceholder": "Escribe algo...",
+        "todayArticles": "Hoy",
+        "monthArticles": "Este Mes",
+        "allArticles": "Todos los Artículos",
+        "allCategories": "Todas las Categorías"
     },
     "tag": {
         "new": "Nuevo",
