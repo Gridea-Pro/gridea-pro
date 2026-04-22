@@ -5,8 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
+
+// jinja2SyntaxRe 匹配 Jinja2/pongo2 独有的语句块：{% if ... %}、{% for ... %}、
+// {% block ... %}、{% extends ... %} 等。Go 模板只使用 {{ ... }}，不会出现 {% 。
+// 这里仅要求能匹配到 "{%" + 空白 + 标识符，足以区分两种引擎。
+var jinja2SyntaxRe = regexp.MustCompile(`{%[-\s]*[A-Za-z_]`)
 
 // RendererFactory 渲染器工厂
 // 根据主题配置自动创建合适的渲染器
@@ -105,22 +111,55 @@ func (f *RendererFactory) detectEngineByExtension(templatesDir string) (string, 
 		return "ejs", nil
 	}
 
-	// 检查是否存在 .jinja2 或 .j2 文件
+	// 检查是否存在 .jinja2 或 .j2 文件（明确后缀，无歧义）
 	jinja2Files, _ := filepath.Glob(filepath.Join(templatesDir, "*.jinja2"))
 	j2Files, _ := filepath.Glob(filepath.Join(templatesDir, "*.j2"))
 	if len(jinja2Files) > 0 || len(j2Files) > 0 {
 		return "jinja2", nil
 	}
 
-	// 检查是否存在 .html 或 .gohtml 文件
-	htmlFiles, _ := filepath.Glob(filepath.Join(templatesDir, "*.html"))
+	// 检查是否存在 .gohtml 文件（明确后缀，仅 Go 模板使用）
 	gohtmlFiles, _ := filepath.Glob(filepath.Join(templatesDir, "*.gohtml"))
-	if len(htmlFiles) > 0 || len(gohtmlFiles) > 0 {
+	if len(gohtmlFiles) > 0 {
+		return "gotemplate", nil
+	}
+
+	// 检查是否存在 .html 文件。.html 是 jinja2/pongo2 和 Go 模板通用的后缀，
+	// 仅凭后缀无法判断，因此对内容做嗅探：若文件含 {% ... %} 语句块特征就判为
+	// jinja2，否则回退到 gotemplate（原有默认行为）。
+	htmlFiles, _ := filepath.Glob(filepath.Join(templatesDir, "*.html"))
+	if len(htmlFiles) > 0 {
+		if sniffJinja2FromHTMLFiles(htmlFiles) {
+			return "jinja2", nil
+		}
 		return "gotemplate", nil
 	}
 
 	// 默认使用 EJS (向后兼容)
 	return "ejs", nil
+}
+
+// sniffJinja2FromHTMLFiles 读取若干 .html 文件首部内容，检测是否包含 Jinja2/pongo2
+// 独有的 {% ... %} 语句块。命中任一文件即返回 true。
+//
+// 采用"读首部"策略而非全文，避免超大模板拖慢启动；若首部就有 extends/block/if/for
+// 任一语句，足以区分引擎；若首部全是静态 HTML，则继续读完该文件，保证覆盖率。
+func sniffJinja2FromHTMLFiles(paths []string) bool {
+	const headSize = 8 * 1024 // 8KB，覆盖绝大多数模板头部的 extends/block 块
+	for _, p := range paths {
+		data, err := os.ReadFile(p)
+		if err != nil {
+			continue
+		}
+		target := data
+		if len(target) > headSize {
+			target = target[:headSize]
+		}
+		if jinja2SyntaxRe.Match(target) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetEngineType 获取当前主题的引擎类型(不创建渲染器)
