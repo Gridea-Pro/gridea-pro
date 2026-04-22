@@ -9,9 +9,16 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
+
+// defaultDeployTimeout 单次部署的总超时上限，超过就强制取消。
+// 30 分钟对绝大多数站点（含大文件 CDN 上传）足够宽松，同时保证 deploy 卡死
+// 不会无限占用互斥锁 —— 即便 provider 某个阻塞点对 ctx 不敏感，HTTP
+// 请求 / 网络 I/O 也会在 ctx 超时后被 Transport 取消。
+const defaultDeployTimeout = 30 * time.Minute
 
 type DeployService struct {
 	settingRepo      domain.SettingRepository
@@ -60,6 +67,16 @@ func (s *DeployService) DeployToRemote(ctx context.Context) error {
 		s.isDeploying = false
 		s.mu.Unlock()
 	}()
+
+	// 总超时控制（issue #49）：
+	// 1) 部分 provider 在非 HTTP 的阻塞点（SFTP io.Copy / FTP Stor）对 ctx 不敏感，
+	//    没有总 timeout 就会永远占用互斥锁，直到进程重启
+	// 2) WailsContext 在正常运行期间永远不 Done，不能靠外部取消兜底
+	// 每个 provider 内部的 HTTP 请求通过 NewRequestWithContext 继承这个 ctx，
+	// 超时后会被 Transport 层主动取消，释放 goroutine。
+	deployCtx, cancel := context.WithTimeout(ctx, defaultDeployTimeout)
+	defer cancel()
+	ctx = deployCtx
 
 	s.log(ctx, "Starting deployment check...")
 
