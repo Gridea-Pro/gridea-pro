@@ -1,13 +1,17 @@
 package facade
 
 import (
+	"bufio"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"gridea-pro/backend/internal/utils"
 	"gridea-pro/backend/internal/version"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -139,12 +143,12 @@ func (f *UpdateFacade) StartDownload() error {
 	go func() {
 		defer f.clearDownloadState()
 
-		asset, err := f.fetchAssetForCurrentPlatform(ctx)
+		asset, sums, err := f.fetchAssetForCurrentPlatform(ctx)
 		if err != nil {
 			f.emitError(err)
 			return
 		}
-		f.doDownload(ctx, asset.DownloadURL, asset.Name, asset.Size)
+		f.doDownload(ctx, asset.DownloadURL, asset.Name, asset.Size, sums)
 	}()
 	return nil
 }
@@ -202,36 +206,51 @@ func (f *UpdateFacade) clearDownloadState() {
 	f.mu.Unlock()
 }
 
-func (f *UpdateFacade) fetchAssetForCurrentPlatform(ctx context.Context) (*githubAsset, error) {
+// fetchAssetForCurrentPlatform 返回当前平台的下载 asset，以及同 Release 中
+// 名为 SHA256SUMS 的校验文件（若存在）。校验文件缺失时 sums 返回 nil，
+// 调用方应 warn 但允许下载继续 —— 这是为兼容未产出 SHA256SUMS 的历史 Release。
+func (f *UpdateFacade) fetchAssetForCurrentPlatform(ctx context.Context) (asset *githubAsset, sums *githubAsset, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, f.releasesURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "Gridea-Pro/"+version.Version)
 
 	resp, err := f.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("请求 Releases 失败: %w", err)
+		return nil, nil, fmt.Errorf("请求 Releases 失败: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("Releases 返回 %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		return nil, nil, fmt.Errorf("Releases 返回 %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
 	var rel githubRelease
 	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
-		return nil, fmt.Errorf("解析 Releases 失败: %w", err)
+		return nil, nil, fmt.Errorf("解析 Releases 失败: %w", err)
 	}
-	asset := pickAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
+	asset = pickAsset(rel.Assets, runtime.GOOS, runtime.GOARCH)
 	if asset == nil {
-		return nil, fmt.Errorf("没有匹配当前平台 (%s/%s) 的下载资源", runtime.GOOS, runtime.GOARCH)
+		return nil, nil, fmt.Errorf("没有匹配当前平台 (%s/%s) 的下载资源", runtime.GOOS, runtime.GOARCH)
 	}
-	return asset, nil
+	sums = findSumsAsset(rel.Assets)
+	return asset, sums, nil
 }
 
-func (f *UpdateFacade) doDownload(ctx context.Context, url, assetName string, expectedSize int64) {
+// findSumsAsset 在 assets 里查找 SHA256SUMS 文件（约定命名，全大写匹配）。
+// 未来如果改成 SHA256SUMS.sig / .asc 等格式，也可以在这里扩展识别规则。
+func findSumsAsset(assets []githubAsset) *githubAsset {
+	for i := range assets {
+		if assets[i].Name == "SHA256SUMS" {
+			return &assets[i]
+		}
+	}
+	return nil
+}
+
+func (f *UpdateFacade) doDownload(ctx context.Context, url, assetName string, expectedSize int64, sumsAsset *githubAsset) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		f.emitError(err)
@@ -311,12 +330,110 @@ func (f *UpdateFacade) doDownload(ctx context.Context, url, assetName string, ex
 		return
 	}
 
+	// SHA256 完整性校验：防中间人、防上游 Release 被动替换、防半下载损坏。
+	// sumsAsset 为 nil 时仅告警（兼容未产出 SHA256SUMS 的历史 Release）；
+	// 为非 nil 时必须通过，否则删掉临时文件并 emitError，不进入 readyPath 状态。
+	if err := f.verifyDownloadChecksum(ctx, tmp.Name(), assetName, sumsAsset); err != nil {
+		_ = os.Remove(tmp.Name())
+		f.emitError(fmt.Errorf("完整性校验失败: %w", err))
+		return
+	}
+
 	f.mu.Lock()
 	f.readyPath = tmp.Name()
 	f.readyAssetName = assetName
 	f.mu.Unlock()
 
 	f.emitReady(tmp.Name())
+}
+
+// verifyDownloadChecksum 拉取 SHA256SUMS、在其中查找 assetName 对应的哈希、
+// 计算本地文件哈希并对比。sumsAsset 为 nil 时仅告警并放行（向后兼容），
+// 非 nil 时任何一步失败都返回 error —— 调用方会丢弃下载文件。
+func (f *UpdateFacade) verifyDownloadChecksum(ctx context.Context, localPath, assetName string, sumsAsset *githubAsset) error {
+	if sumsAsset == nil {
+		slog.Warn("本次 Release 无 SHA256SUMS 资源，跳过完整性校验（建议重新发布时补上）",
+			"asset", assetName)
+		return nil
+	}
+
+	expected, err := f.fetchExpectedChecksum(ctx, sumsAsset.DownloadURL, assetName)
+	if err != nil {
+		return err
+	}
+	if expected == "" {
+		return fmt.Errorf("SHA256SUMS 中未找到 %s 的哈希", assetName)
+	}
+
+	actual, err := sha256File(localPath)
+	if err != nil {
+		return fmt.Errorf("计算本地哈希失败: %w", err)
+	}
+	if !strings.EqualFold(actual, expected) {
+		return fmt.Errorf("下载包哈希不匹配：期望 %s，实际 %s", expected, actual)
+	}
+	return nil
+}
+
+// fetchExpectedChecksum 下载 SHA256SUMS 并返回 assetName 对应的 hex 哈希。
+// 用与二进制下载相同大小的合理上限（1 MiB）防止被超大文件拖垮。
+func (f *UpdateFacade) fetchExpectedChecksum(ctx context.Context, sumsURL, assetName string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sumsURL, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("User-Agent", "Gridea-Pro/"+version.Version)
+
+	resp, err := f.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("下载 SHA256SUMS 失败: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("下载 SHA256SUMS 返回 %d", resp.StatusCode)
+	}
+
+	const maxSize = 1 << 20 // 1 MiB
+	return parseSha256Sums(io.LimitReader(resp.Body, maxSize), assetName)
+}
+
+// parseSha256Sums 按 GNU sha256sum 格式解析（"<hex>  <filename>"），
+// 返回目标文件名的哈希；未命中返回空串。
+func parseSha256Sums(r io.Reader, target string) (string, error) {
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		// 格式："<hex>  <filename>"（两个空格分隔）；部分实现会是单空格或 tab
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+		name := strings.TrimPrefix(fields[1], "*") // sha256sum -b 会在文件名前加 '*'
+		if name == target {
+			return strings.ToLower(fields[0]), nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+	return "", nil
+}
+
+// sha256File 计算文件内容的 SHA256 hex 哈希。
+func sha256File(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 func (f *UpdateFacade) emitProgress(received, total int64) {

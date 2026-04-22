@@ -582,6 +582,16 @@ jobs:
           ls -lh artifacts/
           echo "========================="
 
+      - name: Generate SHA256SUMS
+        # 自更新完整性校验的真源：客户端下载后比对此文件里的哈希（见 UpdateFacade.verifyIntegrity）。
+        # 格式是 GNU sha256sum 的默认两列："<hex>  <filename>"，每行一个 asset。
+        # 也对 SHA256SUMS 本身签名的需求另作一个 issue 处理（需要 minisign / cosign 密钥管理）。
+        run: |
+          cd artifacts
+          sha256sum * > SHA256SUMS
+          echo "=== SHA256SUMS ==="
+          cat SHA256SUMS
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
