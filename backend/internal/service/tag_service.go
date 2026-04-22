@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"gridea-pro/backend/internal/domain"
+	"gridea-pro/backend/internal/utils"
 	"strings"
 	"sync"
-	"unicode"
 
-	"github.com/gosimple/slug"
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"github.com/mozillazg/go-pinyin"
 )
 
 type TagService struct {
@@ -174,48 +172,12 @@ func (s *TagService) GetOrCreateTag(ctx context.Context, name string) (domain.Ta
 }
 
 func (s *TagService) generateSlug(name string, existingTags []domain.Tag) string {
-	// 1. Convert to Pinyin if it contains Chinese
-	pinyinArgs := pinyin.NewArgs()
-	pinyinArgs.Fallback = func(r rune, a pinyin.Args) []string {
-		return []string{string(r)}
-	}
-
-	// Check if string contains chinese
-	// Simple check: iterate runes
-	hasChinese := false
-	for _, r := range name {
-		if unicode.Is(unicode.Han, r) {
-			hasChinese = true
-			break
-		}
-	}
-
-	var preSlug string
-	if hasChinese {
-		// Pinyin conversion
-		// "测试" -> [[ce], [shi]]
-		pyRows := pinyin.Pinyin(name, pinyinArgs)
-		var parts []string
-		for _, row := range pyRows {
-			if len(row) > 0 {
-				parts = append(parts, row[0])
-			}
-		}
-		preSlug = strings.Join(parts, "-")
-	} else {
-		preSlug = name
-	}
-
-	// 2. Slugify (handling special chars, lower case)
-	finalSlug := slug.Make(preSlug)
+	finalSlug := utils.SlugifyName(name)
 	if finalSlug == "" {
-		// Fallback for purely special chars or empty slug result
 		const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		finalSlug, _ = gonanoid.Generate(alphabet, 6)
 	}
 
-	// 3. Handle Duplicates
-	// Check against existing slugs
 	uniqueSlug := finalSlug
 	counter := 1
 	for {

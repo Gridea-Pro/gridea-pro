@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -196,12 +197,18 @@ func (b *TemplateDataBuilder) Build(ctx context.Context, posts []domain.Post, co
 			}
 		}
 	}
-	// 兜底：tagRepo 中不存在但文章中使用的标签，追加到末尾
+	// 兜底：tagRepo 中不存在但文章中使用的标签，追加到末尾。
+	// 原始 Name 可能含中文/空格/非法 URL 字符，走 SlugifyName（拼音 + slug.Make）
+	// 生成可读的 slug；完全无可用 ASCII 字符时退回 url.PathEscape 保证 URL 合法且稳定。
 	for name, count := range tagCountMap {
+		s := utils.SlugifyName(name)
+		if s == "" {
+			s = url.PathEscape(name)
+		}
 		allTags = append(allTags, template.TagView{
 			Name:  name,
-			Slug:  name,
-			Link:  "/" + tagPath + "/" + name + "/",
+			Slug:  s,
+			Link:  "/" + tagPath + "/" + s + "/",
 			Count: count,
 		})
 	}
@@ -419,10 +426,18 @@ func (b *TemplateDataBuilder) convertPost(post domain.Post, config domain.ThemeC
 	var tags []template.TagView
 	var tagNames []string
 	for _, tag := range post.Tags {
-		tagSlug := tag
+		tagSlug := ""
 		if tagByName != nil {
 			if t, ok := tagByName[tag]; ok {
 				tagSlug = t.Slug
+			}
+		}
+		// 兜底：Name 可能含中文/空格/非法 URL 字符，做与 all-tags 列表一致的
+		// slugify（拼音 + slug.Make），保证视图层生成合法 URL。
+		if tagSlug == "" {
+			tagSlug = utils.SlugifyName(tag)
+			if tagSlug == "" {
+				tagSlug = url.PathEscape(tag)
 			}
 		}
 		tagView := template.TagView{
@@ -456,10 +471,17 @@ func (b *TemplateDataBuilder) convertPost(post domain.Post, config domain.ThemeC
 	} else {
 		// 向后兼容：老文章无 CategoryIDs，回退使用名称字符串
 		for _, category := range post.Categories {
-			slug := category
+			slug := ""
 			if categoryByName != nil {
 				if cat, ok := categoryByName[category]; ok {
 					slug = cat.Slug
+				}
+			}
+			// 兜底：Name 可能含中文/空格/非法 URL 字符，走 slugify 保证 URL 合法。
+			if slug == "" {
+				slug = utils.SlugifyName(category)
+				if slug == "" {
+					slug = url.PathEscape(category)
 				}
 			}
 			categories = append(categories, template.CategoryView{
