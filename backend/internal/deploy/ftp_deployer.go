@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"os"
@@ -22,6 +23,16 @@ type FtpProvider struct{}
 func NewFtpProvider() *FtpProvider {
 	return &FtpProvider{}
 }
+
+// FTP 模式常量：对应 setting.ftpMode 字段。
+const (
+	ftpModePlain         = "ftp"            // 明文（不安全），仅为兼容老配置保留
+	ftpModeExplicitTLS   = "ftps-explicit"  // 推荐：先建立 TCP，再 AUTH TLS 升级
+	ftpModeImplicitTLS   = "ftps-implicit"  // 首包就是 TLS（通常 990 端口）
+	plainFTPInsecureWarn = "⚠️ 警告：当前使用明文 FTP。用户名、密码和所有上传内容将以明文形式在网络上传输，\n" +
+		"   任何可以嗅探链路的中间节点（公共 WiFi / 运营商 / 被攻陷的路由器）都能直接获取。\n" +
+		"   强烈建议切换到 SFTP 或 FTPS（在平台设置里选择 \"ftps-explicit\"）。"
+)
 
 // Deploy 实现 Provider 接口
 // 流程：FTP 连接 → 登录 → 清理远程目录 → 上传文件
@@ -58,9 +69,33 @@ func (p *FtpProvider) Deploy(ctx context.Context, outputDir string, setting *dom
 
 	// 2. FTP 连接
 	addr := fmt.Sprintf("%s:%d", server, port)
-	logger(fmt.Sprintf("正在连接 %s ...", addr))
+	mode := setting.FtpMode()
+	if mode == "" {
+		mode = ftpModePlain
+	}
+	logger(fmt.Sprintf("正在连接 %s (模式: %s) ...", addr, mode))
 
-	conn, err := ftp.Dial(addr, ftp.DialWithTimeout(15*time.Second))
+	dialOpts := []ftp.DialOption{ftp.DialWithTimeout(15 * time.Second)}
+	switch mode {
+	case ftpModeExplicitTLS, ftpModeImplicitTLS:
+		tlsCfg := &tls.Config{
+			ServerName:         server,
+			InsecureSkipVerify: setting.AllowInsecureTLS(),
+		}
+		if tlsCfg.InsecureSkipVerify {
+			logger("⚠️ 已启用\"允许不安全 TLS\"，服务端证书不会被校验，仅建议 NAS 自签场景使用")
+		}
+		if mode == ftpModeExplicitTLS {
+			dialOpts = append(dialOpts, ftp.DialWithExplicitTLS(tlsCfg))
+		} else {
+			dialOpts = append(dialOpts, ftp.DialWithTLS(tlsCfg))
+		}
+	default:
+		// 明文 FTP：给用户醒目警告，凭证与内容将以明文传输
+		logger(plainFTPInsecureWarn)
+	}
+
+	conn, err := ftp.Dial(addr, dialOpts...)
 	if err != nil {
 		return fmt.Errorf("FTP 连接失败: %w", err)
 	}
