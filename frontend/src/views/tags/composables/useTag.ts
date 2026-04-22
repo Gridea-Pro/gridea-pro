@@ -105,17 +105,27 @@ export function useTag() {
         }
     }
 
-    // checkTagValid 分别检查 name / slug 冲突，返回明确的冲突类型；
-    // 优先检查 name（用户更直观的概念），其次 slug。
-    const checkTagValid = (): { ok: true } | { ok: false; reason: 'name' | 'slug' } => {
+    // slug 必须是 URL-safe + 跨平台文件系统安全的：小写字母 / 数字 / 中间的连字符。
+    // 与后端 utils.ValidateSlug 的正则保持一致，避免后端兜底拒绝后用户才发现。
+    const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
+
+    // checkTagValid 依次检查 slug 合法性 → name 冲突 → slug 冲突。
+    // 唯一性比对走 toLowerCase，与后端 EqualFold 对齐 —— macOS/Windows 文件系统
+    // 大小写不敏感，`Go` 和 `GO` 不应被放行为两个不同 slug。
+    const checkTagValid = (): { ok: true } | { ok: false; reason: 'slugInvalid' | 'name' | 'slug' } => {
+        if (!slugPattern.test(form.slug)) {
+            return { ok: false, reason: 'slugInvalid' }
+        }
         const tags = [...siteStore.tags]
         if (isUpdate.value) {
             tags.splice(form.index, 1)
         }
-        if (tags.some((t: ITag) => t.name === form.name)) {
+        const nameLower = form.name.toLowerCase()
+        const slugLower = form.slug.toLowerCase()
+        if (tags.some((t: ITag) => t.name.toLowerCase() === nameLower)) {
             return { ok: false, reason: 'name' }
         }
-        if (tags.some((t: ITag) => t.slug === form.slug)) {
+        if (tags.some((t: ITag) => (t.slug || '').toLowerCase() === slugLower)) {
             return { ok: false, reason: 'slug' }
         }
         return { ok: true }
@@ -126,7 +136,11 @@ export function useTag() {
 
         const check = checkTagValid()
         if (!check.ok) {
-            toast.error(check.reason === 'name' ? t('tag.nameRepeat') : t('tag.urlRepeat'))
+            const key =
+                check.reason === 'slugInvalid' ? 'tag.slugInvalid'
+                : check.reason === 'name' ? 'tag.nameRepeat'
+                : 'tag.urlRepeat'
+            toast.error(t(key))
             return
         }
 
@@ -151,8 +165,14 @@ export function useTag() {
         } catch (e: any) {
             // Wails v2 把 Go error 序列化成字符串，所以 e 可能是 string 而不是 Error 对象；
             // 仅当两者都不可用时再回落到通用错误文案。
-            const msg = typeof e === 'string' ? e : (e?.message || t('tag.saveError'))
-            toast.error(msg)
+            const raw = typeof e === 'string' ? e : (e?.message || '')
+            // 后端 utils.ErrInvalidSlug 的 Error() 前缀 —— 即便前端校验被绕过（MCP / 直调 API）
+            // 也能按当前语言展示本地化文案，而不是原样抛出中文 backend 字符串。
+            if (raw.startsWith('invalid slug')) {
+                toast.error(t('tag.slugInvalid'))
+            } else {
+                toast.error(raw || t('tag.saveError'))
+            }
         }
     }
 

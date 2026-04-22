@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"gridea-pro/backend/internal/domain"
 )
@@ -16,15 +17,18 @@ var (
 
 // checkTagUniqueness 在现有 list 中查找与 target 冲突的记录，excludeID 指定要忽略的自身 ID。
 // 错误消息面向用户，包装 ErrDuplicateName / ErrDuplicateSlug 以便 service 层用 errors.Is 识别类型。
+//
+// Name / Slug 比较走 EqualFold（大小写不敏感）：macOS APFS / Windows NTFS 默认大小写不敏感，
+// `C#` 和 `c#` 在磁盘上会撞同一目录；URL 层面大小写敏感但用户直觉也是"大小写不同就该是重复"。
 func checkTagUniqueness(list []domain.Tag, target domain.Tag, excludeID string) error {
 	for _, t := range list {
 		if t.ID == excludeID {
 			continue
 		}
-		if target.Name != "" && t.Name == target.Name {
+		if target.Name != "" && strings.EqualFold(t.Name, target.Name) {
 			return fmt.Errorf("%w：标签名 %q 已被使用", ErrDuplicateName, target.Name)
 		}
-		if target.Slug != "" && t.Slug == target.Slug {
+		if target.Slug != "" && strings.EqualFold(t.Slug, target.Slug) {
 			return fmt.Errorf("%w：标签 URL slug %q 已被使用", ErrDuplicateSlug, target.Slug)
 		}
 	}
@@ -37,10 +41,10 @@ func checkCategoryUniqueness(list []domain.Category, target domain.Category, exc
 		if c.ID == excludeID {
 			continue
 		}
-		if target.Name != "" && c.Name == target.Name {
+		if target.Name != "" && strings.EqualFold(c.Name, target.Name) {
 			return fmt.Errorf("%w：分类名 %q 已被使用", ErrDuplicateName, target.Name)
 		}
-		if target.Slug != "" && c.Slug == target.Slug {
+		if target.Slug != "" && strings.EqualFold(c.Slug, target.Slug) {
 			return fmt.Errorf("%w：分类 URL slug %q 已被使用", ErrDuplicateSlug, target.Slug)
 		}
 	}
@@ -72,6 +76,9 @@ func AuditCategoryUniqueness(ctx context.Context, repo domain.CategoryRepository
 
 // findDuplicates 通用的 Name/Slug 重复检测：
 // accessor(i) 返回第 i 条记录的 (Name, Slug, ID)；kind 是类型名用于拼接错误消息。
+//
+// 用 strings.ToLower 归一做 key，与运行期 EqualFold 的判定一致，启动期审计
+// 不会放过仅大小写不同的历史重复。
 func findDuplicates(n int, accessor func(int) (name, slug, id string), kind string) []string {
 	var conflicts []string
 	nameSeen := make(map[string]string)
@@ -79,17 +86,19 @@ func findDuplicates(n int, accessor func(int) (name, slug, id string), kind stri
 	for i := range n {
 		name, slug, id := accessor(i)
 		if name != "" {
-			if prevID, ok := nameSeen[name]; ok {
+			key := strings.ToLower(name)
+			if prevID, ok := nameSeen[key]; ok {
 				conflicts = append(conflicts, fmt.Sprintf("%s名 %q 在 ID %s 与 %s 间重复", kind, name, prevID, id))
 			} else {
-				nameSeen[name] = id
+				nameSeen[key] = id
 			}
 		}
 		if slug != "" {
-			if prevID, ok := slugSeen[slug]; ok {
+			key := strings.ToLower(slug)
+			if prevID, ok := slugSeen[key]; ok {
 				conflicts = append(conflicts, fmt.Sprintf("%s Slug %q 在 ID %s 与 %s 间重复", kind, slug, prevID, id))
 			} else {
-				slugSeen[slug] = id
+				slugSeen[key] = id
 			}
 		}
 	}

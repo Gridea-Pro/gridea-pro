@@ -67,17 +67,26 @@ export function useCategory() {
         }
     }
 
-    // checkCategoryValid 分别检查 name / slug 冲突，返回明确的冲突类型；
-    // 优先检查 name（用户更直观），其次 slug。
-    const checkCategoryValid = (): { ok: true } | { ok: false; reason: 'name' | 'slug' } => {
+    // slug 必须是 URL-safe + 跨平台文件系统安全的：小写字母 / 数字 / 中间的连字符。
+    // 与后端 utils.ValidateSlug 的正则保持一致。
+    const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
+
+    // checkCategoryValid 依次检查 slug 合法性 → name 冲突 → slug 冲突。
+    // 唯一性比对走 toLowerCase，与后端 EqualFold 对齐。
+    const checkCategoryValid = (): { ok: true } | { ok: false; reason: 'slugInvalid' | 'name' | 'slug' } => {
+        if (!slugPattern.test(form.slug)) {
+            return { ok: false, reason: 'slugInvalid' }
+        }
         const categories = [...siteStore.categories]
         if (isUpdate.value) {
             categories.splice(form.index, 1)
         }
-        if (categories.some((c: ICategory) => c.name === form.name)) {
+        const nameLower = form.name.toLowerCase()
+        const slugLower = form.slug.toLowerCase()
+        if (categories.some((c: ICategory) => c.name.toLowerCase() === nameLower)) {
             return { ok: false, reason: 'name' }
         }
-        if (categories.some((c: ICategory) => c.slug === form.slug)) {
+        if (categories.some((c: ICategory) => (c.slug || '').toLowerCase() === slugLower)) {
             return { ok: false, reason: 'slug' }
         }
         return { ok: true }
@@ -114,7 +123,11 @@ export function useCategory() {
 
         const check = checkCategoryValid()
         if (!check.ok) {
-            toast.error(check.reason === 'name' ? t('category.nameRepeat') : t('category.urlRepeat'))
+            const key =
+                check.reason === 'slugInvalid' ? 'category.slugInvalid'
+                : check.reason === 'name' ? 'category.nameRepeat'
+                : 'category.urlRepeat'
+            toast.error(t(key))
             return
         }
 
@@ -138,8 +151,12 @@ export function useCategory() {
             }
         } catch (e: any) {
             // Wails v2 把 Go error 序列化成字符串，优先取字符串本体
-            const msg = typeof e === 'string' ? e : (e?.message || t('category.saveError'))
-            toast.error(msg)
+            const raw = typeof e === 'string' ? e : (e?.message || '')
+            if (raw.startsWith('invalid slug')) {
+                toast.error(t('category.slugInvalid'))
+            } else {
+                toast.error(raw || t('category.saveError'))
+            }
         }
     }
 

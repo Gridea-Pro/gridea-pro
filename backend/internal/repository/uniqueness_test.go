@@ -72,6 +72,36 @@ func TestTagRepository_Update_AllowsSelf(t *testing.T) {
 	}
 }
 
+// Issue #99：仅大小写不同的 Name / Slug 在 macOS/Windows 默认大小写不敏感的
+// 文件系统上会互相覆盖页面，必须判重。
+func TestTagRepository_Create_RejectsCaseInsensitiveDuplicateName(t *testing.T) {
+	ctx := context.Background()
+	appDir := newTestAppDir(t)
+	repo := NewTagRepository(appDir)
+
+	if err := repo.Create(ctx, &domain.Tag{Name: "Go", Slug: "go"}); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	err := repo.Create(ctx, &domain.Tag{Name: "GO", Slug: "golang"})
+	if !errors.Is(err, ErrDuplicateName) {
+		t.Errorf("GO vs Go should collide, got %v", err)
+	}
+}
+
+func TestTagRepository_Create_RejectsCaseInsensitiveDuplicateSlug(t *testing.T) {
+	ctx := context.Background()
+	appDir := newTestAppDir(t)
+	repo := NewTagRepository(appDir)
+
+	if err := repo.Create(ctx, &domain.Tag{Name: "Go", Slug: "go"}); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	err := repo.Create(ctx, &domain.Tag{Name: "Golang", Slug: "GO"})
+	if !errors.Is(err, ErrDuplicateSlug) {
+		t.Errorf("GO vs go should collide, got %v", err)
+	}
+}
+
 func TestTagRepository_Update_RejectsCollisionWithOther(t *testing.T) {
 	ctx := context.Background()
 	appDir := newTestAppDir(t)
@@ -132,6 +162,22 @@ func TestCategoryRepository_Create_RejectsDuplicateSlug(t *testing.T) {
 	}
 }
 
+func TestCategoryRepository_Create_RejectsCaseInsensitiveDuplicate(t *testing.T) {
+	ctx := context.Background()
+	appDir := newTestAppDir(t)
+	repo := NewCategoryRepository(appDir)
+
+	if err := repo.Create(ctx, &domain.Category{Name: "Tech", Slug: "tech"}); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if err := repo.Create(ctx, &domain.Category{Name: "TECH", Slug: "technology"}); !errors.Is(err, ErrDuplicateName) {
+		t.Errorf("TECH vs Tech name should collide, got %v", err)
+	}
+	if err := repo.Create(ctx, &domain.Category{Name: "Other", Slug: "TECH"}); !errors.Is(err, ErrDuplicateSlug) {
+		t.Errorf("TECH vs tech slug should collide, got %v", err)
+	}
+}
+
 // ─── 启动期审计 ──────────────────────────────────────────────────────────────
 
 func TestAuditTagUniqueness_FindsHistoricalDuplicates(t *testing.T) {
@@ -170,6 +216,27 @@ func TestAuditTagUniqueness_FindsHistoricalDuplicates(t *testing.T) {
 	}
 	if !foundSlug {
 		t.Errorf("expected Slug conflict in %v", conflicts)
+	}
+}
+
+// Issue #99：审计也必须识别仅大小写不同的历史重复。
+func TestAuditTagUniqueness_FindsCaseInsensitiveDuplicates(t *testing.T) {
+	ctx := context.Background()
+	appDir := newTestAppDir(t)
+
+	content := `{"tags":[
+		{"id":"a","name":"Go","slug":"go"},
+		{"id":"b","name":"GO","slug":"golang"},
+		{"id":"c","name":"Rust","slug":"GO"}
+	]}`
+	if err := os.WriteFile(filepath.Join(appDir, "config", "tags.json"), []byte(content), 0o644); err != nil {
+		t.Fatalf("write tags.json: %v", err)
+	}
+
+	repo := NewTagRepository(appDir)
+	conflicts := AuditTagUniqueness(ctx, repo)
+	if len(conflicts) < 2 {
+		t.Fatalf("expected case-insensitive Name + Slug conflicts, got %d: %v", len(conflicts), conflicts)
 	}
 }
 

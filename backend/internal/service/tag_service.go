@@ -29,6 +29,11 @@ func (s *TagService) LoadTags(ctx context.Context) ([]domain.Tag, error) {
 }
 
 func (s *TagService) SaveTag(ctx context.Context, tag domain.Tag, originalName string) error {
+	// 在持锁前校验用户输入，失败即返回 —— 避免 Wails 调用链拿不到锁时堆积
+	if err := utils.ValidateSlug(tag.Slug); err != nil {
+		return fmt.Errorf("%w：标签 URL slug %q 不合法，只能包含小写字母、数字和连字符", err, tag.Slug)
+	}
+
 	s.mu.Lock()
 
 	tags, err := s.repo.List(ctx)

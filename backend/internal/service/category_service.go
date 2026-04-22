@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"gridea-pro/backend/internal/domain"
+	"gridea-pro/backend/internal/utils"
 	"sync"
 )
 
@@ -31,6 +33,11 @@ func (s *CategoryService) SaveCategories(ctx context.Context, categories []domai
 // SaveCategory 创建或更新分类
 // originalID: 若为空则创建新分类；若非空则按 ID 更新
 func (s *CategoryService) SaveCategory(ctx context.Context, category domain.Category, originalID string) error {
+	// 在持锁前校验用户输入，失败即返回 —— 避免 Wails 调用链拿不到锁时堆积
+	if err := utils.ValidateSlug(category.Slug); err != nil {
+		return fmt.Errorf("%w：分类 URL slug %q 不合法，只能包含小写字母、数字和连字符", err, category.Slug)
+	}
+
 	s.mu.Lock()
 
 	if originalID == "" {
