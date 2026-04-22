@@ -23,6 +23,36 @@ func NewGitProvider() *GitProvider {
 	return &GitProvider{}
 }
 
+// destructiveBranches 是"一旦被 force push 覆盖会造成严重后果"的分支名集合。
+// 对应 issue #41：用户把 branch 填成 main/master 会让整条主线变成站点产物，
+// 除非仓库本身就是 user page（<username>.github.io）——那种情形下 main
+// 本来就是部署分支。
+var destructiveBranches = map[string]bool{
+	"main":    true,
+	"master":  true,
+	"develop": true,
+	"release": true,
+}
+
+// isUserPageRepo 判断 repo 路径是否形如 <user>/<user>.github.io（GitHub 用户页）
+// 或 <user>/<user>.gitee.io（Gitee 用户页）。这类仓库的 main 本就是部署分支，
+// 部署到 main 不是误操作。
+func isUserPageRepo(repoPath string) bool {
+	parts := strings.Split(strings.TrimSuffix(repoPath, ".git"), "/")
+	// 取最后两段做匹配，忽略可能的 github.com/ 前缀
+	if len(parts) < 2 {
+		return false
+	}
+	owner := parts[len(parts)-2]
+	name := parts[len(parts)-1]
+	if owner == "" || name == "" {
+		return false
+	}
+	return name == owner+".github.io" ||
+		name == owner+".gitee.io" ||
+		name == owner+".coding.me"
+}
+
 func (p *GitProvider) Deploy(ctx context.Context, outputDir string, setting *domain.Setting, logger LogFunc) error {
 	logger("Preparing git repository...")
 
@@ -159,6 +189,20 @@ func (p *GitProvider) Deploy(ctx context.Context, outputDir string, setting *dom
 	branch := setting.Branch()
 	if branch == "" {
 		branch = "gh-pages"
+	}
+
+	// 分支安全检查（issue #41）：force push 到 main / master / develop / release 会
+	// 抹掉远端历史，典型的误配置是用户把部署分支填成了 main 而仓库不是 user page。
+	// 用户可以在 setting 里把 gitForceOverwrite 开关打开来显式放行，前端 UI 对此
+	// 应给出红色警告。
+	if destructiveBranches[strings.ToLower(branch)] && !isUserPageRepo(repoUrl) && !setting.GitForceOverwrite() {
+		return fmt.Errorf(
+			"拒绝 force push 到「%s」分支：这会覆盖远端已有历史。\n"+
+				"  • 部署分支建议用 gh-pages / pages / site 等独立分支\n"+
+				"  • 若仓库是 %s.github.io 形式的用户/组织站点，请把仓库名补全\n"+
+				"  • 若确实需要强制覆盖，请在平台设置里开启\"强制覆盖目标分支\"选项",
+			branch, setting.Username(),
+		)
 	}
 
 	// 获取当前的本地分支（通常是 master 或 main）

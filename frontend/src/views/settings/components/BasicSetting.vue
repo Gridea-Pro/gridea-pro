@@ -303,6 +303,13 @@
             <FormField label="CNAME">
               <Input v-model="drawerForm.cname" placeholder="mydomain.com" />
             </FormField>
+            <!-- Git 强制覆盖目标分支（高危选项，#41） -->
+            <FormField label="强制覆盖目标分支">
+              <Switch :checked="!!drawerForm.gitForceOverwrite" @update:checked="drawerForm.gitForceOverwrite = $event" />
+              <template #hint>
+                <span class="text-red-500">⚠️ 开启后会 force push 到目标分支，覆盖远端已有提交。默认关闭以防误配置（如把 branch 填成 main）</span>
+              </template>
+            </FormField>
           </template>
 
           <!-- ─ Netlify ─ -->
@@ -551,6 +558,7 @@ const drawerForm = reactive<Record<string, any>>({
   token: '',
   cname: '',
   transferProtocol: 'sftp',
+  gitForceOverwrite: false,
   port: '',
   server: '',
   password: '',
@@ -925,9 +933,9 @@ function buildSettingForPlatform(platformId: string) {
   const domain = drawerForm.domain ? `https://${drawerForm.domain.replace(/\/+$/, '')}` : ''
 
   const platformFieldMap: Record<string, string[]> = {
-    github: ['domain', 'repository', 'branch', 'username', 'email', 'tokenUsername', 'token', 'cname'],
-    gitee: ['domain', 'repository', 'branch', 'username', 'email', 'tokenUsername', 'token', 'cname'],
-    coding: ['domain', 'repository', 'branch', 'username', 'email', 'tokenUsername', 'token', 'cname'],
+    github: ['domain', 'repository', 'branch', 'username', 'email', 'tokenUsername', 'token', 'cname', 'gitForceOverwrite'],
+    gitee: ['domain', 'repository', 'branch', 'username', 'email', 'tokenUsername', 'token', 'cname', 'gitForceOverwrite'],
+    coding: ['domain', 'repository', 'branch', 'username', 'email', 'tokenUsername', 'token', 'cname', 'gitForceOverwrite'],
     netlify: ['domain', 'netlifySiteId', 'netlifyAccessToken'],
     vercel: ['domain', 'repository', 'token', 'cname'],
     sftp: ['domain', 'transferProtocol', 'server', 'port', 'username', 'password', 'privateKey', 'remotePath'],
@@ -938,6 +946,8 @@ function buildSettingForPlatform(platformId: string) {
   for (const f of fields) {
     if (f === 'domain') {
       cfg.domain = domain
+    } else if (f === 'gitForceOverwrite') {
+      cfg[f] = !!drawerForm[f]
     } else {
       cfg[f] = drawerForm[f] || ''
     }

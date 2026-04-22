@@ -83,9 +83,9 @@ func (s *Setting) InjectCredentials(credentials map[string]string) {
 
 // platformFieldOrder 定义各平台配置项的输出顺序，与前端表单顺序一致
 var platformFieldOrder = map[string][]string{
-	"github":  {"domain", "repository", "branch", "username", "email", "tokenUsername", "token", "cname"},
-	"gitee":   {"domain", "repository", "branch", "username", "email", "tokenUsername", "token", "cname"},
-	"coding":  {"domain", "repository", "branch", "username", "email", "tokenUsername", "token", "cname"},
+	"github":  {"domain", "repository", "branch", "username", "email", "tokenUsername", "token", "cname", "gitForceOverwrite"},
+	"gitee":   {"domain", "repository", "branch", "username", "email", "tokenUsername", "token", "cname", "gitForceOverwrite"},
+	"coding":  {"domain", "repository", "branch", "username", "email", "tokenUsername", "token", "cname", "gitForceOverwrite"},
 	"netlify": {"domain", "netlifySiteId", "netlifyAccessToken"},
 	"vercel":  {"domain", "repository", "token", "cname"},
 	"sftp":    {"domain", "transferProtocol", "server", "port", "username", "password", "privateKey", "remotePath"},
@@ -275,6 +275,26 @@ func (s *Setting) RemotePath() string { return s.Get("remotePath") }
 
 // TransferProtocol 当前平台的传输协议（sftp 或 ftp）
 func (s *Setting) TransferProtocol() string { return s.Get("transferProtocol") }
+
+// GitForceOverwrite 是否允许 force push 到 main / master 等主分支。
+// 默认 false；仅在用户明确知悉"远端历史会被覆盖"的情况下开启。
+// 见 issue #41：防止误把 branch 填成 main 导致主线被站点产物替换。
+func (s *Setting) GitForceOverwrite() bool {
+	if s.PlatformConfigs == nil {
+		return false
+	}
+	cfg, ok := s.PlatformConfigs[s.Platform]
+	if !ok {
+		return false
+	}
+	switch v := cfg["gitForceOverwrite"].(type) {
+	case bool:
+		return v
+	case string:
+		return v == "true" || v == "1"
+	}
+	return false
+}
 
 // Validate 校验配置数据
 func (s *Setting) Validate() error {
