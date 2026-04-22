@@ -66,9 +66,14 @@ type VercelFileResult struct {
 	Size int64  `json:"size"`
 }
 
-// Deploy 实现了 Provider 接口
-// 流程：扫描文件 → 创建部署(获取 missing 列表) → 只上传缺失文件 → 完成
+// Deploy 实现了 Provider 接口。
+//
+// 流程：扫描文件 → 创建部署（服务器返回 missing 列表） → 上传 missing →
+// 再次创建部署 … 循环直到 missing 为空或达到 maxRounds 上限（避免大文件 /
+// 网络抖动场景下被服务端吞文件却静默宣布成功，见 issue #48）。
 func (p *VercelProvider) Deploy(ctx context.Context, outputDir string, setting *domain.Setting, logger LogFunc) error {
+	const maxRounds = 3
+
 	logger("🚀 开始准备 Vercel 部署...")
 
 	projectName := setting.Repository()
@@ -100,23 +105,34 @@ func (p *VercelProvider) Deploy(ctx context.Context, outputDir string, setting *
 
 	logger(fmt.Sprintf("文件扫描完成，共 %d 个文件。", len(fileResults)))
 
-	// 2. 创建部署，Vercel 会返回需要上传的文件列表（missing）
-	logger("正在创建部署...")
-	missing, err := p.createDeployment(ctx, projectName, fileResults, token)
-	if err != nil {
-		return fmt.Errorf("创建部署失败: %w", err)
-	}
-
-	// 3. 只上传 missing 的文件
-	if len(missing) > 0 {
-		logger(fmt.Sprintf("需要上传 %d / %d 个文件...", len(missing), len(fileResults)))
-
-		// 构建 sha → file 的映射，快速查找需要上传的文件
-		missingSet := make(map[string]bool, len(missing))
-		for _, sha := range missing {
-			missingSet[sha] = true
+	for round := 1; round <= maxRounds; round++ {
+		logger(fmt.Sprintf("正在创建部署（第 %d 轮）...", round))
+		resp, err := p.createDeployment(ctx, projectName, fileResults, token)
+		if err != nil {
+			return fmt.Errorf("创建部署失败: %w", err)
 		}
 
+		if len(resp.Missing) == 0 {
+			if round == 1 {
+				logger("所有文件已在 Vercel 缓存中，无需上传。")
+			}
+			logger("✅ Vercel 部署成功！")
+			return nil
+		}
+
+		if round == maxRounds {
+			return fmt.Errorf(
+				"Vercel 在 %d 轮后仍有 %d 个文件被报缺失；请检查网络后重试（通常为上传中断 / digest 校验失败）",
+				maxRounds, len(resp.Missing),
+			)
+		}
+
+		logger(fmt.Sprintf("第 %d 轮需要上传 %d / %d 个文件...", round, len(resp.Missing), len(fileResults)))
+
+		missingSet := make(map[string]bool, len(resp.Missing))
+		for _, sha := range resp.Missing {
+			missingSet[sha] = true
+		}
 		var filesToUpload []VercelFileResult
 		for _, f := range fileResults {
 			if missingSet[f.Sha] {
@@ -127,17 +143,8 @@ func (p *VercelProvider) Deploy(ctx context.Context, outputDir string, setting *
 		if err := p.uploadFiles(ctx, outputDir, filesToUpload, token, logger); err != nil {
 			return fmt.Errorf("上传文件失败: %w", err)
 		}
-
-		// 4. 重新创建部署（文件已上传完毕）
-		logger("文件上传完成，正在触发最终部署...")
-		if _, err := p.createDeployment(ctx, projectName, fileResults, token); err != nil {
-			return fmt.Errorf("触发最终部署失败: %w", err)
-		}
-	} else {
-		logger("所有文件已在 Vercel 缓存中，无需上传。")
 	}
-
-	logger("✅ Vercel 部署成功！")
+	// 循环保证此处不可达
 	return nil
 }
 
@@ -250,9 +257,46 @@ func (p *VercelProvider) uploadSingleFile(ctx context.Context, filePath, sha str
 	return nil
 }
 
-// createDeployment 调用 Vercel v13 部署接口
-// 返回 missing 文件的 SHA 列表（如果有文件需要先上传）
-func (p *VercelProvider) createDeployment(ctx context.Context, projectName string, files []VercelFileResult, token string) ([]string, error) {
+// vercelDeployResp 聚合 createDeployment 的返回：可能是"部署成功"、"仍有文件
+// 需上传"或"真正的错误"。无论响应码是什么都尝试解析 missing —— Vercel 的
+// v13 在 2xx 和非 2xx 响应里都可能出现 missing 字段（issue #48）。
+type vercelDeployResp struct {
+	ID      string
+	Missing []string
+}
+
+// parseVercelDeployBody 根据 HTTP 状态码与 body 做分类：
+//   - 2xx：部署请求被受理，missing 可能为 nil 或非空（Vercel 也会在 2xx 里告知缺文件）
+//   - 非 2xx + error.missing 非空：服务端需要先补齐文件，当作"半成功"继续循环
+//   - 其它非 2xx：返回真正的错误（优先 error.message）
+//
+// 抽出来便于测试各类响应体形态。
+func parseVercelDeployBody(statusCode int, bodyBytes []byte) (*vercelDeployResp, error) {
+	var parsed struct {
+		ID      string   `json:"id"`
+		Missing []string `json:"missing"`
+		Error   *struct {
+			Code    string   `json:"code"`
+			Message string   `json:"message"`
+			Missing []string `json:"missing"`
+		} `json:"error"`
+	}
+	_ = json.Unmarshal(bodyBytes, &parsed)
+
+	if statusCode >= 200 && statusCode < 300 {
+		return &vercelDeployResp{ID: parsed.ID, Missing: parsed.Missing}, nil
+	}
+	if parsed.Error != nil && len(parsed.Error.Missing) > 0 {
+		return &vercelDeployResp{Missing: parsed.Error.Missing}, nil
+	}
+	if parsed.Error != nil && parsed.Error.Message != "" {
+		return nil, fmt.Errorf("HTTP %d (%s): %s", statusCode, parsed.Error.Code, parsed.Error.Message)
+	}
+	return nil, fmt.Errorf("HTTP %d: %s", statusCode, string(bodyBytes))
+}
+
+// createDeployment 调用 Vercel v13 部署接口。
+func (p *VercelProvider) createDeployment(ctx context.Context, projectName string, files []VercelFileResult, token string) (*vercelDeployResp, error) {
 	payload := map[string]interface{}{
 		"name":   projectName,
 		"files":  files,
@@ -282,25 +326,7 @@ func (p *VercelProvider) createDeployment(ctx context.Context, projectName strin
 	defer resp.Body.Close()
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
-
-	// Vercel 返回 missing 文件列表时状态码可能不同：
-	// - 200/201: 部署创建成功（无 missing 或所有文件已存在）
-	// - 其他: 可能包含 error 信息
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusAccepted {
-		// 尝试解析 missing 列表
-		var errResp struct {
-			Error struct {
-				Code    string   `json:"code"`
-				Missing []string `json:"missing"`
-			} `json:"error"`
-		}
-		if json.Unmarshal(bodyBytes, &errResp) == nil && len(errResp.Error.Missing) > 0 {
-			return errResp.Error.Missing, nil
-		}
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	return nil, nil
+	return parseVercelDeployBody(resp.StatusCode, bodyBytes)
 }
 
 // AddCustomDomain 通过 Vercel API 为项目绑定自定义域名
