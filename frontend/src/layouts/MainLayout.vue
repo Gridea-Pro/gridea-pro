@@ -266,6 +266,34 @@ fill-rule="evenodd" clip-rule="evenodd"
       </DialogContent>
     </Dialog>
 
+    <!-- 部署进度面板（#43）：发布期间右下角显示实时日志，用户可点开完整列表 -->
+    <div
+      v-if="publishLoading || deployLogs.length > 0"
+      class="fixed bottom-4 right-4 z-50 w-[420px] max-w-[90vw] rounded-lg border border-border bg-card shadow-lg">
+      <div
+        class="flex items-center justify-between px-3 py-2 border-b border-border cursor-pointer select-none"
+        @click="deployLogDrawerOpen = !deployLogDrawerOpen">
+        <div class="flex items-center gap-2 text-xs">
+          <span v-if="publishLoading" class="inline-block w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+          <span v-else class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+          <span class="font-medium">{{ publishLoading ? '部署中' : '部署完成' }}</span>
+          <span class="text-muted-foreground">{{ deployLogs.length }} 行</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button class="text-xs text-muted-foreground hover:text-foreground" @click.stop="copyDeployLogs">复制</button>
+          <button v-if="!publishLoading" class="text-xs text-muted-foreground hover:text-foreground ml-2" @click.stop="deployLogs = []">关闭</button>
+        </div>
+      </div>
+      <!-- 折叠状态：只显示最后一行作为进度提示 -->
+      <div v-if="!deployLogDrawerOpen" class="px-3 py-2 text-xs text-muted-foreground truncate font-mono">
+        {{ deployLogs[deployLogs.length - 1] || '等待后端输出...' }}
+      </div>
+      <!-- 展开状态：完整日志滚动区 -->
+      <div v-else class="max-h-[280px] overflow-auto bg-muted">
+        <pre class="whitespace-pre-wrap text-[11px] leading-5 px-3 py-2 font-mono">{{ deployLogs.join('\n') }}</pre>
+      </div>
+    </div>
+
     <Dialog v-model:open="systemModalVisible">
       <DialogContent class="max-w-[800px] overflow-hidden">
         <DialogHeader>
@@ -360,6 +388,11 @@ const logModalVisible = ref(false)
 const sidebarVisible = ref(true)
 const log = ref<any>({})
 
+// 部署日志（#43）：后端每次 runtime.EventsEmit("deploy-log", msg) 会被这里累积到 deployLogs，
+// publish() 开始时清空、发布期间在屏幕右下显示最新一行，用户可展开查看全文。
+const deployLogs = ref<string[]>([])
+const deployLogDrawerOpen = ref(false)
+
 const currentRouter = computed(() => route.path)
 
 const sideMenus = computed(() => {
@@ -431,6 +464,8 @@ const preview = () => {
 const publish = async () => {
   if (publishLoading.value) return
   publishLoading.value = true
+  // 每次部署清空上一轮日志；deploy-log 事件会持续推入新记录
+  deployLogs.value = []
 
   try {
     await DeployToGit()
@@ -441,13 +476,24 @@ const publish = async () => {
     })
   } catch (error: any) {
     console.error('Deploy error:', error)
+    // 失败时把收集到的部署日志一并呈现，方便用户复制 / 截图给开发者
+    const tail = deployLogs.value.slice(-30).join('\n')
     log.value = {
       type: t('dashboard.syncError1'),
-      message: error.message || String(error)
+      message: (error.message || String(error)) + (tail ? `\n\n--- 部署日志 (最后 30 行) ---\n${tail}` : '')
     }
     logModalVisible.value = true
   } finally {
     publishLoading.value = false
+  }
+}
+
+const copyDeployLogs = async () => {
+  try {
+    await navigator.clipboard.writeText(deployLogs.value.join('\n'))
+    EventsEmit('app:toast', { message: '已复制部署日志', type: 'success', duration: 2000 })
+  } catch {
+    // 剪贴板权限缺失等场景，忽略
   }
 }
 
@@ -576,6 +622,16 @@ onMounted(() => {
   EventsOn('log-error', (result: any) => {
     log.value = result
     logModalVisible.value = true
+  })
+
+  // 部署日志：后端 DeployService.log 会 emit 到 deploy-log。
+  // publish() 开始时清空 deployLogs，这里持续 append，保证失败后用户仍可查看完整过程。
+  EventsOn('deploy-log', (msg: any) => {
+    if (typeof msg === 'string') {
+      deployLogs.value.push(msg)
+    } else if (msg && typeof msg.toString === 'function') {
+      deployLogs.value.push(String(msg))
+    }
   })
 
   // 监听首选项菜单事件
