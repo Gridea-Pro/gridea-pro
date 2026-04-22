@@ -40,6 +40,44 @@ func NewUpdateFacade() *UpdateFacade {
 	}
 }
 
+// trustedRedirectSuffixes 自更新下载允许落地的域名根：
+// GitHub releases 首跳在 github.com，资源本体 302 到 *.githubusercontent.com。
+// 用后缀匹配 + 边界校验，避免 github.com.evil.com 这类后缀伪装；
+// 同时兼容 GitHub 将来新增的 CDN 子域，不用穷举。
+var trustedRedirectSuffixes = []string{
+	"github.com",
+	"githubusercontent.com",
+}
+
+// hasTrustedRedirectHost 判定 host 严格等于白名单后缀，或为 "." + 后缀 结尾。
+func hasTrustedRedirectHost(host string) bool {
+	host = strings.ToLower(host)
+	if i := strings.IndexByte(host, ':'); i >= 0 {
+		host = host[:i]
+	}
+	for _, suffix := range trustedRedirectSuffixes {
+		if host == suffix || strings.HasSuffix(host, "."+suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+// trustedRedirectChecker 作为 http.Client.CheckRedirect 使用，
+// 限制 3xx 跳转只能落到 github 体系内的 HTTPS 地址，且跳转总数 < 10。
+func trustedRedirectChecker(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return fmt.Errorf("重定向次数过多（%d 次）", len(via))
+	}
+	if req.URL.Scheme != "https" {
+		return fmt.Errorf("拒绝非 HTTPS 重定向: %s", req.URL.String())
+	}
+	if !hasTrustedRedirectHost(req.URL.Host) {
+		return fmt.Errorf("拒绝重定向到非预期域名: %s", req.URL.Host)
+	}
+	return nil
+}
+
 // UpdateInfo 更新检查结果
 type UpdateInfo struct {
 	HasUpdate      bool   `json:"hasUpdate"`
@@ -239,8 +277,13 @@ func (f *UpdateFacade) doDownload(ctx context.Context, url, assetName string, ex
 	}
 	req.Header.Set("User-Agent", "Gridea-Pro/"+version.Version)
 
-	// 下载客户端用较长超时（GitHub LFS 重定向也走这儿）
-	dlClient := &http.Client{Timeout: 30 * time.Minute}
+	// 下载客户端用较长超时（GitHub LFS 重定向也走这儿）。
+	// CheckRedirect 限制跳转只能落到 github.com / *.githubusercontent.com 体系内，
+	// 避免入口 URL 过了白名单后被 302 重定向到第三方域名绕过防御。
+	dlClient := &http.Client{
+		Timeout:       30 * time.Minute,
+		CheckRedirect: trustedRedirectChecker,
+	}
 	resp, err := dlClient.Do(req)
 	if err != nil {
 		f.emitError(fmt.Errorf("下载失败: %w", err))
