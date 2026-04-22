@@ -22,7 +22,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const netlifyAPIBase = "https://api.netlify.com/api/v1"
+// netlifyAPIBase 指向 Netlify API 根；测试可替换为本地 httptest 地址。
+var netlifyAPIBase = "https://api.netlify.com/api/v1"
 
 // NetlifyProvider 实现了 Netlify API 部署策略
 type NetlifyProvider struct {
@@ -115,8 +116,105 @@ func (p *NetlifyProvider) Deploy(ctx context.Context, outputDir string, setting 
 		logger("所有文件已在 Netlify 缓存中，无需上传。")
 	}
 
-	logger("✅ Netlify 部署成功！")
+	// 4. 轮询部署状态直到 ready / error / 超时（issue #50）。
+	// "上传完成" != "部署成功"：Netlify 仍要做校验 / CDN 分发 / build plugin 等，
+	// 可能最终变为 error。没有这一步前端会误报成功，站点实际仍是旧版本。
+	logger("文件上传完成，等待 Netlify 处理...")
+	status, err := p.pollDeployStatus(ctx, deployId, token, logger)
+	if err != nil {
+		return err
+	}
+	if status.DeployURL != "" {
+		logger(fmt.Sprintf("✅ Netlify 部署成功：%s", status.DeployURL))
+	} else {
+		logger("✅ Netlify 部署成功！")
+	}
 	return nil
+}
+
+// netlifyDeployStatus 是 /api/v1/deploys/{id} 的状态响应，字段按需取。
+type netlifyDeployStatus struct {
+	ID           string `json:"id"`
+	State        string `json:"state"`         // uploading / processing / ready / error
+	DeployURL    string `json:"deploy_url"`
+	ErrorMessage string `json:"error_message"`
+	Title        string `json:"title"`
+}
+
+// pollDeployStatus 轮询部署直到终态（ready / error）或超时。
+// 轮询间隔从 2s 起指数退避到 10s 上限，总超时 5 分钟（不超过外部 ctx 的剩余时间）。
+func (p *NetlifyProvider) pollDeployStatus(ctx context.Context, deployID, token string, logger LogFunc) (*netlifyDeployStatus, error) {
+	const (
+		initialInterval = 2 * time.Second
+		maxInterval     = 10 * time.Second
+		totalBudget     = 5 * time.Minute
+	)
+
+	deadline := time.Now().Add(totalBudget)
+	interval := initialInterval
+	apiURL := fmt.Sprintf("%s/deploys/%s", netlifyAPIBase, deployID)
+
+	var lastState string
+	for {
+		if time.Now().After(deadline) {
+			return nil, fmt.Errorf("等待 Netlify 处理超时（最后状态：%s）。部署已提交，可到 Netlify 后台查看最终结果", lastState)
+		}
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		resp, httpErr := p.client.Do(req)
+		if httpErr != nil {
+			// 瞬时 / 网络错误：继续轮询，不中止
+			logger(fmt.Sprintf("查询状态失败（将重试）：%v", httpErr))
+		} else {
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				var st netlifyDeployStatus
+				if err := json.Unmarshal(bodyBytes, &st); err == nil {
+					if st.State != lastState {
+						logger(fmt.Sprintf("Netlify 状态：%s", st.State))
+						lastState = st.State
+					}
+					switch st.State {
+					case "ready":
+						return &st, nil
+					case "error":
+						msg := st.ErrorMessage
+						if msg == "" {
+							msg = st.Title
+						}
+						if msg == "" {
+							msg = "未知错误"
+						}
+						return &st, fmt.Errorf("Netlify 处理失败：%s", msg)
+					}
+				}
+			} else if resp.StatusCode == http.StatusUnauthorized {
+				return nil, fmt.Errorf("Netlify Token 无效，轮询已中止")
+			}
+		}
+
+		// 等待下一轮 / 响应 ctx 取消
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(interval):
+		}
+		if interval < maxInterval {
+			interval *= 2
+			if interval > maxInterval {
+				interval = maxInterval
+			}
+		}
+	}
 }
 
 // scanAndHashFiles 遍历目录，返回 map["/relPath"] = "sha1hex"
