@@ -21,6 +21,7 @@ type DeployService struct {
 	appDir           string
 	mu               sync.Mutex
 	isDeploying      bool
+	activeCancel     context.CancelFunc // 当前部署的取消函数；空闲时为 nil（issue #42）
 }
 
 func NewDeployService(settingRepo domain.SettingRepository, appDir string) *DeployService {
@@ -46,19 +47,27 @@ func (s *DeployService) SetCdnUploadService(cdnUpload *CdnUploadService) {
 }
 
 func (s *DeployService) DeployToRemote(ctx context.Context) error {
+	// 为本次部署创建可取消的 ctx，暴露 cancel 给 CancelDeploy 调用。
+	deployCtx, cancel := context.WithCancel(ctx)
+
 	s.mu.Lock()
 	if s.isDeploying {
 		s.mu.Unlock()
+		cancel()
 		return fmt.Errorf(domain.ErrDeployInProgress)
 	}
 	s.isDeploying = true
+	s.activeCancel = cancel
 	s.mu.Unlock()
+	ctx = deployCtx
 
 	// Ensure we reset the flag when done
 	defer func() {
 		s.mu.Lock()
 		s.isDeploying = false
+		s.activeCancel = nil
 		s.mu.Unlock()
+		cancel()
 	}()
 
 	s.log(ctx, "Starting deployment check...")
@@ -141,6 +150,25 @@ func (s *DeployService) DeployToRemote(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// CancelDeploy 中断当前正在进行的部署。
+// 若当前空闲则 no-op，不返回错误。取消后 DeployToRemote 会收到 ctx.Canceled
+// 并尽可能快地退出（各 provider 内部的 HTTP / walk 循环都要尊重 ctx）。
+func (s *DeployService) CancelDeploy() {
+	s.mu.Lock()
+	cancel := s.activeCancel
+	s.mu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+}
+
+// IsDeploying 返回当前是否有部署在进行中，供前端按钮状态同步使用。
+func (s *DeployService) IsDeploying() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.isDeploying
 }
 
 // log sends a message to the frontend safely
