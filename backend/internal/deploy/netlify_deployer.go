@@ -242,24 +242,26 @@ func (p *NetlifyProvider) uploadFiles(ctx context.Context, outputDir, deployId s
 	return eg.Wait()
 }
 
-// uploadSingleFile 上传单个文件到 Netlify
+// uploadSingleFile 上传单个文件到 Netlify。
+// PUT 幂等 + Netlify 服务端通过 deployId 锁定目标，5xx/429/网络错误重试安全（见 #46）。
 func (p *NetlifyProvider) uploadSingleFile(ctx context.Context, deployId, localPath, remotePath, token string) error {
-	file, err := os.Open(localPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
 	apiURL := fmt.Sprintf("%s/deploys/%s/files%s", netlifyAPIBase, deployId, remotePath)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, apiURL, file)
-	if err != nil {
-		return err
+	buildReq := func() (*http.Request, error) {
+		file, err := os.Open(localPath)
+		if err != nil {
+			return nil, err
+		}
+		req, err := http.NewRequestWithContext(ctx, http.MethodPut, apiURL, file)
+		if err != nil {
+			_ = file.Close()
+			return nil, err
+		}
+		req.Header.Set("Content-Type", "application/octet-stream")
+		req.Header.Set("Authorization", "Bearer "+token)
+		return req, nil
 	}
 
-	req.Header.Set("Content-Type", "application/octet-stream")
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := p.client.Do(req)
+	resp, err := DoHTTPWithRetry(ctx, p.client, buildReq, HTTPRetryPolicy{MaxAttempts: 3}, nil)
 	if err != nil {
 		return err
 	}

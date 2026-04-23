@@ -219,24 +219,28 @@ func (p *VercelProvider) uploadFiles(ctx context.Context, outputDir string, file
 	return eg.Wait()
 }
 
-// uploadSingleFile 上传单个文件到 Vercel
+// uploadSingleFile 上传单个文件到 Vercel。
+// 带有 x-vercel-digest 的 POST 是内容寻址的幂等写入（见 #46），5xx/429/网络
+// 错误可安全重试，因此这里走 DoHTTPWithRetry 而非直接 client.Do。
 func (p *VercelProvider) uploadSingleFile(ctx context.Context, filePath, sha string, size int64, token string) error {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return err
+	buildReq := func() (*http.Request, error) {
+		// 每次重试重新 Open 文件；body 在失败后已被 http.Transport 消费，不能复用
+		file, err := os.Open(filePath)
+		if err != nil {
+			return nil, err
+		}
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://api.vercel.com/v2/files", file)
+		if err != nil {
+			_ = file.Close()
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("x-vercel-digest", sha)
+		req.ContentLength = size
+		return req, nil
 	}
-	defer file.Close()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://api.vercel.com/v2/files", file)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("x-vercel-digest", sha)
-	req.ContentLength = size
-
-	resp, err := p.client.Do(req)
+	resp, err := DoHTTPWithRetry(ctx, p.client, buildReq, HTTPRetryPolicy{MaxAttempts: 3}, nil)
 	if err != nil {
 		return err
 	}
