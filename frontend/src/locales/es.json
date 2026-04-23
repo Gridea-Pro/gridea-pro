@@ -40,7 +40,8 @@
         "install": "Instalar ahora",
         "restart": "Reiniciar",
         "retry": "Reintentar",
-        "readyToRestart": "Descarga completa. Reinicia para aplicar la actualización."
+        "readyToRestart": "Descarga completa. Reinicia para aplicar la actualización.",
+        "upToDate": "Ya estás al día"
     },
     "article": {
         "new": "Nuevo",

@@ -40,7 +40,8 @@
         "install": "Installa ora",
         "restart": "Riavvia",
         "retry": "Riprova",
-        "readyToRestart": "Download completato. Riavvia per applicare l'aggiornamento."
+        "readyToRestart": "Download completato. Riavvia per applicare l'aggiornamento.",
+        "upToDate": "Sei già aggiornato"
     },
     "article": {
         "new": "Nuovo",
