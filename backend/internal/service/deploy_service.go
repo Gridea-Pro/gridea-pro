@@ -87,13 +87,20 @@ func (s *DeployService) DeployToRemote(ctx context.Context) error {
 		s.log(ctx, "Warning: Renderer service not attached, skipping build.")
 	}
 
-	// 2.5 CDN 上传媒体文件
+	// 2.5 CDN 上传媒体文件。
+	// 单文件失败不终止整组，UploadMediaForDeploy 返回 UploadResult 汇总成功 / 失败清单。
+	// 失败占比超过阈值时中止部署，避免"toast 成功、线上图片大面积 404"的隐性故障（#44）。
 	if s.cdnUploadService != nil {
 		s.log(ctx, "Uploading media files to CDN...")
-		if err := s.cdnUploadService.UploadMediaForDeploy(ctx, s.appDir, func(msg string) {
+		result, err := s.cdnUploadService.UploadMediaForDeploy(ctx, s.appDir, func(msg string) {
 			s.log(ctx, msg)
-		}); err != nil {
+		})
+		if err != nil {
 			s.log(ctx, fmt.Sprintf("CDN upload warning: %v", err))
+		}
+		if reason := cdnFailureAbortReason(result); reason != "" {
+			s.log(ctx, fmt.Sprintf("❌ %s，已中止部署以避免上线图片 404", reason))
+			return fmt.Errorf("CDN 上传失败率过高：%s", reason)
 		}
 	}
 
@@ -149,3 +156,36 @@ func (s *DeployService) log(ctx context.Context, msg string) {
 		runtime.EventsEmit(ctx, "deploy-log", msg)
 	}
 }
+
+// cdn 上传失败阈值：超过任一条件都视为"过多"，部署中止。
+// 比例偏保守（10%），绝对数给定下限（5）避免小图库被 1~2 个误差锁死。
+const (
+	cdnFailureRatioThreshold = 0.10
+	cdnFailureAbsoluteCap    = 5
+)
+
+// cdnFailureAbortReason 判断是否因 CDN 上传失败过多而中止部署。
+// 返回空串表示可以继续；返回非空表示应中止，字符串即用户友好原因。
+func cdnFailureAbortReason(r CdnUploadResultShape) string {
+	if r.GetTotal() == 0 || len(r.GetFailures()) == 0 {
+		return ""
+	}
+	failed := len(r.GetFailures())
+	ratio := float64(failed) / float64(r.GetTotal())
+	if ratio >= cdnFailureRatioThreshold && failed >= cdnFailureAbsoluteCap {
+		return fmt.Sprintf("%d 个文件失败（共 %d 个，占比 %.0f%%）", failed, r.GetTotal(), ratio*100)
+	}
+	return ""
+}
+
+// CdnUploadResultShape 是对 UploadResult 的抽象，用于在不跨包循环依赖的前提下
+// 在 service 包里做阈值判断。具体类型为 *UploadResult。
+type CdnUploadResultShape interface {
+	GetTotal() int
+	GetFailures() []UploadFailure
+}
+
+// 让 UploadResult 满足 CdnUploadResultShape —— 方法放这里是为了让阈值函数能在
+// 同一个 service 包内引用，不需要暴露到 domain 层。
+func (r UploadResult) GetTotal() int                 { return r.Total }
+func (r UploadResult) GetFailures() []UploadFailure  { return r.Failures }

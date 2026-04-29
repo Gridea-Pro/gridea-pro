@@ -296,15 +296,33 @@ func (s *CdnUploadService) TestUpload(ctx context.Context) (string, error) {
 	return cdnURL, nil
 }
 
-// UploadMediaForDeploy 部署时扫描并上传媒体文件到 CDN
-func (s *CdnUploadService) UploadMediaForDeploy(ctx context.Context, appDir string, logger func(string)) error {
+// UploadFailure 描述一次 CDN 上传失败，用于汇总向上报告（见 UploadResult）。
+type UploadFailure struct {
+	Path  string // 相对仓库根的远程路径（例如 "post-images/cover.png"）
+	Error string // 人类可读错误（已脱敏，不包含 token）
+}
+
+// UploadResult 汇总 CDN 批量上传的结果。
+// 调用方据此决定是否中止部署 / 展示失败列表。
+type UploadResult struct {
+	Total    int
+	Success  int
+	Failures []UploadFailure
+}
+
+// UploadMediaForDeploy 部署时扫描并上传媒体文件到 CDN。
+// 返回 UploadResult 供调用方做失败汇总 / 阈值判断；error 仅用于"整体流程失败"
+// （如读配置失败）。单文件失败会计入 Failures 但不直接返回 error。
+func (s *CdnUploadService) UploadMediaForDeploy(ctx context.Context, appDir string, logger func(string)) (UploadResult, error) {
+	var res UploadResult
+
 	setting, err := s.cdnSettingRepo.GetCdnSetting(ctx)
 	if err != nil {
-		return fmt.Errorf("读取 CDN 配置失败: %w", err)
+		return res, fmt.Errorf("读取 CDN 配置失败: %w", err)
 	}
 
 	if !setting.Enabled || setting.GithubToken == "" {
-		return nil
+		return res, nil
 	}
 
 	// 需要扫描的目录
@@ -348,18 +366,21 @@ func (s *CdnUploadService) UploadMediaForDeploy(ctx context.Context, appDir stri
 		}
 	}
 
-	if len(filesToUpload) == 0 {
+	res.Total = len(filesToUpload)
+	if res.Total == 0 {
 		logger("没有需要上传的媒体文件")
-		return nil
+		return res, nil
 	}
 
-	logger(fmt.Sprintf("发现 %d 个媒体文件，开始上传到 CDN...", len(filesToUpload)))
+	logger(fmt.Sprintf("发现 %d 个媒体文件，开始上传到 CDN...", res.Total))
 
-	// 使用 errgroup 控制并发（限制 5 并发）
+	// 使用 errgroup 控制并发（限制 5 并发）。
+	// 单文件失败不终止 errgroup（保持"尽量完成"语义），但会被收集到 failures 列表。
 	g, gCtx := errgroup.WithContext(ctx)
 	sem := make(chan struct{}, 5)
-	var uploadCount int
 	var mu sync.Mutex
+	var failures []UploadFailure
+	var successCount int
 
 	for _, file := range filesToUpload {
 		f := file
@@ -369,22 +390,42 @@ func (s *CdnUploadService) UploadMediaForDeploy(ctx context.Context, appDir stri
 
 			if err := s.uploadToGitHub(gCtx, setting, f.localPath, f.remotePath); err != nil {
 				logger(fmt.Sprintf("上传 %s 失败: %v", f.remotePath, err))
+				mu.Lock()
+				failures = append(failures, UploadFailure{Path: f.remotePath, Error: err.Error()})
+				mu.Unlock()
 				return nil // 单个文件失败不中断整个上传
 			}
 
 			mu.Lock()
-			uploadCount++
+			successCount++
 			mu.Unlock()
 			return nil
 		})
 	}
 
 	if err := g.Wait(); err != nil {
-		return fmt.Errorf("上传媒体文件失败: %w", err)
+		return res, fmt.Errorf("上传媒体文件失败: %w", err)
 	}
 
-	logger(fmt.Sprintf("CDN 上传完成，共上传 %d 个文件", uploadCount))
-	return nil
+	res.Success = successCount
+	res.Failures = failures
+
+	if len(failures) == 0 {
+		logger(fmt.Sprintf("CDN 上传完成，共上传 %d 个文件", res.Success))
+	} else {
+		logger(fmt.Sprintf("CDN 上传完成：成功 %d / 总数 %d（失败 %d 个，详见下方列表）",
+			res.Success, res.Total, len(failures)))
+		// 摘要列出头几条失败，避免把日志撑爆；调用方会拿到完整 Failures 做决策
+		const previewN = 5
+		for i, f := range failures {
+			if i >= previewN {
+				logger(fmt.Sprintf("  ...（其余 %d 个失败未列出）", len(failures)-previewN))
+				break
+			}
+			logger(fmt.Sprintf("  ✗ %s: %s", f.Path, f.Error))
+		}
+	}
+	return res, nil
 }
 
 // buildCdnURL 构建 CDN 访问 URL
