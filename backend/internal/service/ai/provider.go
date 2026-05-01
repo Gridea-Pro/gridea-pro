@@ -39,6 +39,12 @@ func NewOpenAICompatibleProvider(baseURL string) Provider {
 	return &openAICompatProvider{baseURL: strings.TrimRight(strings.TrimSpace(baseURL), "/")}
 }
 
+// NewAnthropicCompatibleProvider 创建使用指定 Base URL 的 Anthropic 兼容 Provider。
+// 用于支持各类中转站 / 自定义 Anthropic Compatible 接口。
+func NewAnthropicCompatibleProvider(baseURL string) Provider {
+	return &anthropicProvider{baseURL: strings.TrimRight(strings.TrimSpace(baseURL), "/")}
+}
+
 // NewProviderFromInfo 根据厂商元信息创建对应的 Provider 实例
 func NewProviderFromInfo(info ProviderInfo) (Provider, ProviderInfo, error) {
 	info.BaseURL = strings.TrimRight(strings.TrimSpace(info.BaseURL), "/")

@@ -44,7 +44,7 @@ func (f *AIFacade) TestConnection(provider, model, apiKey string) error {
 	return f.service.TestConnection(f.ctx(), provider, model, apiKey)
 }
 
-// TestConnectionWithBaseURL 测试自定义 OpenAI 兼容厂商连接
+// TestConnectionWithBaseURL 测试自定义兼容厂商连接
 func (f *AIFacade) TestConnectionWithBaseURL(provider, model, apiKey, baseURL string) error {
 	return f.service.TestConnectionWithBaseURL(f.ctx(), provider, model, apiKey, baseURL)
 }
@@ -54,7 +54,7 @@ func (f *AIFacade) ListProviderModels(provider, apiKey string) ([]string, error)
 	return f.service.ListProviderModels(f.ctx(), provider, apiKey)
 }
 
-// ListProviderModelsWithBaseURL 拉取自定义 OpenAI 兼容厂商的真实模型列表
+// ListProviderModelsWithBaseURL 拉取自定义兼容厂商的真实模型列表
 func (f *AIFacade) ListProviderModelsWithBaseURL(provider, apiKey, baseURL string) ([]string, error) {
 	return f.service.ListProviderModelsWithBaseURL(f.ctx(), provider, apiKey, baseURL)
 }

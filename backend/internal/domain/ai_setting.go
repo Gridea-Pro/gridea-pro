@@ -20,7 +20,7 @@ type AISetting struct {
 type AICustomConfig struct {
 	Model   string `json:"model"`   // 模型 ID
 	APIKey  string `json:"apiKey"`  // API Key
-	BaseURL string `json:"baseURL"` // 自定义 OpenAI 兼容接口地址（如中转站）
+	BaseURL string `json:"baseURL"` // 自定义兼容接口地址（如中转站）
 }
 
 // AISettingRepository AI 配置存储接口

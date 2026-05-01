@@ -196,6 +196,17 @@ var providerRegistry = []ProviderInfo{
 		},
 		APIKeyURL: "",
 	},
+	{
+		ID:       "custom-anthropic",
+		Name:     "自定义 Anthropic 兼容（中转站）",
+		Protocol: ProtocolAnthropic,
+		BaseURL:  "",
+		DefaultModels: []string{
+			"claude-sonnet-4-6",
+			"claude-haiku-4-5",
+		},
+		APIKeyURL: "",
+	},
 }
 
 // AllProviders 返回所有自定义厂商配置

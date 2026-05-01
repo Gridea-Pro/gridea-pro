@@ -42,6 +42,27 @@ func (s *AIService) httpClient(ctx context.Context) *http.Client {
 	return &http.Client{Timeout: 30 * time.Second}
 }
 
+var customBaseURLProviders = map[string]struct{}{
+	"custom-openai":    {},
+	"custom-anthropic": {},
+}
+
+func isCustomBaseURLProvider(providerID string) bool {
+	_, ok := customBaseURLProviders[strings.TrimSpace(providerID)]
+	return ok
+}
+
+func newCustomBaseURLProvider(providerID, baseURL string) ai.Provider {
+	switch strings.TrimSpace(providerID) {
+	case "custom-openai":
+		return ai.NewOpenAICompatibleProvider(baseURL)
+	case "custom-anthropic":
+		return ai.NewAnthropicCompatibleProvider(baseURL)
+	default:
+		return nil
+	}
+}
+
 // resolveProvider 根据当前 AI 设置返回 (provider, model, apiKey, isBuiltIn, error)
 func (s *AIService) resolveProvider(ctx context.Context) (ai.Provider, string, string, bool, error) {
 	setting, _ := s.repo.GetAISetting(ctx)
@@ -70,12 +91,12 @@ func (s *AIService) resolveProvider(ctx context.Context) (ai.Provider, string, s
 	if strings.TrimSpace(cfg.Model) == "" {
 		return nil, "", "", false, errors.New("请先在「偏好设置 → AI 配置」中选择模型")
 	}
-	if activeProvider == "custom-openai" {
+	if isCustomBaseURLProvider(activeProvider) {
 		baseURL := strings.TrimRight(strings.TrimSpace(cfg.BaseURL), "/")
 		if baseURL == "" {
 			return nil, "", "", false, errors.New("请先在「偏好设置 → AI 配置」中填写 Base URL")
 		}
-		return ai.NewOpenAICompatibleProvider(baseURL), strings.TrimSpace(cfg.Model), strings.TrimSpace(cfg.APIKey), false, nil
+		return newCustomBaseURLProvider(activeProvider, baseURL), strings.TrimSpace(cfg.Model), strings.TrimSpace(cfg.APIKey), false, nil
 	}
 	provider, _, err := ai.NewProvider(activeProvider)
 	if err != nil {
@@ -228,7 +249,7 @@ func (s *AIService) TestConnection(ctx context.Context, providerID, model, apiKe
 	return s.TestConnectionWithBaseURL(ctx, providerID, model, apiKey, "")
 }
 
-// TestConnectionWithBaseURL 测试自定义厂商的连接性，custom-openai 可传入 Base URL
+// TestConnectionWithBaseURL 测试自定义厂商的连接性，自定义兼容厂商可传入 Base URL
 func (s *AIService) TestConnectionWithBaseURL(ctx context.Context, providerID, model, apiKey, baseURL string) error {
 	if strings.TrimSpace(providerID) == "" {
 		return errors.New("请选择模型厂商")
@@ -240,12 +261,12 @@ func (s *AIService) TestConnectionWithBaseURL(ctx context.Context, providerID, m
 		return errors.New("请选择模型")
 	}
 	var provider ai.Provider
-	if strings.TrimSpace(providerID) == "custom-openai" {
+	if isCustomBaseURLProvider(providerID) {
 		baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
 		if baseURL == "" {
 			return errors.New("请填写 Base URL")
 		}
-		provider = ai.NewOpenAICompatibleProvider(baseURL)
+		provider = newCustomBaseURLProvider(providerID, baseURL)
 	} else {
 		p, _, err := ai.NewProvider(providerID)
 		if err != nil {
@@ -268,7 +289,7 @@ func (s *AIService) ListProviderModels(ctx context.Context, providerID, apiKey s
 	return s.ListProviderModelsWithBaseURL(ctx, providerID, apiKey, "")
 }
 
-// ListProviderModelsWithBaseURL 拉取指定厂商的真实模型列表，custom-openai 可传入 Base URL
+// ListProviderModelsWithBaseURL 拉取指定厂商的真实模型列表，自定义兼容厂商可传入 Base URL
 func (s *AIService) ListProviderModelsWithBaseURL(ctx context.Context, providerID, apiKey, baseURL string) ([]string, error) {
 	if strings.TrimSpace(providerID) == "" {
 		return nil, errors.New("请选择模型厂商")
@@ -277,12 +298,12 @@ func (s *AIService) ListProviderModelsWithBaseURL(ctx context.Context, providerI
 		return nil, errors.New("请先填写 API Key")
 	}
 	var provider ai.Provider
-	if strings.TrimSpace(providerID) == "custom-openai" {
+	if isCustomBaseURLProvider(providerID) {
 		baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
 		if baseURL == "" {
 			return nil, errors.New("请填写 Base URL")
 		}
-		provider = ai.NewOpenAICompatibleProvider(baseURL)
+		provider = newCustomBaseURLProvider(providerID, baseURL)
 	} else {
 		p, _, err := ai.NewProvider(providerID)
 		if err != nil {
