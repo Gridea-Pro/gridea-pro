@@ -392,7 +392,10 @@
             "dailyLimitReached": "Cuota gratuita diaria alcanzada (20/día). Inténtalo de nuevo mañana o cambia a un modelo personalizado en Preferencias → Configuración de IA",
             "rateLimited": "Demasiadas solicitudes, por favor más despacio (límite: 5/minuto)",
             "upstream429": "El servicio del modelo está ocupado, inténtalo de nuevo más tarde",
-            "noTitle": "Por favor, introduce primero el título del artículo"
+            "noTitle": "Por favor, introduce primero el título del artículo",
+            "baseURL": "Base URL",
+            "baseURLDesc": "Endpoint compatible con OpenAI, normalmente termina en /v1. Úsalo para relays/proxies o servicios autoalojados.",
+            "fillBaseURLFirst": "Introduce primero la Base URL"
         },
         "network": {
             "title": "Servidor",

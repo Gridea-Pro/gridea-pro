@@ -18,8 +18,9 @@ type AISetting struct {
 // AICustomConfig 单个自定义厂商的配置
 // 注意：厂商 ID 由 AISetting.Customs 的 map key 表示，不在此结构中冗余存储
 type AICustomConfig struct {
-	Model  string `json:"model"`  // 模型 ID
-	APIKey string `json:"apiKey"` // API Key
+	Model   string `json:"model"`   // 模型 ID
+	APIKey  string `json:"apiKey"`  // API Key
+	BaseURL string `json:"baseURL"` // 自定义 OpenAI 兼容接口地址（如中转站）
 }
 
 // AISettingRepository AI 配置存储接口

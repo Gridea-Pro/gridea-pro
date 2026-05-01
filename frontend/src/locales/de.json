@@ -392,7 +392,10 @@
             "dailyLimitReached": "Tägliches Gratiskontingent erreicht (20/Tag). Bitte morgen erneut versuchen oder unter Einstellungen → KI-Einstellungen auf ein eigenes Modell wechseln",
             "rateLimited": "Zu viele Anfragen, bitte langsamer (Limit: 5/Minute)",
             "upstream429": "Modelldienst ist ausgelastet, bitte später erneut versuchen",
-            "noTitle": "Bitte geben Sie zuerst den Artikeltitel ein"
+            "noTitle": "Bitte geben Sie zuerst den Artikeltitel ein",
+            "baseURL": "Base URL",
+            "baseURLDesc": "OpenAI-kompatibler Endpunkt, normalerweise mit /v1 am Ende. Für Relay/Proxy oder selbst gehostete Dienste.",
+            "fillBaseURLFirst": "Bitte zuerst die Base URL eingeben"
         },
         "network": {
             "title": "Server",

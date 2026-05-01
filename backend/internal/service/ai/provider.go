@@ -30,6 +30,18 @@ func NewProvider(providerID string) (Provider, ProviderInfo, error) {
 	if !ok {
 		return nil, ProviderInfo{}, errors.New("未知的模型厂商: " + providerID)
 	}
+	return NewProviderFromInfo(info)
+}
+
+// NewOpenAICompatibleProvider 创建使用指定 Base URL 的 OpenAI 兼容 Provider。
+// 用于支持各类中转站 / 自定义 OpenAI Compatible 接口。
+func NewOpenAICompatibleProvider(baseURL string) Provider {
+	return &openAICompatProvider{baseURL: strings.TrimRight(strings.TrimSpace(baseURL), "/")}
+}
+
+// NewProviderFromInfo 根据厂商元信息创建对应的 Provider 实例
+func NewProviderFromInfo(info ProviderInfo) (Provider, ProviderInfo, error) {
+	info.BaseURL = strings.TrimRight(strings.TrimSpace(info.BaseURL), "/")
 	switch info.Protocol {
 	case ProtocolOpenAI:
 		return &openAICompatProvider{baseURL: info.BaseURL}, info, nil

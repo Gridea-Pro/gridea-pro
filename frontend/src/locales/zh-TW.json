@@ -392,7 +392,10 @@
             "dailyLimitReached": "今日免費額度已用完（20 次/天），請明日再試，或在「偏好設定 → AI 設定」中切換為自訂模型",
             "rateLimited": "呼叫過於頻繁，請稍後再試（限制 5 次/分鐘）",
             "upstream429": "模型服務繁忙，請稍後再試",
-            "noTitle": "請先填寫文章標題"
+            "noTitle": "請先填寫文章標題",
+            "baseURL": "Base URL",
+            "baseURLDesc": "填寫 OpenAI 相容介面地址，通常以 /v1 結尾，用於中轉站或自部署服務。",
+            "fillBaseURLFirst": "請先填寫 Base URL"
         },
         "network": {
             "title": "設定",
