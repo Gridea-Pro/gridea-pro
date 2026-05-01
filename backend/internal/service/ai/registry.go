@@ -185,6 +185,28 @@ var providerRegistry = []ProviderInfo{
 		},
 		APIKeyURL: "https://console.groq.com/keys",
 	},
+	{
+		ID:       "custom-openai",
+		Name:     "自定义 OpenAI 兼容（中转站）",
+		Protocol: ProtocolOpenAI,
+		BaseURL:  "",
+		DefaultModels: []string{
+			"gpt-4o-mini",
+			"gpt-4o",
+		},
+		APIKeyURL: "",
+	},
+	{
+		ID:       "custom-anthropic",
+		Name:     "自定义 Anthropic 兼容（中转站）",
+		Protocol: ProtocolAnthropic,
+		BaseURL:  "",
+		DefaultModels: []string{
+			"claude-sonnet-4-6",
+			"claude-haiku-4-5",
+		},
+		APIKeyURL: "",
+	},
 }
 
 // AllProviders 返回所有自定义厂商配置

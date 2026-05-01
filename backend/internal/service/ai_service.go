@@ -42,6 +42,27 @@ func (s *AIService) httpClient(ctx context.Context) *http.Client {
 	return &http.Client{Timeout: 30 * time.Second}
 }
 
+var customBaseURLProviders = map[string]struct{}{
+	"custom-openai":    {},
+	"custom-anthropic": {},
+}
+
+func isCustomBaseURLProvider(providerID string) bool {
+	_, ok := customBaseURLProviders[strings.TrimSpace(providerID)]
+	return ok
+}
+
+func newCustomBaseURLProvider(providerID, baseURL string) ai.Provider {
+	switch strings.TrimSpace(providerID) {
+	case "custom-openai":
+		return ai.NewOpenAICompatibleProvider(baseURL)
+	case "custom-anthropic":
+		return ai.NewAnthropicCompatibleProvider(baseURL)
+	default:
+		return nil
+	}
+}
+
 // resolveProvider 根据当前 AI 设置返回 (provider, model, apiKey, isBuiltIn, error)
 func (s *AIService) resolveProvider(ctx context.Context) (ai.Provider, string, string, bool, error) {
 	setting, _ := s.repo.GetAISetting(ctx)
@@ -69,6 +90,13 @@ func (s *AIService) resolveProvider(ctx context.Context) (ai.Provider, string, s
 	}
 	if strings.TrimSpace(cfg.Model) == "" {
 		return nil, "", "", false, errors.New("请先在「偏好设置 → AI 配置」中选择模型")
+	}
+	if isCustomBaseURLProvider(activeProvider) {
+		baseURL := strings.TrimRight(strings.TrimSpace(cfg.BaseURL), "/")
+		if baseURL == "" {
+			return nil, "", "", false, errors.New("请先在「偏好设置 → AI 配置」中填写 Base URL")
+		}
+		return newCustomBaseURLProvider(activeProvider, baseURL), strings.TrimSpace(cfg.Model), strings.TrimSpace(cfg.APIKey), false, nil
 	}
 	provider, _, err := ai.NewProvider(activeProvider)
 	if err != nil {
@@ -218,6 +246,11 @@ func (s *AIService) GenerateSlug(ctx context.Context, title string) (string, err
 
 // TestConnection 测试自定义厂商的连接性（最小 chat 请求）
 func (s *AIService) TestConnection(ctx context.Context, providerID, model, apiKey string) error {
+	return s.TestConnectionWithBaseURL(ctx, providerID, model, apiKey, "")
+}
+
+// TestConnectionWithBaseURL 测试自定义厂商的连接性，自定义兼容厂商可传入 Base URL
+func (s *AIService) TestConnectionWithBaseURL(ctx context.Context, providerID, model, apiKey, baseURL string) error {
 	if strings.TrimSpace(providerID) == "" {
 		return errors.New("请选择模型厂商")
 	}
@@ -227,9 +260,19 @@ func (s *AIService) TestConnection(ctx context.Context, providerID, model, apiKe
 	if strings.TrimSpace(model) == "" {
 		return errors.New("请选择模型")
 	}
-	provider, _, err := ai.NewProvider(providerID)
-	if err != nil {
-		return err
+	var provider ai.Provider
+	if isCustomBaseURLProvider(providerID) {
+		baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+		if baseURL == "" {
+			return errors.New("请填写 Base URL")
+		}
+		provider = newCustomBaseURLProvider(providerID, baseURL)
+	} else {
+		p, _, err := ai.NewProvider(providerID)
+		if err != nil {
+			return err
+		}
+		provider = p
 	}
 	req := ai.ChatRequest{
 		Model:       strings.TrimSpace(model),
@@ -237,21 +280,36 @@ func (s *AIService) TestConnection(ctx context.Context, providerID, model, apiKe
 		Temperature: 0.0,
 		MaxTokens:   1,
 	}
-	_, err = provider.Chat(ctx, req, strings.TrimSpace(apiKey), s.httpClient(ctx))
+	_, err := provider.Chat(ctx, req, strings.TrimSpace(apiKey), s.httpClient(ctx))
 	return err
 }
 
 // ListProviderModels 拉取指定厂商的真实模型列表
 func (s *AIService) ListProviderModels(ctx context.Context, providerID, apiKey string) ([]string, error) {
+	return s.ListProviderModelsWithBaseURL(ctx, providerID, apiKey, "")
+}
+
+// ListProviderModelsWithBaseURL 拉取指定厂商的真实模型列表，自定义兼容厂商可传入 Base URL
+func (s *AIService) ListProviderModelsWithBaseURL(ctx context.Context, providerID, apiKey, baseURL string) ([]string, error) {
 	if strings.TrimSpace(providerID) == "" {
 		return nil, errors.New("请选择模型厂商")
 	}
 	if strings.TrimSpace(apiKey) == "" {
 		return nil, errors.New("请先填写 API Key")
 	}
-	provider, _, err := ai.NewProvider(providerID)
-	if err != nil {
-		return nil, err
+	var provider ai.Provider
+	if isCustomBaseURLProvider(providerID) {
+		baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+		if baseURL == "" {
+			return nil, errors.New("请填写 Base URL")
+		}
+		provider = newCustomBaseURLProvider(providerID, baseURL)
+	} else {
+		p, _, err := ai.NewProvider(providerID)
+		if err != nil {
+			return nil, err
+		}
+		provider = p
 	}
 	return provider.ListModels(ctx, strings.TrimSpace(apiKey), s.httpClient(ctx))
 }

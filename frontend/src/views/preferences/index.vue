@@ -154,12 +154,23 @@ v-for="item in navItems" :key="item.key"
                   </Select>
                 </div>
 
+                <!-- Base URL -->
+                <div v-if="aiForm.activeProvider && isCustomBaseURLProvider" class="flex items-start gap-3">
+                  <Label class="w-20 text-xs shrink-0 pt-2">{{ t('settings.ai.baseURL') }}</Label>
+                  <div class="flex-1 space-y-1.5">
+                    <Input v-model="currentBaseURL" placeholder="https://api.example.com/v1" />
+                    <div class="text-xs text-muted-foreground">{{ t('settings.ai.baseURLDesc') }}</div>
+                  </div>
+                </div>
+
                 <!-- 模型 -->
                 <div v-if="aiForm.activeProvider" class="flex items-start gap-3">
                   <Label class="w-20 text-xs shrink-0 pt-2">{{ t('settings.ai.model') }}</Label>
                   <div class="flex-1 space-y-2">
                     <div class="flex items-center gap-2">
-                      <Select v-if="!useCustomModelId" v-model="currentModel">
+                      <Input v-if="isCustomBaseURLProvider" v-model="currentModel" class="flex-1"
+                        :placeholder="t('settings.ai.customModelPlaceholder')" />
+                      <Select v-else-if="!useCustomModelId" v-model="currentModel">
                         <SelectTrigger class="flex-1">
                           <SelectValue :placeholder="t('settings.ai.selectModel')" />
                         </SelectTrigger>
@@ -176,7 +187,7 @@ v-for="item in navItems" :key="item.key"
                         <ArrowPathIcon class="size-4" :class="{ 'animate-spin': refreshingModels }" />
                       </Button>
                     </div>
-                    <label class="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer w-fit">
+                    <label v-if="!isCustomBaseURLProvider" class="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer w-fit">
                       <Checkbox :model-value="useCustomModelId" class="size-3"
                         @update:model-value="(v: any) => onUseCustomModelToggle(!!v)">
                         <Check class="size-2.5" />
@@ -319,7 +330,9 @@ import {
   GetProviderRegistry,
   GetBuiltInModels,
   ListProviderModels,
+  ListProviderModelsWithBaseURL,
   TestConnection,
+  TestConnectionWithBaseURL,
 } from '@/wailsjs/go/facade/AIFacade'
 import { domain, ai as aiNS } from '@/wailsjs/go/models'
 import { setI18nLanguage, type LocaleType } from '@/locales'
@@ -383,6 +396,8 @@ const providerRegistry = ref<aiNS.ProviderInfo[]>([])
 const currentProviderInfo = computed<aiNS.ProviderInfo | undefined>(() =>
   providerRegistry.value.find((p) => p.id === aiForm.value.activeProvider),
 )
+const customBaseURLProviderIds = ['custom-openai', 'custom-anthropic']
+const isCustomBaseURLProvider = computed(() => customBaseURLProviderIds.includes(aiForm.value.activeProvider))
 // 当前选中厂商的模型列表（默认或刷新后），按厂商隔离
 const modelOptionsByProvider = ref<Record<string, string[]>>({})
 const currentModelOptions = computed<string[]>(() => {
@@ -400,7 +415,7 @@ const ensureCustomEntry = (provider: string) => {
   if (!provider) return
   if (!aiForm.value.customs) aiForm.value.customs = {}
   if (!aiForm.value.customs[provider]) {
-    aiForm.value.customs[provider] = { model: '', apiKey: '' }
+    aiForm.value.customs[provider] = { model: '', apiKey: '', baseURL: '' } as any
   }
 }
 
@@ -423,6 +438,17 @@ const currentApiKey = computed<string>({
     if (!provider) return
     ensureCustomEntry(provider)
     aiForm.value.customs[provider].apiKey = val
+  },
+})
+
+// 当前激活厂商的 Base URL（用于自定义兼容 / 中转站）
+const currentBaseURL = computed<string>({
+  get: () => (aiForm.value.customs?.[aiForm.value.activeProvider] as any)?.baseURL || '',
+  set: (val) => {
+    const provider = aiForm.value.activeProvider
+    if (!provider) return
+    ensureCustomEntry(provider)
+    ;(aiForm.value.customs[provider] as any).baseURL = val.trim()
   },
 })
 
@@ -450,6 +476,11 @@ const loadAISetting = async () => {
 // 切换厂商或加载后，根据 currentModel 决定 useCustomModelId 状态
 const refreshUIStateForCurrentProvider = () => {
   const model = currentModel.value
+  if (isCustomBaseURLProvider.value) {
+    useCustomModelId.value = true
+    customModelInput.value = model
+    return
+  }
   const defaults = currentProviderInfo.value?.defaultModels || []
   const refreshed = modelOptionsByProvider.value[aiForm.value.activeProvider] || []
   const knownModels = refreshed.length > 0 ? refreshed : defaults
@@ -496,9 +527,15 @@ const handleRefreshModels = async () => {
     toast.warning(t('settings.ai.fillApiKeyFirst'))
     return
   }
+  if (isCustomBaseURLProvider.value && !currentBaseURL.value) {
+    toast.warning(t('settings.ai.fillBaseURLFirst'))
+    return
+  }
   refreshingModels.value = true
   try {
-    const models = await ListProviderModels(provider, currentApiKey.value)
+    const models = isCustomBaseURLProvider.value
+      ? await ListProviderModelsWithBaseURL(provider, currentApiKey.value, currentBaseURL.value)
+      : await ListProviderModels(provider, currentApiKey.value)
     if (models && models.length > 0) {
       modelOptionsByProvider.value[provider] = models
       toast.success(t('settings.ai.refreshSuccess'))
@@ -515,13 +552,17 @@ const handleRefreshModels = async () => {
 
 const handleTestConnection = async () => {
   const provider = aiForm.value.activeProvider
-  if (!provider || !currentModel.value || !currentApiKey.value) {
+  if (!provider || !currentModel.value || !currentApiKey.value || (isCustomBaseURLProvider.value && !currentBaseURL.value)) {
     toast.warning(t('settings.ai.testIncomplete'))
     return
   }
   testingConnection.value = true
   try {
-    await TestConnection(provider, currentModel.value, currentApiKey.value)
+    if (isCustomBaseURLProvider.value) {
+      await TestConnectionWithBaseURL(provider, currentModel.value, currentApiKey.value, currentBaseURL.value)
+    } else {
+      await TestConnection(provider, currentModel.value, currentApiKey.value)
+    }
     toast.success(t('settings.ai.testSuccess'))
   } catch (e: any) {
     console.error('Test connection failed:', e)

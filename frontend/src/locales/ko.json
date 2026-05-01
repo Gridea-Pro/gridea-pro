@@ -392,7 +392,10 @@
             "dailyLimitReached": "오늘의 무료 할당량을 모두 사용했습니다 (하루 20회). 내일 다시 시도하거나 「환경설정 → AI 설정」에서 사용자 모델로 전환해 주세요",
             "rateLimited": "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요 (분당 5회 제한)",
             "upstream429": "모델 서비스가 혼잡합니다. 잠시 후 다시 시도해 주세요",
-            "noTitle": "먼저 게시글 제목을 입력해 주세요"
+            "noTitle": "먼저 게시글 제목을 입력해 주세요",
+            "baseURL": "Base URL",
+            "baseURLDesc": "OpenAI 호환 엔드포인트를 입력하세요. 일반적으로 /v1 로 끝나며 중계 또는 자체 호스팅 서비스에 사용합니다.",
+            "fillBaseURLFirst": "먼저 Base URL을 입력해 주세요"
         },
         "network": {
             "title": "설정",
