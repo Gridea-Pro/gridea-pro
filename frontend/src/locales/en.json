@@ -14,7 +14,9 @@
         "saved": "Saved",
         "search": "Search",
         "clear": "Clear",
-        "markdownSupported": "Markdown syntax supported"
+        "markdownSupported": "Markdown syntax supported",
+        "saveSuccess": "Saved successfully",
+        "saveFailed": "Failed to save"
     },
     "nav": {
         "preview": "Preview",
@@ -398,6 +400,22 @@
             "testUploadFailed": "Test upload failed",
             "saveSuccess": "CDN settings saved",
             "saveFailed": "Failed to save CDN settings"
+        },
+        "imageHosting": {
+            "title": "Image Hosting",
+            "enable": "Enable Image Hosting",
+            "enableDesc": "Host images via S.EE image hosting",
+            "apiKey": "API Key",
+            "apiKeyPlaceholder": "Enter your S.EE API Key",
+            "apiKeyDesc": "Get your API Key from S.EE dashboard",
+            "imageBrowser": "Image Browser",
+            "refresh": "Refresh",
+            "loading": "Loading...",
+            "noImages": "No images",
+            "copied": "Image URL copied to clipboard",
+            "copyFailed": "Failed to copy",
+            "deleteSuccess": "Deleted successfully",
+            "deleteFailed": "Failed to delete"
         },
         "ai": {
             "title": "AI Settings",

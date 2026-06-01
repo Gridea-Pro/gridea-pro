@@ -14,7 +14,9 @@
     "saved": "已保存",
     "search": "搜索",
     "clear": "清除",
-    "markdownSupported": "支持 Markdown 语法"
+    "markdownSupported": "支持 Markdown 语法",
+    "saveSuccess": "保存成功",
+    "saveFailed": "保存失败"
   },
   "nav": {
     "preview": "预 览",
@@ -398,6 +400,22 @@
       "testUploadFailed": "测试上传失败",
       "saveSuccess": "CDN 配置已保存",
       "saveFailed": "CDN 配置保存失败"
+    },
+    "imageHosting": {
+      "title": "图床",
+      "enable": "启用图床",
+      "enableDesc": "通过 S.EE 图床托管图片资源",
+      "apiKey": "API Key",
+      "apiKeyPlaceholder": "输入您的 S.EE API Key",
+      "apiKeyDesc": "在 S.EE 控制台获取 API Key",
+      "imageBrowser": "图片浏览器",
+      "refresh": "刷新",
+      "loading": "加载中...",
+      "noImages": "暂无图片",
+      "copied": "图片 URL 已复制到剪贴板",
+      "copyFailed": "复制失败",
+      "deleteSuccess": "删除成功",
+      "deleteFailed": "删除失败"
     },
     "ai": {
       "title": "AI 配置",

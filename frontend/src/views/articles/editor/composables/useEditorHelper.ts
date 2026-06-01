@@ -21,6 +21,7 @@ import { toast } from '@/helpers/toast'
 import { BrowserOpenURL } from '@/wailsjs/runtime'
 import { UploadImagesFromFrontend } from '@/wailsjs/go/facade/PostFacade'
 import { OpenImageDialog } from '@/wailsjs/go/app/App'
+import { UploadImage, GetSetting } from '@/wailsjs/go/facade/ImageHostingFacade'
 import { domain } from '@/wailsjs/go/models'
 
 /** Monaco 编辑器组件 ref 类型（editor 为 shallowRef 包装） */
@@ -92,18 +93,28 @@ export function useEditorHelper() {
 
     const uploadImageFiles = async (files: domain.UploadedFile[]) => {
         try {
-            const data = await UploadImagesFromFrontend(files)
+            let urls: string[]
+            const imgSetting = await GetSetting()
+            if (imgSetting?.enabled && imgSetting?.apiKey) {
+                urls = []
+                for (const f of files) {
+                    const result = await UploadImage(f.path)
+                    urls.push(result.url)
+                }
+            } else {
+                urls = await UploadImagesFromFrontend(files)
+            }
             const editor = getEditor()
             if (!editor) return
 
-            for (const path of data) {
-                const url = `![](${path})`
+            for (const url of urls) {
+                const md = `![](${url})`
                 const position = editor.getPosition()
                 if (!position) return
                 editor.executeEdits('', [
                     {
                         range: monaco.Range.fromPositions(position),
-                        text: url,
+                        text: md,
                         forceMoveMarkers: true,
                     },
                 ])

@@ -36,8 +36,9 @@ type AppServices struct {
 	PwaSetting *PwaSettingFacade
 	CdnUpload  *CdnUploadFacade
 	AI         *AIFacade
-	OAuth      *OAuthFacade
-	Update     *UpdateFacade
+	OAuth       *OAuthFacade
+	Update      *UpdateFacade
+	ImageHosting *ImageHostingFacade
 	// Internal services for event/update handling
 	Services struct {
 		Category  *service.CategoryService
@@ -141,6 +142,10 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	deployService.SetKnownHostsPath(filepath.Join(cm.AppConfigDir(), "known_hosts"))
 	aiService := service.NewAIService(aiSettingRepo, settingRepo, aiUsageRepo)
 
+	// 2.5 Image Hosting Service (S.EE)
+	imageHostingRepo := repository.NewImageHostingRepository(appDir)
+	imageHostingService := service.NewImageHostingService(imageHostingRepo)
+
 	// 3. Wrap with Facades
 	return &AppServices{
 		Category:   NewCategoryFacade(categoryService, postRepo),
@@ -160,8 +165,9 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 		PwaSetting: NewPwaSettingFacade(pwaSettingRepo, appDir),
 		CdnUpload:  NewCdnUploadFacade(cdnUploadService),
 		AI:         NewAIFacade(aiSettingRepo, aiService),
-		OAuth:      NewOAuthFacade(oauthService),
-		Update:     NewUpdateFacade(),
+		OAuth:       NewOAuthFacade(oauthService),
+		Update:      NewUpdateFacade(),
+		ImageHosting: NewImageHostingFacade(imageHostingService),
 		Services: struct {
 			Category  *service.CategoryService
 			Post      *service.PostService
@@ -268,6 +274,8 @@ func (s *AppServices) UpdateAppDir(appDir string) {
 	// OAuth 服务是应用级单例（跨站点共享 Keychain 状态），但代理配置要跟随
 	// 当前站点——切站时更新其 settingRepo 指针
 	s.OAuth.service.SetSettingRepo(newServices.Repositories.Setting)
+	// ImageHosting repo doesn't have state that needs migration, but keep reference fresh
+	s.ImageHosting = newServices.ImageHosting
 	// Scaffold service doesn't need update generally, but good to keep in sync
 	s.Services.Scaffold = newServices.Services.Scaffold
 	s.Services.Comment = newServices.Services.Comment
