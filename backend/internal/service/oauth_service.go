@@ -79,7 +79,7 @@ func (s *OAuthService) StartOAuthFlow(ctx context.Context, providerID, lang stri
 	}
 	p := oauth.Providers[providerID]
 
-	// 某些平台（如 Gitee）要求回调地址完全匹配，使用固定端口
+	// 某些平台要求回调地址完全匹配，使用固定端口
 	listenAddr := "127.0.0.1:0"
 	if p.FixedPort > 0 {
 		listenAddr = fmt.Sprintf("127.0.0.1:%d", p.FixedPort)
@@ -126,7 +126,7 @@ func (s *OAuthService) RevokeToken(ctx context.Context, providerID string) error
 
 // GetAllStatuses 获取所有平台的连接状态
 func (s *OAuthService) GetAllStatuses(ctx context.Context) map[string]PlatformStatus {
-	platforms := []string{"github", "netlify", "vercel", "gitee", "coding", "sftp"}
+	platforms := []string{"github", "netlify", "vercel", "coding", "sftp"}
 	result := make(map[string]PlatformStatus, len(platforms))
 	for _, p := range platforms {
 		result[p] = s.getStatus(p)
@@ -325,7 +325,7 @@ func (s *OAuthService) runCallbackServer(ctx context.Context, listener net.Liste
 // sensitiveFieldsByPlatform 同 domain.SensitiveFields，此处冗余以避免包循环引用
 var sensitiveFieldsByPlatform = map[string][]string{
 	"github":  {"token"},
-	"gitee":   {"token"},
+
 	"coding":  {"token"},
 	"netlify": {"netlifyAccessToken"},
 	"vercel":  {"token"},

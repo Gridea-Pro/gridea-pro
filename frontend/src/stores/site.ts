@@ -83,6 +83,7 @@ const defaultThemeConfig: ITheme = {
 const defaultSetting: ISetting = {
   platform: 'github',
   platformConfigs: {},
+  enabledPlatforms: ['github'],
 }
 
 // 默认评论设置

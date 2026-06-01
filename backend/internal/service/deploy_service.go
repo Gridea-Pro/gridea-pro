@@ -10,6 +10,7 @@ import (
 	"gridea-pro/backend/internal/notify"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -88,6 +89,7 @@ func (s *DeployService) DeployToRemote(ctx context.Context) (err error) {
 	// 通知用闭包变量：声明在 defer 之前，部署进展中再填实际值。
 	startedAt := time.Now()
 	var platform, siteDomain string
+	var deployedPlatforms []string
 
 	// Ensure we reset the flag when done
 	defer func() {
@@ -96,8 +98,15 @@ func (s *DeployService) DeployToRemote(ctx context.Context) (err error) {
 		s.activeCancel = nil
 		s.mu.Unlock()
 		cancelFn()
+		// 多平台时使用汇总信息
+		notifyPlatform := platform
+		notifyDomain := siteDomain
+		if len(deployedPlatforms) > 1 {
+		notifyPlatform = strings.Join(deployedPlatforms, " / ")
+		notifyDomain = fmt.Sprintf("%d 个平台", len(deployedPlatforms))
+		}
 		// 部署结束（成功 / 失败 / 取消）后发系统通知中心；偏好关闭则跳过。
-		s.notifyDeployResult(err, time.Since(startedAt), platform, siteDomain)
+		s.notifyDeployResult(err, time.Since(startedAt), notifyPlatform, notifyDomain)
 	}()
 
 	s.log(ctx, "Starting deployment check...")
@@ -115,10 +124,12 @@ func (s *DeployService) DeployToRemote(ctx context.Context) (err error) {
 		creds := s.oauthService.GetAllCredentials()
 		setting.InjectCredentials(creds)
 	}
-	platform = setting.Platform
-	siteDomain = setting.Domain()
+	platformsToDeploy := setting.EnabledPlatforms
+	if len(platformsToDeploy) == 0 {
+		platformsToDeploy = []string{setting.Platform}
+	}
 
-	s.log(ctx, fmt.Sprintf("Deploying to domain: %s", setting.Domain()))
+	s.log(ctx, fmt.Sprintf("Platforms to deploy: %v", platformsToDeploy))
 
 	// 2. Render Site
 	if s.renderer != nil {
@@ -158,41 +169,61 @@ func (s *DeployService) DeployToRemote(ctx context.Context) (err error) {
 		_ = os.MkdirAll(outputDir, 0755) // Ensure it exists before Git operations if not already
 	}
 
-	// 4. Instantiate strategy based on platform
-	var provider deploy.Provider
-	switch setting.Platform {
-	case "github", "gitee", "coding":
-		provider = deploy.NewGitProvider()
-	case "vercel":
-		proxyURL := ""
-		if setting.ProxyEnabled {
-			proxyURL = setting.ProxyURL
-		}
-		provider = deploy.NewVercelProvider(proxyURL)
-	case "netlify":
-		proxyURL := ""
-		if setting.ProxyEnabled {
-			proxyURL = setting.ProxyURL
-		}
-		provider = deploy.NewNetlifyProvider(proxyURL)
-	case "sftp":
-		if setting.TransferProtocol() == "ftp" {
-			provider = deploy.NewFtpProvider()
-		} else {
-			provider = deploy.NewSftpProviderWithKnownHosts(s.knownHostsPath)
-		}
-	default:
-		provider = deploy.NewGitProvider()
-	}
-
-	// 5. Wrap log function
+	// 4. Wrap log function
 	logger := func(msg string) {
 		s.log(ctx, msg)
 	}
 
-	// 6. Execute deployment (without buildSite callback)
-	if err := provider.Deploy(ctx, outputDir, &setting, logger); err != nil {
-		return err
+	// 5. Deploy to each enabled platform
+	var deployErrors []string
+	for _, p := range platformsToDeploy {
+		s.log(ctx, fmt.Sprintf("Deploying to %s...", p))
+
+		// Clone setting and set active platform for per-platform config access
+		platformSetting := setting.Clone()
+		platformSetting.Platform = p
+
+		platform = platformSetting.Platform
+		siteDomain = platformSetting.Domain()
+
+		var provider deploy.Provider
+		switch platform {
+		case "github", "coding":
+			provider = deploy.NewGitProvider()
+		case "vercel":
+			proxyURL := ""
+			if platformSetting.ProxyEnabled {
+				proxyURL = platformSetting.ProxyURL
+			}
+			provider = deploy.NewVercelProvider(proxyURL)
+		case "netlify":
+			proxyURL := ""
+			if platformSetting.ProxyEnabled {
+				proxyURL = platformSetting.ProxyURL
+			}
+			provider = deploy.NewNetlifyProvider(proxyURL)
+		case "sftp":
+			if platformSetting.TransferProtocol() == "ftp" {
+				provider = deploy.NewFtpProvider()
+			} else {
+				provider = deploy.NewSftpProviderWithKnownHosts(s.knownHostsPath)
+			}
+		default:
+			provider = deploy.NewGitProvider()
+		}
+
+		if err := provider.Deploy(ctx, outputDir, &platformSetting, logger); err != nil {
+			errMsg := fmt.Sprintf("%s: %v", platform, err)
+			s.log(ctx, fmt.Sprintf("❌ %s 部署失败: %v", platform, err))
+			deployErrors = append(deployErrors, errMsg)
+		} else {
+			s.log(ctx, fmt.Sprintf("✅ %s 部署成功", platform))
+			deployedPlatforms = append(deployedPlatforms, platform)
+		}
+	}
+
+	if len(deployErrors) > 0 {
+		return fmt.Errorf("部分平台部署失败: %s", strings.Join(deployErrors, "; "))
 	}
 
 	return nil

@@ -491,7 +491,6 @@
             "githubDesc": "GitHub Pagesで無料ホスティング",
             "netlifyDesc": "自動CI/CD、カスタムドメイン対応",
             "vercelDesc": "エッジネットワーク、フロントエンド向け",
-            "giteeDesc": "中国国内で高速アクセス",
             "codingDesc": "Tencent Cloud、中国国内で安定",
             "sftpDesc": "自分のサーバーに直接デプロイ"
         },

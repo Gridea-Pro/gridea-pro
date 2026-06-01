@@ -10,13 +10,15 @@ import (
 )
 
 // Setting 系统设置
-// platform 标识当前启用的平台，platformConfigs 按平台独立存储所有配置
+// platform 标识默认/主平台（向后兼容），platformConfigs 按平台独立存储所有配置，
+// enabledPlatforms 列出当前启用的平台（部署时会部署到所有已启用平台）。
 // 注意：敏感字段（token/password/privateKey）存储于系统 Keychain，不序列化到 JSON
 type Setting struct {
-	Platform        string                    `json:"platform"`
-	PlatformConfigs map[string]map[string]any `json:"platformConfigs,omitempty"`
-	ProxyEnabled    bool                      `json:"proxyEnabled"`
-	ProxyURL        string                    `json:"proxyURL"`
+	Platform         string                    `json:"platform"`
+	PlatformConfigs  map[string]map[string]any `json:"platformConfigs,omitempty"`
+	EnabledPlatforms []string                  `json:"enabledPlatforms,omitempty"`
+	ProxyEnabled     bool                      `json:"proxyEnabled"`
+	ProxyURL         string                    `json:"proxyURL"`
 	// NotifyOnDeployComplete 部署完成（成功 / 失败 / 取消）后是否弹系统通知中心通知。
 	// 用指针区分"未设置（默认开）"和"显式关闭"，避免新增字段对老用户默认变 false。
 	NotifyOnDeployComplete *bool `json:"notifyOnDeployComplete,omitempty"`
@@ -34,7 +36,7 @@ func (s *Setting) IsDeployNotifyEnabled() bool {
 // key: 平台 ID，value: 字段名列表
 var SensitiveFields = map[string][]string{
 	"github":  {"token"},
-	"gitee":   {"token"},
+
 	"coding":  {"token"},
 	"netlify": {"netlifyAccessToken"},
 	"vercel":  {"token"},
@@ -95,7 +97,7 @@ func (s *Setting) InjectCredentials(credentials map[string]string) {
 // platformFieldOrder 定义各平台配置项的输出顺序，与前端表单顺序一致
 var platformFieldOrder = map[string][]string{
 	"github":  {"domain", "repository", "branch", "username", "email", "tokenUsername", "token", "cname"},
-	"gitee":   {"domain", "repository", "branch", "username", "email", "tokenUsername", "token", "cname"},
+
 	"coding":  {"domain", "repository", "branch", "username", "email", "tokenUsername", "token", "cname"},
 	"netlify": {"domain", "netlifySiteId", "netlifyAccessToken"},
 	"vercel":  {"domain", "repository", "token", "cname"},
@@ -177,6 +179,13 @@ func (s Setting) MarshalJSON() ([]byte, error) {
 			}
 		}
 		buf.WriteByte('}')
+	}
+
+	// 序列化 enabledPlatforms
+	if len(s.EnabledPlatforms) > 0 {
+		buf.WriteString(`,"enabledPlatforms":`)
+		ep, _ := json.Marshal(s.EnabledPlatforms)
+		buf.Write(ep)
 	}
 
 	// 序列化代理设置
@@ -323,7 +332,7 @@ func (s *Setting) AllowInsecureTLS() bool {
 
 // Validate 校验配置数据
 func (s *Setting) Validate() error {
-	if s.Platform == "" {
+	if s.Platform == "" && len(s.EnabledPlatforms) == 0 {
 		return errors.New("platform is required")
 	}
 	return nil
@@ -353,6 +362,10 @@ func (s *Setting) SetPlatformConfig(platform, key string, value any) {
 // 测试连接 / 模板渲染）都应先 Clone 再改。
 func (s Setting) Clone() Setting {
 	cp := s
+	if len(s.EnabledPlatforms) > 0 {
+		cp.EnabledPlatforms = make([]string, len(s.EnabledPlatforms))
+		copy(cp.EnabledPlatforms, s.EnabledPlatforms)
+	}
 	if s.PlatformConfigs != nil {
 		cp.PlatformConfigs = make(map[string]map[string]any, len(s.PlatformConfigs))
 		for platform, inner := range s.PlatformConfigs {

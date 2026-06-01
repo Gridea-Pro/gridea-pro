@@ -63,57 +63,6 @@ func ensureGitHubRepo(client *http.Client, token, username string) (map[string]s
 	}
 	return result, nil
 }
-
-// ensureGiteeRepo 确保用户的 Gitee Pages 仓库（username）存在
-func ensureGiteeRepo(client *http.Client, token, username string) (map[string]string, error) {
-	repoName := strings.ToLower(username)
-	result := map[string]string{"repository": repoName}
-
-	// 1. 检查仓库是否存在
-	checkURL := fmt.Sprintf("https://gitee.com/api/v5/repos/%s/%s?access_token=%s", username, repoName, token)
-	req, _ := http.NewRequest(http.MethodGet, checkURL, nil)
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "Gridea-Pro")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return result, fmt.Errorf("check repo failed: %w", err)
-	}
-	resp.Body.Close()
-
-	if resp.StatusCode == http.StatusOK {
-		return result, nil
-	}
-	if resp.StatusCode != http.StatusNotFound {
-		return result, fmt.Errorf("unexpected status when checking repo: %d", resp.StatusCode)
-	}
-
-	// 2. 创建新仓库
-	payload := map[string]interface{}{
-		"access_token": token,
-		"name":         repoName,
-		"description":  "My blog powered by Gridea Pro",
-		"private":      false,
-		"auto_init":    true,
-	}
-	body, _ := json.Marshal(payload)
-	createReq, _ := http.NewRequest(http.MethodPost, "https://gitee.com/api/v5/user/repos", bytes.NewReader(body))
-	createReq.Header.Set("Content-Type", "application/json")
-	createReq.Header.Set("Accept", "application/json")
-	createReq.Header.Set("User-Agent", "Gridea-Pro")
-
-	createResp, err := client.Do(createReq)
-	if err != nil {
-		return result, fmt.Errorf("create repo failed: %w", err)
-	}
-	defer createResp.Body.Close()
-
-	if createResp.StatusCode != http.StatusCreated && createResp.StatusCode != http.StatusOK {
-		return result, fmt.Errorf("create repo failed with status %d", createResp.StatusCode)
-	}
-	return result, nil
-}
-
 // ensureNetlifySite 确保用户有一个可用的 Netlify Site
 // 优先查找现有 sites 中名称包含 "gridea" 的，找不到则创建一个
 // 返回 netlifySiteId 和 domain

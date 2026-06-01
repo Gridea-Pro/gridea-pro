@@ -491,7 +491,6 @@
             "githubDesc": "Hosting gratuito su GitHub Pages",
             "netlifyDesc": "CI/CD auto con dominio e HTTPS",
             "vercelDesc": "Rete edge, ideale per frontend",
-            "giteeDesc": "Accesso veloce in Cina",
             "codingDesc": "Tencent Cloud, stabile in Cina",
             "sftpDesc": "Deploy diretto sul tuo server"
         },

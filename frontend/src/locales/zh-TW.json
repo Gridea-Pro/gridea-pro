@@ -491,7 +491,6 @@
             "githubDesc": "部署到 GitHub Pages，免費託管靜態部落格",
             "netlifyDesc": "自動 CI/CD，支援自訂網域與 HTTPS",
             "vercelDesc": "邊緣網路加速，前端部署首選",
-            "giteeDesc": "中國境內存取速度更快，無需代理",
             "codingDesc": "騰訊旗下，中國境內穩定存取",
             "sftpDesc": "直接部署到你自己的伺服器"
         },

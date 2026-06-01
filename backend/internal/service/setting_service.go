@@ -100,18 +100,15 @@ func (s *SettingService) RemoteDetect(ctx context.Context, setting domain.Settin
 	message := ""
 
 	switch setting.Platform {
-	case "github", "gitee", "coding":
+	case "github", "coding":
 		// 使用 go-git ls-remote 验证认证
 		repoUrl := strings.TrimSpace(setting.Repository())
 		repoUrl = strings.TrimPrefix(repoUrl, "https://")
 		repoUrl = strings.TrimPrefix(repoUrl, "http://")
 		repoUrl = strings.TrimPrefix(repoUrl, "git@github.com:")
-		repoUrl = strings.TrimPrefix(repoUrl, "git@gitee.com:")
 
 		hostname := "github.com"
 		switch setting.Platform {
-		case "gitee":
-			hostname = "gitee.com"
 		case "coding":
 			hostname = "e.coding.net"
 		}

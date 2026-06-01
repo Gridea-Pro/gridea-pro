@@ -1,11 +1,13 @@
 package app
 
 import (
+	"archive/zip"
 	"context"
 	"fmt"
 	"gridea-pro/backend/internal/config"
 	"gridea-pro/backend/internal/facade"
 	"gridea-pro/backend/internal/service"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -475,6 +477,107 @@ func (a *App) handleSiteReload(_ ...interface{}) {
 	data := a.LoadSite()
 	// 发送给前端更新 Store
 	runtime.EventsEmit(a.ctx, EventAppSiteLoaded, data)
+}
+
+// ExportAsZip 渲染站点并将 output 目录打包为 zip，弹出另存为对话框供用户选择保存位置。
+// 返回保存路径（用户取消时返回空字符串）。
+func (a *App) ExportAsZip() (string, error) {
+	if err := a.services.Renderer.RenderAll(); err != nil {
+		return "", fmt.Errorf("渲染失败: %w", err)
+	}
+
+	outputDir := filepath.Join(a.appDir, "output")
+	zipPath := filepath.Join(os.TempDir(), "gridea-export.zip")
+
+	if err := zipDirectory(outputDir, zipPath); err != nil {
+		return "", fmt.Errorf("打包失败: %w", err)
+	}
+
+	opts := runtime.SaveDialogOptions{
+		Title:           "导出站点",
+		DefaultFilename: "gridea-site.zip",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "ZIP 文件 (*.zip)", Pattern: "*.zip"},
+		},
+	}
+	savePath, err := runtime.SaveFileDialog(a.ctx, opts)
+	if err != nil {
+		os.Remove(zipPath)
+		return "", err
+	}
+	if savePath == "" {
+		os.Remove(zipPath)
+		return "", nil
+	}
+
+	if err := copyFile(zipPath, savePath); err != nil {
+		os.Remove(zipPath)
+		return "", fmt.Errorf("保存失败: %w", err)
+	}
+	os.Remove(zipPath)
+	return savePath, nil
+}
+
+// zipDirectory 将 srcDir 目录下所有文件递归压缩到 dstZip。
+func zipDirectory(srcDir, dstZip string) error {
+	f, err := os.Create(dstZip)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	w := zip.NewWriter(f)
+	defer w.Close()
+
+	err = filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		rel, err := filepath.Rel(srcDir, path)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+		header.Name = rel
+		header.Method = zip.Deflate
+		wr, err := w.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+		src, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+		_, err = io.Copy(wr, src)
+		return err
+	})
+	return err
+}
+
+// copyFile 拷贝文件（用于将临时 zip 移动到用户选择的保存路径）。
+func copyFile(src, dst string) error {
+	s, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer s.Close()
+
+	d, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+
+	_, err = io.Copy(d, s)
+	return err
 }
 
 func (a *App) handlePreviewSite(_ ...interface{}) {
