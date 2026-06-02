@@ -47,7 +47,7 @@ func listPostsHandler(s *service.PostService) server.ToolHandlerFunc {
 func getPostTool() mcp.Tool {
 	return mcp.NewTool("get_post",
 		mcp.WithDescription("Get full content of a post by filename"),
-		mcp.WithString("filename", mcp.Description("The filename of the post (e.g. 'hello-world.md')"), mcp.Required()),
+		mcp.WithString("filename", mcp.Description("Filename of the post WITHOUT the .md extension (e.g. 'hello-world', not 'hello-world.md')"), mcp.Required()),
 	)
 }
 
@@ -57,6 +57,7 @@ func getPostHandler(s *service.PostService) server.ToolHandlerFunc {
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("filename is required: %v", err)), nil
 		}
+		filename = normalizeFileName(filename)
 
 		post, err := s.GetByFileName(ctx, filename)
 		if err != nil {
@@ -74,9 +75,8 @@ func createPostTool() mcp.Tool {
 		mcp.WithString("title", mcp.Description("Post title"), mcp.Required()),
 		mcp.WithString("content", mcp.Description("Post markdown content"), mcp.Required()),
 		mcp.WithString("date", mcp.Description("Publish date (YYYY-MM-DD HH:mm:ss)")),
-		mcp.WithString("fileName", mcp.Description("Custom filename (optional)")),
-		mcp.WithString("tags", mcp.Description("Comma separated tags or JSON array string")), // Simplification: use string or deal with array complexity
-		// Actually mcp-go supports explicit types. Let's use array if possible or just string for simplicity in handlers
+		mcp.WithString("fileName", mcp.Description("Custom filename WITHOUT the .md extension (optional; .md will be appended automatically)")),
+		mcp.WithString("tags", mcp.Description("Comma-separated tag names, e.g. 'tag1, tag2, tag3'")),
 		mcp.WithString("category", mcp.Description("Category name (one category per post)")),
 		mcp.WithBoolean("published", mcp.Description("Whether to publish immediately")),
 	)
@@ -109,7 +109,7 @@ func createPostHandler(s *service.PostService) server.ToolHandlerFunc {
 			post.CreatedAt = time.Now()
 		}
 
-		post.FileName = request.GetString("fileName", "")
+		post.FileName = normalizeFileName(request.GetString("fileName", ""))
 		post.Published = request.GetBool("published", true)
 
 		if v := request.GetString("tags", ""); v != "" {
@@ -139,10 +139,10 @@ func createPostHandler(s *service.PostService) server.ToolHandlerFunc {
 func updatePostTool() mcp.Tool {
 	return mcp.NewTool("update_post",
 		mcp.WithDescription("Update an existing post"),
-		mcp.WithString("filename", mcp.Description("Filename of the post to update"), mcp.Required()),
+		mcp.WithString("filename", mcp.Description("Filename of the post to update, WITHOUT the .md extension"), mcp.Required()),
 		mcp.WithString("title", mcp.Description("New title")),
 		mcp.WithString("content", mcp.Description("New content")),
-		mcp.WithString("tags", mcp.Description("New tags (comma separated)")),
+		mcp.WithString("tags", mcp.Description("New tags (comma separated, e.g. 'tag1, tag2, tag3')")),
 		mcp.WithBoolean("published", mcp.Description("Update publish status")),
 	)
 }
@@ -153,6 +153,7 @@ func updatePostHandler(s *service.PostService) server.ToolHandlerFunc {
 		if err != nil {
 			return mcp.NewToolResultError("filename is required"), nil
 		}
+		filename = normalizeFileName(filename)
 
 		// First load existing post
 		existing, err := s.GetByFileName(ctx, filename)
@@ -210,7 +211,7 @@ func updatePostHandler(s *service.PostService) server.ToolHandlerFunc {
 func deletePostTool() mcp.Tool {
 	return mcp.NewTool("delete_post",
 		mcp.WithDescription("Delete a post"),
-		mcp.WithString("filename", mcp.Description("Filename of the post to delete"), mcp.Required()),
+		mcp.WithString("filename", mcp.Description("Filename of the post to delete, WITHOUT the .md extension"), mcp.Required()),
 		mcp.WithBoolean("confirm", mcp.Description("Set to true to confirm deletion")),
 	)
 }
@@ -221,6 +222,7 @@ func deletePostHandler(s *service.PostService) server.ToolHandlerFunc {
 		if err != nil {
 			return mcp.NewToolResultError("filename is required"), nil
 		}
+		filename = normalizeFileName(filename)
 
 		confirm := request.GetBool("confirm", false)
 		if !confirm {
@@ -244,6 +246,23 @@ func deletePostHandler(s *service.PostService) server.ToolHandlerFunc {
 func jsonify(v interface{}) string {
 	b, _ := json.MarshalIndent(v, "", "  ")
 	return string(b)
+}
+
+// normalizeFileName strips any trailing ".md" extension(s) from a filename
+// provided by an MCP caller. The post repository always appends ".md" to
+// FileName when writing to disk (see post_repo.go:save), so callers must
+// pass the bare name (e.g. "hello-world", not "hello-world.md").
+//
+// Without this normalization, a caller passing "hello-world.md" would
+// produce a file "hello-world.md.md" on disk and a cache entry keyed by
+// "hello-world.md" — these would silently drift, causing update_post /
+// get_post / delete_post with filename="hello-world.md" to either miss
+// the cache entry or target the wrong file. See issues #117 and #119.
+func normalizeFileName(name string) string {
+	for strings.HasSuffix(name, ".md") {
+		name = strings.TrimSuffix(name, ".md")
+	}
+	return name
 }
 
 // generateSlug 从标题生成 URL-safe 的文件名
