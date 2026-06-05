@@ -36,6 +36,7 @@
     "@dicebear/core": "^9.2.4",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
+    "@tabler/icons-vue": "^3.44.0",
     "@tiptap/core": "^3.24.0",
     "@tiptap/extension-bubble-menu": "^3.24.0",
     "@tiptap/extension-character-count": "^3.24.0",

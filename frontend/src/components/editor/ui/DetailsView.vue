@@ -23,7 +23,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NodeViewWrapper, NodeViewContent, nodeViewProps } from '@tiptap/vue-3'
-import { ChevronRight } from 'lucide-vue-next'
+import { IconChevronRight as ChevronRight } from '@tabler/icons-vue'
 
 const props = defineProps(nodeViewProps)
 const { t } = useI18n()

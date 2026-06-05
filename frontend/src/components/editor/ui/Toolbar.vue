@@ -54,7 +54,7 @@
       <ToolbarButton :title="t('editor.aiPolish')" @click="emit('polish')"><Sparkles /></ToolbarButton>
     </div>
 
-    <div class="tb-spacer" />
+    <div class="tb-sep" />
 
     <div class="tb-group">
       <ToolbarButton :title="t('editor.rich')" :active="mode === 'rich'" @click="emit('update:mode', 'rich')"><Eye /></ToolbarButton>
@@ -73,13 +73,14 @@ import ToolbarButton from './ToolbarButton.vue'
 import ColorPicker from './ColorPicker.vue'
 import EmojiPicker from './EmojiPicker.vue'
 import {
-  Undo2, Redo2, Bold, Italic, Strikethrough, Code, Code2,
-  Heading1, Heading2, Heading3, Highlighter,
-  SubscriptIcon, SuperscriptIcon,
-  List, ListOrdered, ListChecks, Quote, Minus,
-  Link as LinkIcon, Image as ImageIcon, Table as TableIcon,
-  Sparkles, Eye, Columns2, FileCode2,
-} from 'lucide-vue-next'
+  IconArrowBackUp as Undo2, IconArrowForwardUp as Redo2, IconBold as Bold, IconItalic as Italic,
+  IconStrikethrough as Strikethrough, IconCode as Code, IconSourceCode as Code2,
+  IconH1 as Heading1, IconH2 as Heading2, IconH3 as Heading3, IconHighlight as Highlighter,
+  IconSubscript as SubscriptIcon, IconSuperscript as SuperscriptIcon,
+  IconList as List, IconListNumbers as ListOrdered, IconListCheck as ListChecks, IconBlockquote as Quote, IconMinus as Minus,
+  IconLink as LinkIcon, IconPhoto as ImageIcon, IconTable as TableIcon,
+  IconSparkles as Sparkles, IconEye as Eye, IconColumns as Columns2, IconFileCode as FileCode2,
+} from '@tabler/icons-vue'
 
 const props = defineProps<{ editor: Editor | null | undefined; mode: EditorMode }>()
 const emit = defineEmits<{
@@ -145,10 +146,12 @@ function active(nameOrAttrs: string | Record<string, unknown>, attrs?: Record<st
 .editor-toolbar {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 2px;
   padding: 6px 8px;
-  border-bottom: 1px solid var(--editor-border);
+  /* 更淡的细分隔线（原 --editor-border 太实） */
+  border-bottom: 1px solid color-mix(in srgb, var(--editor-border) 45%, transparent);
   background: var(--editor-bg);
   position: sticky;
   top: 0;
@@ -164,8 +167,5 @@ function active(nameOrAttrs: string | Record<string, unknown>, attrs?: Record<st
   height: 18px;
   margin: 0 4px;
   background: var(--editor-border);
-}
-.tb-spacer {
-  flex: 1;
 }
 </style>

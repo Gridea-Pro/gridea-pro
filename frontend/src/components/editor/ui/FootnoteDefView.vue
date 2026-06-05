@@ -33,7 +33,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
-import { CornerLeftUp } from 'lucide-vue-next'
+import { IconCornerUpLeft as CornerLeftUp } from '@tabler/icons-vue'
 import { footnoteNumber } from './footnoteNumber'
 
 const props = defineProps(nodeViewProps)

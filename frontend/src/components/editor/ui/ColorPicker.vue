@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Baseline, Ban } from 'lucide-vue-next'
+import { IconLetterA as Baseline, IconBan as Ban } from '@tabler/icons-vue'
 import { Chrome } from '@ckpack/vue-color'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 

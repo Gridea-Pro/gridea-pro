@@ -21,6 +21,44 @@
   word-break: break-word;
 }
 
+/* ── 文章模式排版（is-post）：单栏限宽居中；双栏各栏填满分栏 ──────────────
+   放在全局 editor.css（非 scoped），可稳定命中 TipTap 动态生成的 .ProseMirror，
+   并按根元素上的 mode-* 类区分单栏 / 双栏 / 源码。 */
+
+/* 顶部工具栏：固定栏不被压缩；居中与底分隔线由 Toolbar.vue 自身样式负责 */
+.gridea-tiptap .editor-toolbar {
+  flex-shrink: 0;
+}
+
+/* Tabler 图标统一描边 1.75（默认 2 偏粗、1.5 偏细）。Tabler 组件渲染时带 .tabler-icon 类；
+   全局规则即可覆盖编辑器内所有 Tabler 图标，含浮层/菜单（斜杠/气泡/拖拽柄等被 portal 到 body 的） */
+.tabler-icon {
+  stroke-width: 1.75;
+}
+
+/* 单栏 rich：正文限宽居中 */
+.gridea-tiptap.is-post.mode-rich .ProseMirror {
+  max-width: 740px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 单栏 source：源码限宽居中 */
+.gridea-tiptap.is-post.mode-source .source-editor {
+  max-width: 740px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 双栏：两栏各自留横向内边距、内容铺满分栏（不再 740 居中，避免大片留白） */
+.gridea-tiptap.mode-split .rich-pane {
+  padding-left: 28px;
+  padding-right: 28px;
+}
+.gridea-tiptap.mode-split .source-pane {
+  padding-left: 12px;
+}
+
 .gridea-tiptap .ProseMirror > * + * {
   margin-top: 0.85em;
 }

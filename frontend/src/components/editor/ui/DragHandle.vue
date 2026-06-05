@@ -43,7 +43,7 @@ import { computed, ref } from 'vue'
 import type { Editor } from '@tiptap/vue-3'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { DragHandle } from '@tiptap/extension-drag-handle-vue-3'
-import { Copy, Eraser, GripVertical, Trash2 } from 'lucide-vue-next'
+import { IconCopy as Copy, IconEraser as Eraser, IconGripVertical as GripVertical, IconTrash as Trash2 } from '@tabler/icons-vue'
 import { useI18n } from 'vue-i18n'
 import {
   DropdownMenu,

@@ -5,10 +5,14 @@
  */
 import type { Editor, Range } from '@tiptap/core'
 import {
-  Heading1, Heading2, Heading3, List, ListOrdered, ListChecks, Quote, Code2, Minus,
-  Table as TableIcon, Image as ImageIcon, Link as LinkIcon, Sigma, FunctionSquare,
-  SeparatorHorizontal, Workflow, ListCollapse, Asterisk,
-} from 'lucide-vue-next'
+  IconH1 as Heading1, IconH2 as Heading2, IconH3 as Heading3, IconList as List,
+  IconListNumbers as ListOrdered, IconListCheck as ListChecks, IconBlockquote as Quote,
+  IconSourceCode as Code2, IconMinus as Minus,
+  IconTable as TableIcon, IconPhoto as ImageIcon, IconLink as LinkIcon,
+  IconSum as Sigma, IconMathFunction as FunctionSquare,
+  IconSeparatorHorizontal as SeparatorHorizontal, IconSitemap as Workflow,
+  IconListDetails as ListCollapse, IconAsterisk as Asterisk,
+} from '@tabler/icons-vue'
 import type { Component } from 'vue'
 
 export interface SlashItem {

@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Smile } from 'lucide-vue-next'
+import { IconMoodSmile as Smile } from '@tabler/icons-vue'
 import EmojiPicker, { type EmojiExt } from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'

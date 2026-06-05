@@ -29,7 +29,7 @@
 import { computed, ref, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NodeViewWrapper, NodeViewContent, nodeViewProps } from '@tiptap/vue-3'
-import { Copy, Check } from 'lucide-vue-next'
+import { IconCopy as Copy, IconCheck as Check } from '@tabler/icons-vue'
 import { CODE_LANGUAGES } from '../extensions/CodeBlock'
 
 const props = defineProps(nodeViewProps)

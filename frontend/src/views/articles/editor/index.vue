@@ -9,33 +9,37 @@
         <!-- Content -->
         <div class="page-content">
             <div class="editor-wrapper">
-                <input ref="titleInputRef" v-model="form.title"
-                    class="post-title py-4 border-none pt-10 pb-2 bg-transparent text-xl focus:outline-none focus:ring-0 text-foreground placeholder:text-muted-foreground/50 font-bold"
-                    :placeholder="$t('article.title')" @change="handleTitleChange" @focus="handleTitleFocus"
-                    @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)" />
-
-                <div class="post-meta">
-                    <span class="meta-item">
-                        <CalendarIcon class="meta-icon" />
-                        {{ form.createdAt.isValid() ? form.createdAt.format('YYYY-MM-DD') : '' }}
-                    </span>
-                    <span v-if="form.category" class="meta-item">
-                        <FolderIcon class="meta-icon" />
-                        {{ form.category }}
-                    </span>
-                    <span v-if="form.tags.length" class="meta-item">
-                        <TagIcon class="meta-icon" />
-                        {{ form.tags.join(', ') }}
-                    </span>
-                    <span class="meta-item meta-status" :class="form.published ? 'text-emerald-500' : 'text-amber-500'">
-                        {{ form.published ? $t('article.published') : $t('article.draft') }}
-                    </span>
-                </div>
-
+                <!-- 标题/元信息通过 #header 插槽渲染到编辑器工具栏「下方」的滚动区，
+                     使工具栏固定在顶部、其余随内容滚动（贴合 editor-vue 母版布局）。 -->
                 <TiptapEditor ref="tiptapEditor" v-model:value="form.content" :is-post-page="true"
                     :placeholder="$t('article.editorPlaceholder')"
                     class="post-editor" @focus="handleEditorFocus"
-                    @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)"></TiptapEditor>
+                    @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)">
+                    <template #header>
+                        <input ref="titleInputRef" v-model="form.title"
+                            class="post-title py-4 border-none pt-10 pb-2 bg-transparent text-xl focus:outline-none focus:ring-0 text-foreground placeholder:text-muted-foreground/50 font-bold"
+                            :placeholder="$t('article.title')" @change="handleTitleChange" @focus="handleTitleFocus"
+                            @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)" />
+
+                        <div class="post-meta">
+                            <span class="meta-item">
+                                <CalendarIcon class="meta-icon" />
+                                {{ form.createdAt.isValid() ? form.createdAt.format('YYYY-MM-DD') : '' }}
+                            </span>
+                            <span v-if="form.category" class="meta-item">
+                                <FolderIcon class="meta-icon" />
+                                {{ form.category }}
+                            </span>
+                            <span v-if="form.tags.length" class="meta-item">
+                                <TagIcon class="meta-icon" />
+                                {{ form.tags.join(', ') }}
+                            </span>
+                            <span class="meta-item meta-status" :class="form.published ? 'text-emerald-500' : 'text-amber-500'">
+                                {{ form.published ? $t('article.published') : $t('article.draft') }}
+                            </span>
+                        </div>
+                    </template>
+                </TiptapEditor>
             </div>
 
             <div class="footer-info">
@@ -299,15 +303,17 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     flex: 1;
+    /* 关键：flex 列子项默认 min-height:auto 会被内容撑高，导致编辑器无法限定高度、正文无法滚动 */
+    min-height: 0;
 
     .post-title {
-        width: 728px;
+        width: 740px;
         margin: 0 auto;
         display: block;
     }
 
     .post-meta {
-        width: 728px;
+        width: 740px;
         margin: 0 auto;
         display: flex;
         align-items: center;
@@ -339,24 +345,11 @@ onUnmounted(() => {
         flex: 1;
         min-height: 0;
 
+        /* 限宽/居中/分栏排版统一在编辑器母版自身的 editor.css 里按 mode 处理
+           （那里是非 scoped 全局样式，能稳定命中 TipTap 动态生成的 .ProseMirror，
+            不受跨组件 :deep + data-v 匹配的影响）。此处只负责把编辑器撑满高度。 */
         :deep(.gridea-tiptap) {
             height: 100%;
-        }
-
-        :deep(.gridea-tiptap .editor-toolbar) {
-            max-width: 760px;
-            margin: 0 auto;
-            background: transparent;
-        }
-
-        :deep(.gridea-tiptap .ProseMirror) {
-            max-width: 728px;
-            margin: 0 auto;
-        }
-
-        :deep(.gridea-tiptap .source-pane) {
-            max-width: 728px;
-            margin: 0 auto;
         }
     }
 }

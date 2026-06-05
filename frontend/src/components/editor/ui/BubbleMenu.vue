@@ -84,14 +84,14 @@ import type { Editor, ChainedCommands } from '@tiptap/vue-3'
 import { BubbleMenu } from '@tiptap/vue-3/menus'
 import type { EditorState } from '@tiptap/pm/state'
 import {
-  Bold,
-  Italic,
-  Strikethrough,
-  Code,
-  Highlighter,
-  Link as LinkIcon,
-  Sparkles,
-} from 'lucide-vue-next'
+  IconBold as Bold,
+  IconItalic as Italic,
+  IconStrikethrough as Strikethrough,
+  IconCode as Code,
+  IconHighlight as Highlighter,
+  IconLink as LinkIcon,
+  IconSparkles as Sparkles,
+} from '@tabler/icons-vue'
 
 const props = defineProps<{ editor: Editor | null }>()
 const emit = defineEmits<{

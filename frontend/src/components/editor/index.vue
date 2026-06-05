@@ -1,5 +1,5 @@
 <template>
-  <div class="gridea-tiptap" :class="{ 'is-post': isPostPage }">
+  <div class="gridea-tiptap" :class="[`mode-${mode}`, { 'is-post': isPostPage }]">
     <Toolbar
       :editor="editor"
       :mode="mode"
@@ -11,15 +11,21 @@
       @update:mode="setMode"
     />
 
-    <div class="editor-body" :class="`mode-${mode}`">
-      <div v-show="mode !== 'source'" class="rich-pane">
-        <EditorBubbleMenu :editor="editor ?? null" @link="openLink" @polish="polishSelection" />
-        <DragHandle :editor="editor ?? null" />
-        <TableMenu :editor="editor ?? null" />
-        <EditorContent :editor="editor" class="rich-content" @keydown="onKeydown" @focus.capture="emit('focus')" />
+    <!-- 工具栏固定在顶部；标题/摘要/正文在下方区域滚动（贴合 editor-vue 母版布局） -->
+    <div class="editor-scroll">
+      <div v-if="$slots.header" class="editor-header-slot">
+        <slot name="header" />
       </div>
-      <div v-show="mode !== 'rich'" class="source-pane" @keydown="onKeydown" @focusin="emit('focus')">
-        <SourceEditor v-model:value="model" />
+      <div class="editor-body" :class="`mode-${mode}`">
+        <div v-show="mode !== 'source'" ref="richPaneRef" class="rich-pane">
+          <EditorBubbleMenu :editor="editor ?? null" @link="openLink" @polish="polishSelection" />
+          <DragHandle :editor="editor ?? null" />
+          <TableMenu :editor="editor ?? null" />
+          <EditorContent :editor="editor" class="rich-content" @keydown="onKeydown" @focus.capture="emit('focus')" />
+        </div>
+        <div v-show="mode !== 'rich'" ref="sourcePaneRef" class="source-pane" @keydown="onKeydown" @focusin="emit('focus')">
+          <SourceEditor v-model:value="model" />
+        </div>
       </div>
     </div>
 
@@ -170,6 +176,55 @@ function setMode(next: EditorMode) {
   }
 }
 
+// ── 双栏同步滚动 ─────────────────────────────────────
+// 富文本侧滚动者是 .rich-pane；源码侧实际滚动者是 CodeMirror 内部的 .cm-scroller
+// （.cm-editor 高度 100%，外层 .source-pane 并不产生滚动）。按progress比例双向同步，
+// 方向锁 + 超时解锁，防止 programmatic scrollTop 触发的回环。
+const richPaneRef = ref<HTMLElement | null>(null)
+const sourcePaneRef = ref<HTMLElement | null>(null)
+let cmScroller: HTMLElement | null = null
+let syncLock: 'rich' | 'source' | null = null
+let syncUnlockTimer: ReturnType<typeof setTimeout> | null = null
+
+function syncScrollTo(from: HTMLElement, to: HTMLElement) {
+  const fromMax = from.scrollHeight - from.clientHeight
+  const toMax = to.scrollHeight - to.clientHeight
+  if (fromMax <= 0 || toMax <= 0) return
+  to.scrollTop = (from.scrollTop / fromMax) * toMax
+}
+function scheduleSyncUnlock() {
+  if (syncUnlockTimer) clearTimeout(syncUnlockTimer)
+  syncUnlockTimer = setTimeout(() => (syncLock = null), 100)
+}
+function onRichScroll() {
+  if (syncLock === 'source') return
+  syncLock = 'rich'
+  if (richPaneRef.value && cmScroller) syncScrollTo(richPaneRef.value, cmScroller)
+  scheduleSyncUnlock()
+}
+function onSourceScroll() {
+  if (syncLock === 'rich') return
+  syncLock = 'source'
+  if (richPaneRef.value && cmScroller) syncScrollTo(cmScroller, richPaneRef.value)
+  scheduleSyncUnlock()
+}
+function detachScrollSync() {
+  richPaneRef.value?.removeEventListener('scroll', onRichScroll)
+  cmScroller?.removeEventListener('scroll', onSourceScroll)
+  cmScroller = null
+}
+watch(mode, (m) => {
+  detachScrollSync()
+  if (m !== 'split') return
+  nextTick(() => {
+    cmScroller = (sourcePaneRef.value?.querySelector('.cm-scroller') as HTMLElement | null) ?? null
+    richPaneRef.value?.addEventListener('scroll', onRichScroll, { passive: true })
+    cmScroller?.addEventListener('scroll', onSourceScroll, { passive: true })
+    // 进入双栏时先把源码栏对齐到富文本当前位置
+    if (richPaneRef.value && cmScroller) syncScrollTo(richPaneRef.value, cmScroller)
+  })
+})
+
 // ── 图片 ─────────────────────────────────────────────
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = ''
@@ -269,11 +324,15 @@ function onEditorAction(ev: Event) {
   if (action === 'link') openLink()
   else if (action === 'image') imageOpen.value = true
 }
+// 缓存挂载监听器的 DOM 元素：卸载时不能再读 editor.value.view —— @tiptap/vue-3 的 useEditor
+// 会先 destroy 编辑器，之后 view getter 返回一个抛错的 Proxy，取 .dom 即触发 Runtime Error。
+let actionDom: HTMLElement | null = null
 watch(
   () => editor.value,
-  (ed, prev) => {
-    ;(prev?.view?.dom as HTMLElement | undefined)?.removeEventListener('gridea-editor:action', onEditorAction)
-    ;(ed?.view?.dom as HTMLElement | undefined)?.addEventListener('gridea-editor:action', onEditorAction)
+  (ed) => {
+    actionDom?.removeEventListener('gridea-editor:action', onEditorAction)
+    actionDom = (ed?.view?.dom as HTMLElement | undefined) ?? null
+    actionDom?.addEventListener('gridea-editor:action', onEditorAction)
   },
   { immediate: true },
 )
@@ -391,8 +450,13 @@ defineExpose({
 })
 
 onBeforeUnmount(() => {
-  ;(editor.value?.view?.dom as HTMLElement | undefined)?.removeEventListener('gridea-editor:action', onEditorAction)
-  editor.value?.destroy()
+  // 对缓存的 DOM 解绑，绝不在此访问 editor.value.view（此刻已被 useEditor 先行 destroy）。
+  actionDom?.removeEventListener('gridea-editor:action', onEditorAction)
+  actionDom = null
+  detachScrollSync()
+  if (syncUnlockTimer) clearTimeout(syncUnlockTimer)
+  // 不再手动 destroy：@tiptap/vue-3 的 useEditor 已注册自己的 onBeforeUnmount 负责销毁，
+  // 重复 destroy + 访问已销毁 editor 正是本次 Runtime Error 的根因。
 })
 </script>
 
@@ -403,34 +467,71 @@ onBeforeUnmount(() => {
   height: 100%;
   width: 100%;
 }
-.editor-body {
+
+/* 工具栏下方的内容容器 */
+.editor-scroll {
   flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* 单栏 rich：整体滚动，标题/摘要随正文一起滚走（贴合 editor-vue） */
+.gridea-tiptap.mode-rich .editor-scroll {
+  overflow-y: auto;
+}
+/* source / split：外层不滚，标题区固定在顶部，正文/分栏内部各自滚动
+   （CodeMirror 源码编辑器自带滚动，需要有界高度才正常） */
+.gridea-tiptap.mode-source .editor-scroll,
+.gridea-tiptap.mode-split .editor-scroll {
+  overflow: hidden;
+}
+.editor-header-slot {
+  flex-shrink: 0;
+}
+
+.editor-body {
   display: flex;
   min-height: 0;
+}
+/* 单栏 rich：body 按内容高度，由 .editor-scroll 负责滚动 */
+.gridea-tiptap.mode-rich .editor-body {
+  flex: 0 0 auto;
+}
+.gridea-tiptap.mode-rich .rich-pane {
+  overflow: visible;
+}
+/* source / split：body 撑满剩余高度，正文/分栏内部各自滚动 */
+.gridea-tiptap.mode-source .editor-body,
+.gridea-tiptap.mode-split .editor-body {
+  flex: 1;
   overflow: hidden;
+}
+.gridea-tiptap.mode-source .source-pane {
+  overflow: auto;
 }
 .editor-body.mode-split .rich-pane,
 .editor-body.mode-split .source-pane {
   width: 50%;
   border-right: 1px solid var(--editor-border);
+  overflow: auto;
 }
+
 .rich-pane {
   flex: 1;
   min-width: 0;
-  overflow: auto;
   padding: 8px 0 80px;
 }
 .source-pane {
   flex: 1;
   min-width: 0;
-  overflow: auto;
   border-left: 1px solid var(--editor-border);
 }
 .editor-body.mode-rich .source-pane,
 .editor-body.mode-source .rich-pane {
   display: none;
 }
-.rich-content {
+/* 单栏正文随容器滚动（高度按内容）；双栏每栏填满各自高度 */
+.gridea-tiptap.mode-split .rich-content {
   height: 100%;
 }
 </style>

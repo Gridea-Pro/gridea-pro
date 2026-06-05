@@ -54,7 +54,7 @@ import { useI18n } from 'vue-i18n'
 import { NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
 import mermaid from 'mermaid'
 import { useThemeStore } from '@/stores/theme'
-import { AlertTriangle, Pencil, Workflow } from 'lucide-vue-next'
+import { IconAlertTriangle as AlertTriangle, IconPencil as Pencil, IconSitemap as Workflow } from '@tabler/icons-vue'
 
 const props = defineProps(nodeViewProps)
 const { t } = useI18n()

@@ -10,18 +10,18 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import {
-  Table as TableIcon,
-  ArrowUpToLine,
-  ArrowDownToLine,
-  ArrowLeftToLine,
-  ArrowRightToLine,
-  Rows3,
-  Columns3,
-  Combine,
-  Split,
-  Heading,
-  Trash2,
-} from 'lucide-vue-next'
+  IconTable as TableIcon,
+  IconRowInsertTop as ArrowUpToLine,
+  IconRowInsertBottom as ArrowDownToLine,
+  IconColumnInsertLeft as ArrowLeftToLine,
+  IconColumnInsertRight as ArrowRightToLine,
+  IconRowRemove as Rows3,
+  IconColumnRemove as Columns3,
+  IconArrowsJoin2 as Combine,
+  IconArrowsSplit2 as Split,
+  IconHeading as Heading,
+  IconTrash as Trash2,
+} from '@tabler/icons-vue'
 
 const props = defineProps<{ editor: Editor | null }>()
 
