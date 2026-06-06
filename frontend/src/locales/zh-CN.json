@@ -835,6 +835,20 @@
       "insertTop": "插入文首",
       "failed": "摘要生成失败",
       "emptyContent": "文章内容为空"
+    },
+    "emojiPicker": {
+      "search": "搜索 emoji…",
+      "empty": "未找到匹配的 emoji",
+      "recent": "最近",
+      "smileys": "表情",
+      "people": "人物",
+      "nature": "动物",
+      "food": "食物",
+      "travel": "旅行",
+      "activity": "活动",
+      "objects": "物品",
+      "symbols": "符号",
+      "flags": "旗帜"
     }
   }
 }

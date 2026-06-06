@@ -136,7 +136,6 @@
     "vue-i18n": "^11.2.7",
     "vue-router": "^4.3.0",
     "vue-tsc": "^3.2.1",
-    "vue3-emoji-picker": "^1.1.8",
     "vuedraggable": "^4.1.0"
   }
 }

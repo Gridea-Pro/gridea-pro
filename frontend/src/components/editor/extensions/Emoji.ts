@@ -1,7 +1,7 @@
 /**
  * Emoji 短码（:smile:），对齐 Gridea 的 markdown-it-emoji。钩子移植自 @ctzhian/tiptap。
  * tokenizer 仅匹配「已知」短码（shortcodeToEmoji 命中），故 8:30、http:// 等不会误判。
- * 选择器 UI（vue3-emoji-picker）在后续 UI 轮接入。
+ * 选择器 UI 见 ui/EmojiPicker.vue（与本扩展同用 @tiptap/extension-emoji 数据源）。
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Emoji, { gitHubEmojis, shortcodeToEmoji } from '@tiptap/extension-emoji'

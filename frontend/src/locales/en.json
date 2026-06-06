@@ -835,6 +835,20 @@
       "insertTop": "Insert at top",
       "failed": "Failed to generate summary",
       "emptyContent": "Article content is empty"
+    },
+    "emojiPicker": {
+      "search": "Search emoji…",
+      "empty": "No matching emoji",
+      "recent": "Recent",
+      "smileys": "Smileys",
+      "people": "People",
+      "nature": "Nature",
+      "food": "Food",
+      "travel": "Travel",
+      "activity": "Activity",
+      "objects": "Objects",
+      "symbols": "Symbols",
+      "flags": "Flags"
     }
   }
 }
