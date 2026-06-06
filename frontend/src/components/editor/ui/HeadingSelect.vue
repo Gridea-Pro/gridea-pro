@@ -86,7 +86,7 @@ function select(id: HeadingOption['id']) {
     <DropdownMenuTrigger as-child>
       <button
         type="button"
-        class="inline-flex h-8 min-w-16 items-center justify-between gap-1 rounded-md px-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
+        class="inline-flex h-8 min-w-16 items-center justify-between gap-1 rounded-md px-2 text-sm text-foreground ed-ctl"
         :title="t('editor.heading.title')"
         @mousedown.prevent
       >
@@ -96,9 +96,10 @@ function select(id: HeadingOption['id']) {
     </DropdownMenuTrigger>
     <DropdownMenuContent align="start" class="min-w-44">
       <DropdownMenuItem
+        class="ed-menu-item"
         v-for="opt in options"
         :key="opt.id"
-        :class="{ 'bg-accent': currentId === opt.id }"
+        :class="{ 'ed-active': currentId === opt.id }"
         @select="select(opt.id)"
       >
         <span class="mr-2 w-6 text-xs font-bold text-muted-foreground">{{ opt.icon }}</span>

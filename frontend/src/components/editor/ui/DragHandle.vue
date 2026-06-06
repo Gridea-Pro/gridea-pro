@@ -4,7 +4,7 @@
       <DropdownMenuTrigger as-child>
         <button
           type="button"
-          class="flex h-6 w-5 cursor-grab items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:cursor-grabbing"
+          class="flex h-6 w-5 cursor-grab items-center justify-center rounded text-muted-foreground transition-colors ed-hover active:cursor-grabbing"
           :title="t('editor.dragHandle.title')"
           @mousedown.stop
         >
@@ -13,12 +13,12 @@
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start" side="bottom" class="min-w-44">
-        <DropdownMenuItem :disabled="!hasBlock" @select="duplicateBlock">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!hasBlock" @select="duplicateBlock">
           <Copy class="mr-2 size-4" />
           <span>{{ t('editor.dragHandle.duplicate') }}</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem :disabled="!hasBlock" @select="clearFormatting">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!hasBlock" @select="clearFormatting">
           <Eraser class="mr-2 size-4" />
           <span>{{ t('editor.dragHandle.clearFormat') }}</span>
         </DropdownMenuItem>

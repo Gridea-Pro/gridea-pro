@@ -136,7 +136,7 @@ function onOpenChange(v: boolean) {
     <PopoverTrigger as-child>
       <button
         type="button"
-        class="inline-flex h-8 items-center gap-0.5 rounded-md px-1 text-foreground hover:bg-accent hover:text-accent-foreground"
+        class="inline-flex h-8 items-center gap-0.5 rounded-md px-1 text-foreground ed-ctl"
         :title="type === 'text' ? t('editor.color.textTitle') : t('editor.color.highlightTitle')"
         @mousedown.prevent
       >
@@ -153,7 +153,7 @@ function onOpenChange(v: boolean) {
       <!-- 默认 / 无颜色 -->
       <button
         type="button"
-        class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+        class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm ed-ctl"
         @click="selectColor(null)"
       >
         <span
@@ -175,7 +175,7 @@ function onOpenChange(v: boolean) {
           v-for="(c, i) in paletteColors"
           :key="`p${i}`"
           type="button"
-          class="relative h-5 w-5 rounded-sm border border-black/5 transition-transform hover:z-10 hover:scale-110 hover:shadow"
+          class="relative h-5 w-5 rounded-sm border border-black/5 cursor-pointer transition-transform hover:z-10 hover:scale-110 hover:shadow"
           :class="{ 'ring-1 ring-primary ring-offset-1 ring-offset-popover': isActive(c) }"
           :style="{ backgroundColor: c }"
           :title="c"
@@ -191,7 +191,7 @@ function onOpenChange(v: boolean) {
             v-for="(g, i) in gradientColors"
             :key="`g${i}`"
             type="button"
-            class="h-5 w-5 rounded-sm border border-black/5 transition-transform hover:z-10 hover:scale-110 hover:shadow"
+            class="h-5 w-5 rounded-sm border border-black/5 cursor-pointer transition-transform hover:z-10 hover:scale-110 hover:shadow"
             :class="{ 'ring-1 ring-primary ring-offset-1 ring-offset-popover': isActive(g) }"
             :style="{ backgroundImage: g }"
             @click="selectColor(g)"
@@ -209,7 +209,7 @@ function onOpenChange(v: boolean) {
             v-for="(c, i) in recentColors"
             :key="`r${i}`"
             type="button"
-            class="h-5 w-5 rounded-sm border border-black/5 transition-transform hover:z-10 hover:scale-110 hover:shadow"
+            class="h-5 w-5 rounded-sm border border-black/5 cursor-pointer transition-transform hover:z-10 hover:scale-110 hover:shadow"
             :class="{ 'ring-1 ring-primary ring-offset-1 ring-offset-popover': isActive(c) }"
             :style="swatchStyle(c)"
             :title="c"
@@ -222,7 +222,7 @@ function onOpenChange(v: boolean) {
       <div class="mt-3 border-t border-border pt-2">
         <button
           type="button"
-          class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+          class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm ed-ctl"
           @click="customOpen = !customOpen"
         >
           <IconPalette class="h-4 w-4 text-muted-foreground" />

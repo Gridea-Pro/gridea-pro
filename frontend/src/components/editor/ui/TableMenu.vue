@@ -129,7 +129,7 @@ function can(name: ChainKey): boolean {
       <DropdownMenuTrigger as-child>
         <button
           type="button"
-          class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-border bg-popover text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+          class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-border bg-popover text-muted-foreground shadow-sm transition-colors ed-ctl"
           :title="t('editor.tableMenu.menu')"
           aria-haspopup="menu"
           @mousedown.prevent
@@ -139,45 +139,45 @@ function can(name: ChainKey): boolean {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" :side-offset="6" class="min-w-44">
-        <DropdownMenuItem :disabled="!can('addRowBefore')" @select="run('addRowBefore')">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!can('addRowBefore')" @select="run('addRowBefore')">
           <ArrowUpToLine class="mr-2 size-4" />
           <span>{{ t('editor.tableMenu.addRowBefore') }}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem :disabled="!can('addRowAfter')" @select="run('addRowAfter')">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!can('addRowAfter')" @select="run('addRowAfter')">
           <ArrowDownToLine class="mr-2 size-4" />
           <span>{{ t('editor.tableMenu.addRowAfter') }}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem :disabled="!can('addColumnBefore')" @select="run('addColumnBefore')">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!can('addColumnBefore')" @select="run('addColumnBefore')">
           <ArrowLeftToLine class="mr-2 size-4" />
           <span>{{ t('editor.tableMenu.addColumnBefore') }}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem :disabled="!can('addColumnAfter')" @select="run('addColumnAfter')">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!can('addColumnAfter')" @select="run('addColumnAfter')">
           <ArrowRightToLine class="mr-2 size-4" />
           <span>{{ t('editor.tableMenu.addColumnAfter') }}</span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem :disabled="!can('deleteRow')" @select="run('deleteRow')">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!can('deleteRow')" @select="run('deleteRow')">
           <Rows3 class="mr-2 size-4" />
           <span>{{ t('editor.tableMenu.deleteRow') }}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem :disabled="!can('deleteColumn')" @select="run('deleteColumn')">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!can('deleteColumn')" @select="run('deleteColumn')">
           <Columns3 class="mr-2 size-4" />
           <span>{{ t('editor.tableMenu.deleteColumn') }}</span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem :disabled="!can('mergeCells')" @select="run('mergeCells')">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!can('mergeCells')" @select="run('mergeCells')">
           <Combine class="mr-2 size-4" />
           <span>{{ t('editor.tableMenu.mergeCells') }}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem :disabled="!can('splitCell')" @select="run('splitCell')">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!can('splitCell')" @select="run('splitCell')">
           <Split class="mr-2 size-4" />
           <span>{{ t('editor.tableMenu.splitCell') }}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem :disabled="!can('toggleHeaderRow')" @select="run('toggleHeaderRow')">
+        <DropdownMenuItem class="ed-menu-item" :disabled="!can('toggleHeaderRow')" @select="run('toggleHeaderRow')">
           <Heading class="mr-2 size-4" />
           <span>{{ t('editor.tableMenu.toggleHeaderRow') }}</span>
         </DropdownMenuItem>
@@ -185,7 +185,7 @@ function can(name: ChainKey): boolean {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          class="text-destructive focus:text-destructive"
+          class="ed-menu-item text-destructive focus:text-destructive"
           :disabled="!can('deleteTable')"
           @select="run('deleteTable')"
         >

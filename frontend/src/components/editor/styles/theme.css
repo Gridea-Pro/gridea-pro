@@ -5,6 +5,9 @@
  * @ctzhian 正文 CSS 中引用的 --mui-palette-* 在此统一重映射到 --editor-*。
  */
 
+/* 变量同时挂 :root：下拉/弹层内容被 radix portal 到 body（编辑器子树之外），
+   仅挂 .gridea-tiptap 会解析不到。全部派生自宿主 token，深浅主题自动跟随。 */
+:root,
 .gridea-tiptap {
   --editor-bg: var(--background, #ffffff);
   --editor-fg: var(--foreground, #1b1b1b);

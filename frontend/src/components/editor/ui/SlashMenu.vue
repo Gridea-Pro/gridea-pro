@@ -17,8 +17,8 @@
           :key="entry.item.key"
           :ref="(el) => setItemRef(el, entry.index)"
           type="button"
-          class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-foreground transition-colors"
-          :class="entry.index === selected ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'"
+          class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-foreground transition-colors cursor-pointer"
+          :class="entry.index === selected ? 'ed-active' : 'ed-hover'"
           @mouseenter="selected = entry.index"
           @mousedown.prevent
           @click="pick(entry.item)"

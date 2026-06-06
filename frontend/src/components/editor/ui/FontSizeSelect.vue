@@ -65,7 +65,7 @@ function reset() {
     <DropdownMenuTrigger as-child>
       <button
         type="button"
-        class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-sm tabular-nums text-foreground hover:bg-accent hover:text-accent-foreground"
+        class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-sm tabular-nums text-foreground ed-ctl"
         :title="t('editor.fontSize.title')"
         @mousedown.prevent
       >
@@ -76,7 +76,7 @@ function reset() {
     <DropdownMenuContent align="start" class="w-36 p-1.5">
       <button
         type="button"
-        class="mb-1 w-full rounded px-2 py-1 text-left text-sm hover:bg-accent"
+        class="mb-1 w-full rounded px-2 py-1 text-left text-sm ed-ctl"
         @click="reset"
       >
         {{ t('editor.fontSize.default') }}
@@ -86,8 +86,8 @@ function reset() {
           v-for="s in sizes"
           :key="s"
           type="button"
-          class="rounded px-0 py-1 text-center text-[13px] tabular-nums hover:bg-accent"
-          :class="{ 'bg-accent font-medium': current === s }"
+          class="rounded px-0 py-1 text-center text-[13px] tabular-nums ed-ctl"
+          :class="{ 'ed-active font-medium': current === s }"
           @click="select(s)"
         >
           {{ s }}

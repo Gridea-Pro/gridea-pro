@@ -216,7 +216,7 @@ function shouldShow(p: any): boolean {
 }
 
 const baseBtn =
-  'inline-flex items-center justify-center w-7 h-7 rounded-md cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground'
+  'inline-flex items-center justify-center w-7 h-7 rounded-md cursor-pointer transition-colors ed-ctl'
 
 // ── 图片选中态：气泡切换为图片操作 ─────────────────────
 const isImage = computed(() => {
@@ -227,7 +227,7 @@ const imageWidth = computed(() => {
   void tick.value
   return (props.editor?.getAttributes('image').width as number | null) || null
 })
-const activeCls = 'bg-accent text-accent-foreground'
+const activeCls = 'ed-active'
 const imageAlign = computed(() => {
   void tick.value
   return (props.editor?.getAttributes('image').textAlign as string | null) || null

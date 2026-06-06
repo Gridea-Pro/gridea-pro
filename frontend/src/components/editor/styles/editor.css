@@ -30,6 +30,34 @@
   flex-shrink: 0;
 }
 
+/* ── 编辑器控件统一交互态（主题色 hover + 小手），对齐 ToolbarButton 基准 ──
+   Tailwind v4 preflight 把 button 置为 cursor:default；hover:bg-accent 是宿主 token，
+   与编辑器主题（--editor-hover / --editor-accent）不一致——统一走这三个类。 */
+.ed-hover:hover:not(:disabled) {
+  background: var(--editor-hover);
+  color: var(--editor-fg);
+}
+.ed-ctl {
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.ed-ctl:hover:not(:disabled) {
+  background: var(--editor-hover);
+  color: var(--editor-fg);
+}
+.ed-active {
+  background: color-mix(in srgb, var(--editor-accent) 16%, transparent) !important;
+  color: var(--editor-accent) !important;
+}
+/* shadcn 下拉项（portal 到 body）：小手 + 主题色高亮（覆盖其 focus:bg-accent 与 cursor-default） */
+.ed-menu-item {
+  cursor: pointer !important;
+}
+.ed-menu-item[data-highlighted] {
+  background: var(--editor-hover) !important;
+  color: var(--editor-fg) !important;
+}
+
 /* Tabler 图标统一描边 1.75（默认 2 偏粗、1.5 偏细）。Tabler 组件渲染时带 .tabler-icon 类；
    全局规则即可覆盖编辑器内所有 Tabler 图标，含浮层/菜单（斜杠/气泡/拖拽柄等被 portal 到 body 的） */
 .tabler-icon {

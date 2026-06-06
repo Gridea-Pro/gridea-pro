@@ -4,7 +4,7 @@
       <!-- 直接 button 子元素：as-child 包 slot 间接层会导致触发 props 丢失（点击无反应的根因） -->
       <button
         type="button"
-        class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground ed-ctl"
         :title="t('editor.emoji.title')"
         :aria-label="t('editor.emoji.title')"
         @mousedown.prevent
