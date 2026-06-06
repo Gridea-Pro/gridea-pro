@@ -35,6 +35,14 @@
                             <span class="meta-item meta-status" :class="form.published ? 'text-emerald-500' : 'text-amber-500'">
                                 {{ form.published ? $t('article.published') : $t('article.draft') }}
                             </span>
+                            <span class="meta-item">
+                                <DocumentTextIcon class="meta-icon" />
+                                {{ articleStats.wordsNumber }} {{ $t('article.wordsUnit') }}
+                            </span>
+                            <span class="meta-item">
+                                <ClockIcon class="meta-icon" />
+                                {{ articleStats.formatTime }}
+                            </span>
                         </div>
                     </template>
                 </TiptapEditor>
@@ -78,7 +86,7 @@ import { useI18n } from 'vue-i18n'
 import { toast } from '@/helpers/toast'
 import { GenerateSlug } from '@/wailsjs/go/facade/AIFacade'
 
-import { CalendarIcon, FolderIcon, TagIcon } from '@heroicons/vue/24/outline'
+import { CalendarIcon, FolderIcon, TagIcon, DocumentTextIcon, ClockIcon } from '@heroicons/vue/24/outline'
 
 import EditorHeader from './components/EditorHeader.vue'
 import ArticleSettingsDrawer from './components/ArticleSettingsDrawer.vue'
@@ -110,6 +118,7 @@ const {
     changedAfterLastSave,
     articleStatusTip,
     canSubmit,
+    articleStats,
     availableTags,
     availableCategories,
     dateValue,

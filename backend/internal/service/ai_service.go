@@ -376,6 +376,59 @@ func (s *AIService) Polish(ctx context.Context, text string) (string, error) {
 	return result, nil
 }
 
+// summaryPrompt 摘要生成提示词
+func summaryPrompt(content string) string {
+	return "你是一位中文博客编辑。请为下面的文章生成一段摘要，要求：\n" +
+		"1. 100 字以内，单段纯文本；\n" +
+		"2. 概括文章核心内容与价值，语气自然，适合作为博客列表页导语；\n" +
+		"3. 不要使用 Markdown 语法、不要引号包裹、不要「摘要：」前缀，直接输出摘要正文。\n\n" +
+		"文章内容：\n" + content
+}
+
+// Summary 生成文章摘要：输入正文（markdown/纯文本），返回 100 字内摘要
+func (s *AIService) Summary(ctx context.Context, content string) (string, error) {
+	if strings.TrimSpace(content) == "" {
+		return "", errors.New("文章内容为空")
+	}
+
+	provider, model, apiKey, isBuiltIn, err := s.resolveProvider(ctx)
+	if err != nil {
+		return "", err
+	}
+	if isBuiltIn {
+		if err := s.checkBuiltInQuota(ctx); err != nil {
+			return "", err
+		}
+	}
+
+	// 输入过长截断，避免超 token（摘要看前文即可）
+	runes := []rune(content)
+	if len(runes) > 6000 {
+		content = string(runes[:6000])
+	}
+
+	req := ai.ChatRequest{
+		Model:       model,
+		Prompt:      summaryPrompt(content),
+		Temperature: 0.5,
+		MaxTokens:   400,
+	}
+	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
+	if err != nil {
+		return "", err
+	}
+
+	result := stripWrapping(raw)
+	if result == "" {
+		return "", errors.New("摘要生成为空，请重试")
+	}
+
+	if isBuiltIn {
+		s.recordBuiltInUsage(ctx)
+	}
+	return result, nil
+}
+
 // TestConnection 测试自定义厂商的连接性（最小 chat 请求）
 func (s *AIService) TestConnection(ctx context.Context, providerID, model, apiKey string) error {
 	return s.TestConnectionWithBaseURL(ctx, providerID, model, apiKey, "")

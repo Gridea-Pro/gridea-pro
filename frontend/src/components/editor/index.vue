@@ -9,6 +9,7 @@
       @highlight="onHighlightSelect"
       @emoji="onEmojiSelect"
       @polish="polishSelection"
+      @summary="openSummary"
       @update:mode="setMode"
     />
 
@@ -40,6 +41,13 @@
     <ImageDialog v-model:open="imageOpen" @insert-url="onImageInsertUrl" @pick-local="pickImageFromDialog" />
     <ImageEditDialog v-model:open="imageEditOpen" :src="imageEditSrc" :alt="imageEditAlt" @save="onImageEditSave" />
     <ImageLightbox :src="previewSrc" @close="previewSrc = null" />
+    <SummaryDialog
+      v-model:open="summaryOpen"
+      :loading="summaryLoading"
+      :text="summaryText"
+      @regenerate="generateSummary"
+      @insert="onSummaryInsert"
+    />
     <MathPopover
       :open="mathEdit.open"
       :kind="mathEdit.kind"
@@ -90,12 +98,13 @@ import DetailsView from './ui/DetailsView.vue'
 import ImageView from './ui/ImageView.vue'
 import ImageEditDialog from './ui/ImageEditDialog.vue'
 import ImageLightbox from './ui/ImageLightbox.vue'
+import SummaryDialog from './ui/SummaryDialog.vue'
 import MathPopover from './ui/MathPopover.vue'
 import type { EditorMode } from './types'
 import { toast } from '@/helpers/toast'
 import { OpenImageDialog } from '@/wailsjs/go/app/App'
 import { UploadImagesFromFrontend, SaveImageBytesFromFrontend } from '@/wailsjs/go/facade/PostFacade'
-import { Polish, Complete } from '@/wailsjs/go/facade/AIFacade'
+import { Polish, Complete, Summary } from '@/wailsjs/go/facade/AIFacade'
 import { domain } from '@/wailsjs/go/models'
 
 const props = withDefaults(defineProps<{ isPostPage?: boolean; placeholder?: string }>(), {
@@ -385,6 +394,53 @@ function onHighlightSelect(color: string | null) {
 
 // ── 快捷键面板 ───────────────────────────────────────
 const shortcutsOpen = ref(false)
+
+// ── AI 摘要 ──────────────────────────────────────────
+const summaryOpen = ref(false)
+const summaryLoading = ref(false)
+const summaryText = ref('')
+
+function openSummary() {
+  if (!model.value?.trim()) {
+    toast.warning(t('editor.summaryDialog.emptyContent'))
+    return
+  }
+  summaryOpen.value = true
+  void generateSummary()
+}
+
+async function generateSummary() {
+  summaryLoading.value = true
+  summaryText.value = ''
+  try {
+    summaryText.value = await Summary(model.value ?? '')
+  } catch (err: unknown) {
+    console.error('[editor] summary failed:', err)
+    const msg = String((err as { message?: string })?.message || err || '')
+    if (msg.includes('[DAILY_LIMIT]')) toast.error(t('settings.ai.dailyLimitReached'))
+    else if (msg.includes('[RATE_LIMIT]')) toast.error(t('settings.ai.rateLimited'))
+    else if (msg.includes('[UPSTREAM_429]') || msg.includes('429')) toast.error(t('settings.ai.upstream429'))
+    else toast.error(t('editor.summaryDialog.failed'))
+    summaryOpen.value = false
+  } finally {
+    summaryLoading.value = false
+  }
+}
+
+function onSummaryInsert(text: string) {
+  const e = editor.value
+  if (!e || !text) return
+  // 已有 <!-- more --> 则只插摘要段；否则补一个 more 分隔（Gridea 的发布摘要 = more 之前内容）
+  let hasMore = false
+  e.state.doc.descendants((n) => {
+    if (n.type.name === 'moreBreak') hasMore = true
+    return !hasMore
+  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const content: any[] = [{ type: 'paragraph', content: [{ type: 'text', text }] }]
+  if (!hasMore) content.push({ type: 'moreBreak' })
+  e.chain().focus().insertContentAt(0, content).run()
+}
 function onEmojiSelect(emoji: string) {
   editor.value?.chain().focus().insertContent(emoji).run()
 }

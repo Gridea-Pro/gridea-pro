@@ -125,7 +125,8 @@
     "previewServiceFailed": "预览服务获取失败",
     "selectLocalImage": "点击选择本地图片",
     "contextMenuTip": "编辑区域右键能弹出快捷菜单哦",
-    "editorPlaceholder": "随便写点什么..."
+    "editorPlaceholder": "随便写点什么...",
+    "wordsUnit": "字"
   },
   "tag": {
     "new": "新标签",
@@ -821,6 +822,19 @@
       "altPlaceholder": "输入图片描述",
       "save": "保存",
       "cancel": "取消"
+    },
+    "more": "更多",
+    "aiSummary": "AI 摘要",
+    "summaryDialog": {
+      "title": "AI 摘要",
+      "generating": "正在生成摘要…",
+      "placeholder": "摘要内容（可编辑）",
+      "regenerate": "重新生成",
+      "copy": "复制",
+      "copied": "已复制",
+      "insertTop": "插入文首",
+      "failed": "摘要生成失败",
+      "emptyContent": "文章内容为空"
     }
   }
 }

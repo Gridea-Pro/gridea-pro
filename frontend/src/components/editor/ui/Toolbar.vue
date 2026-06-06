@@ -25,8 +25,6 @@
       <ToolbarButton :title="t('editor.code')" :active="active('code')" @click="run((c) => c.toggleCode())"><Code /></ToolbarButton>
       <ColorPicker type="text" :model-value="currentColor" @select="emit('color', $event)" />
       <ColorPicker type="highlight" :model-value="currentHighlight" @select="emit('highlight', $event)" />
-      <ToolbarButton :title="t('editor.sub')" :active="active('subscript')" @click="run((c) => c.toggleSubscript())"><SubscriptIcon /></ToolbarButton>
-      <ToolbarButton :title="t('editor.sup')" :active="active('superscript')" @click="run((c) => c.toggleSuperscript())"><SuperscriptIcon /></ToolbarButton>
     </div>
 
     <div class="tb-sep" />
@@ -59,6 +57,40 @@
       <ToolbarButton :title="t('editor.table')" @click="run((c) => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }))"><TableIcon /></ToolbarButton>
       <EmojiPicker @select="emit('emoji', $event)" />
       <ToolbarButton :title="t('editor.aiPolish')" @click="emit('polish')"><Sparkles /></ToolbarButton>
+
+      <!-- ··· 收纳不常用功能 -->
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <button type="button" class="tb-more ed-ctl" :title="t('editor.more')" @mousedown.prevent>
+            <Dots />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" class="min-w-44">
+          <DropdownMenuItem
+            class="ed-menu-item"
+            :class="{ 'ed-active': active('superscript') }"
+            @select="run((c) => c.toggleSuperscript())"
+          >
+            <SuperscriptIcon class="mr-2 size-4" />
+            <span>{{ t('editor.sup') }}</span>
+            <span class="ml-auto pl-3 text-xs text-muted-foreground">{{ modKey }} .</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="ed-menu-item"
+            :class="{ 'ed-active': active('subscript') }"
+            @select="run((c) => c.toggleSubscript())"
+          >
+            <SubscriptIcon class="mr-2 size-4" />
+            <span>{{ t('editor.sub') }}</span>
+            <span class="ml-auto pl-3 text-xs text-muted-foreground">{{ modKey }} ,</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem class="ed-menu-item" @select="emit('summary')">
+            <FileDescription class="mr-2 size-4" />
+            <span>{{ t('editor.aiSummary') }}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
 
     <div class="tb-sep" />
@@ -82,6 +114,13 @@ import EmojiPicker from './EmojiPicker.vue'
 import HeadingSelect from './HeadingSelect.vue'
 import FontSizeSelect from './FontSizeSelect.vue'
 import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
+import {
   IconArrowBackUp as Undo2, IconArrowForwardUp as Redo2, IconBold as Bold, IconItalic as Italic,
   IconStrikethrough as Strikethrough, IconCode as Code, IconSourceCode as Code2,
   IconSubscript as SubscriptIcon, IconSuperscript as SuperscriptIcon,
@@ -89,13 +128,18 @@ import {
   IconAlignLeft as AlignLeft, IconAlignCenter as AlignCenter, IconAlignRight as AlignRight,
   IconLink as LinkIcon, IconPhoto as ImageIcon, IconTable as TableIcon,
   IconSparkles as Sparkles, IconEye as Eye, IconColumns as Columns2, IconFileCode as FileCode2,
+  IconDots as Dots, IconFileDescription as FileDescription,
 } from '@tabler/icons-vue'
+
+const isMac = /mac/i.test(navigator.platform)
+const modKey = isMac ? '⌘' : 'Ctrl'
 
 const props = defineProps<{ editor: Editor | null | undefined; mode: EditorMode }>()
 const emit = defineEmits<{
   link: []
   image: []
   polish: []
+  summary: []
   color: [color: string | null]
   highlight: [color: string | null]
   emoji: [emoji: string]
@@ -182,5 +226,20 @@ function active(nameOrAttrs: string | Record<string, unknown>, attrs?: Record<st
   height: 18px;
   margin: 0 4px;
   background: var(--editor-border);
+}
+.tb-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--editor-muted);
+}
+.tb-more :deep(svg) {
+  width: 17px;
+  height: 17px;
 }
 </style>

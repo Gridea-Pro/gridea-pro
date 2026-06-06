@@ -49,6 +49,11 @@ func (f *AIFacade) Polish(text string) (string, error) {
 	return f.service.Polish(f.ctx(), text)
 }
 
+// Summary 生成文章摘要
+func (f *AIFacade) Summary(content string) (string, error) {
+	return f.service.Summary(f.ctx(), content)
+}
+
 // TestConnection 测试自定义厂商连接
 func (f *AIFacade) TestConnection(provider, model, apiKey string) error {
 	return f.service.TestConnection(f.ctx(), provider, model, apiKey)

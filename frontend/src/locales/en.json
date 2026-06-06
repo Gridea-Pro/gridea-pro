@@ -125,7 +125,8 @@
     "previewServiceFailed": "Failed to get preview service",
     "selectLocalImage": "Click to select a local image",
     "contextMenuTip": "Right-click in the editor to open the context menu",
-    "editorPlaceholder": "Write something..."
+    "editorPlaceholder": "Write something...",
+    "wordsUnit": "words"
   },
   "tag": {
     "new": "New",
@@ -821,6 +822,19 @@
       "altPlaceholder": "Enter image description",
       "save": "Save",
       "cancel": "Cancel"
+    },
+    "more": "More",
+    "aiSummary": "AI summary",
+    "summaryDialog": {
+      "title": "AI summary",
+      "generating": "Generating summary…",
+      "placeholder": "Summary (editable)",
+      "regenerate": "Regenerate",
+      "copy": "Copy",
+      "copied": "Copied",
+      "insertTop": "Insert at top",
+      "failed": "Failed to generate summary",
+      "emptyContent": "Article content is empty"
     }
   }
 }
