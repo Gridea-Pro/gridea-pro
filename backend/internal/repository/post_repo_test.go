@@ -1,6 +1,15 @@
 package repository
 
-import "testing"
+import (
+	"bytes"
+	"context"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"gridea-pro/backend/internal/domain"
+)
 
 // TestNormalizeFileName 验证 repo 入口归一：去掉末尾 .md（含历史遗留的多重 .md），
 // 大小写敏感（只剥小写 .md，与 save 补的小写 .md 对齐），中间的 .md 保留。
@@ -26,5 +35,70 @@ func TestNormalizeFileName(t *testing.T) {
 				t.Errorf("normalizeFileName(%q) = %q, want %q", tt.in, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCopyFileSamePathDoesNotTruncate(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "cover.png")
+	original := []byte("not a real png, but it must remain intact")
+	if err := os.WriteFile(path, original, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := CopyFile(path, filepath.ToSlash(path)); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, original) {
+		t.Fatalf("CopyFile truncated same-path copy: got %d bytes, want %d bytes", len(got), len(original))
+	}
+}
+
+func TestPostRepositoryUpdateKeepsExistingFeatureImage(t *testing.T) {
+	ctx := context.Background()
+	appDir := t.TempDir()
+	repo := NewPostRepository(appDir)
+
+	src := filepath.Join(t.TempDir(), "source-cover.png")
+	original := []byte("stable cover image bytes")
+	if err := os.WriteFile(src, original, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	post := &domain.Post{
+		ID:        "issue127",
+		Title:     "Issue 127",
+		CreatedAt: time.Now(),
+		Published: true,
+		Content:   "body",
+		FileName:  "issue-127",
+		FeatureImage: domain.FileInfo{
+			Name: "source-cover.png",
+			Path: src,
+		},
+	}
+	if err := repo.Create(ctx, post); err != nil {
+		t.Fatal(err)
+	}
+
+	coverPath := filepath.Join(appDir, "post-images", "issue-127.png")
+	post.FeatureImage = domain.FileInfo{
+		Name: "issue-127.png",
+		Path: filepath.ToSlash(coverPath),
+	}
+	if err := repo.Update(ctx, post); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := os.ReadFile(coverPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, original) {
+		t.Fatalf("existing feature image changed on update: got %d bytes, want %d bytes", len(got), len(original))
 	}
 }

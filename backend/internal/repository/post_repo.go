@@ -182,11 +182,11 @@ func (r *postRepository) save(ctx context.Context, post *domain.Post, isUpdate b
 		ext := filepath.Ext(post.FeatureImage.Name)
 		newPath := filepath.Join(postImageDir, post.FileName+ext)
 		// 源路径与目标路径相同时跳过复制，避免 CopyFile 将文件截断为 0 字节
-		if post.FeatureImage.Path == newPath {
+		if sameFilePath(post.FeatureImage.Path, newPath) {
 			feature = "/post-images/" + post.FileName + ext
 		} else if err := CopyFile(post.FeatureImage.Path, newPath); err == nil {
 			feature = "/post-images/" + post.FileName + ext
-			if strings.Contains(post.FeatureImage.Path, postImageDir) {
+			if pathInsideDir(post.FeatureImage.Path, postImageDir) {
 				_ = os.Remove(post.FeatureImage.Path)
 			}
 		}
