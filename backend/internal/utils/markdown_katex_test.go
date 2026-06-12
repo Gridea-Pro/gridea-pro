@@ -129,6 +129,29 @@ func TestKatexInlineDisplayInParagraph(t *testing.T) {
 	}
 }
 
+// TestKatexBlockConcurrentRender 并发渲染多篇含块级公式的文章不应 panic。
+// 回归：Goldmark 在收到 parser.Close 后可能额外调一次 Continue，此时
+// accumulating 已为 nil，若无防御检查会 nil 指针 panic（issue #129）。
+func TestKatexBlockConcurrentRender(t *testing.T) {
+	md := "前文\n\n$$\na + b = c\n$$\n\n后文"
+	const N = 20
+	done := make(chan struct{}, N)
+	for range N {
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("并发渲染 panic: %v", r)
+				}
+				done <- struct{}{}
+			}()
+			ToHTML(md)
+		}()
+	}
+	for range N {
+		<-done
+	}
+}
+
 // TestKatexCacheReuse 第二次渲染同一公式应该走缓存（耗时显著小于第一次）。
 func TestKatexCacheReuse(t *testing.T) {
 	md := "$E = mc^2$"

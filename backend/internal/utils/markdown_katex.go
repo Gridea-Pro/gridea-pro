@@ -124,6 +124,12 @@ func (p *katexBlockParser) Continue(node ast.Node, reader text.Reader, pc parser
 	line, segment := reader.PeekLine()
 	bm := node.(*blockMath)
 
+	// Goldmark 在收到 parser.Close 后可能额外再调一次 Continue；accumulating 已
+	// 被置 nil 说明块已关闭，直接返回 Close 避免 nil 指针 panic。
+	if bm.accumulating == nil {
+		return parser.Close
+	}
+
 	// 找闭合 `$$`。允许 `equation $$` 或单独一行 `$$`。
 	if before, _, found := bytes.Cut(line, []byte("$$")); found {
 		if len(before) > 0 {
