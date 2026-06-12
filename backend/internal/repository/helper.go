@@ -140,6 +140,10 @@ func sameCleanPath(src, dst string) bool {
 
 // cleanAbsPath 先 Clean 再 Abs，用于消除路径中的 ../、多余分隔符等。
 // Abs 失败时安全退化为 Clean 后的结果。
+//
+// 注意：filepath.Abs 对相对路径会基于 os.Getwd()（Wails 进程 CWD）解析，
+// 而非用户站点目录。调用方必须传入绝对路径；本仓库调用方（FeatureImage.Path）
+// 均来自文件选择器，天然为绝对路径。
 func cleanAbsPath(path string) string {
 	cleaned := filepath.Clean(path)
 	abs, err := filepath.Abs(cleaned)

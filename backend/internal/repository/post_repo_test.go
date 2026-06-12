@@ -45,6 +45,7 @@ func TestCopyFileSamePathDoesNotTruncate(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// 同文件、不同写法（Windows \→/）：走 sameCleanPath 或 os.SameFile
 	if err := CopyFile(path, filepath.ToSlash(path)); err != nil {
 		t.Fatal(err)
 	}
@@ -55,6 +56,23 @@ func TestCopyFileSamePathDoesNotTruncate(t *testing.T) {
 	}
 	if !bytes.Equal(got, original) {
 		t.Fatalf("CopyFile truncated same-path copy: got %d bytes, want %d bytes", len(got), len(original))
+	}
+
+	// 语义相同、字符串不同的路径（经 /../ 规范化后等价）：
+	// 确保 sameCleanPath 的 filepath.Abs 规范化分支在 Linux CI 中也被覆盖。
+	altPath := filepath.Dir(path) + string(os.PathSeparator) + ".." +
+		string(os.PathSeparator) + filepath.Base(filepath.Dir(path)) +
+		string(os.PathSeparator) + filepath.Base(path)
+	if err := CopyFile(path, altPath); err != nil {
+		t.Fatal(err)
+	}
+
+	got2, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got2, original) {
+		t.Fatalf("CopyFile truncated same-file (..-normalized) copy: got %d bytes, want %d bytes", len(got2), len(original))
 	}
 }
 
