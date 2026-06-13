@@ -91,5 +91,9 @@
     "vue-tsc": "^3.2.1",
     "vue3-emoji-picker": "^1.1.8",
     "vuedraggable": "^4.1.0"
+  },
+  "overrides": {
+    "katex": "$katex",
+    "dompurify": "^3.3.4"
   }
 }

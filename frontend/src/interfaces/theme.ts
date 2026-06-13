@@ -10,6 +10,8 @@ export interface IThemeConfigArrayField {
   note?: string
   card?: string
   options?: IThemeConfigItemOption[]
+  // 字段默认值，来自主题 config.json，重置单项配置时回填
+  value?: unknown
 }
 
 export interface IThemeConfigItem {
@@ -42,4 +44,6 @@ export interface ITheme {
   feedCount: number
   postPath: string
   tagPath: string
+  // 与 domain.ThemeConfig.KatexEnabled 对应；老配置可能缺省（后端反序列化默认 true）
+  katexEnabled?: boolean
 }

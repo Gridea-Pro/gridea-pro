@@ -178,7 +178,7 @@ const props = defineProps<{
     form: ArticleFormState
     tagInput: string
     availableTags: string[]
-    availableCategories: { name: string; slug: string }[]  // 分类对象列表
+    availableCategories: { name: string; slug: string; id: string }[]  // 分类对象列表，id 为 UUID
     dateValue: DateValue
     dateTimeValue: string
     featureDisplayValue: string

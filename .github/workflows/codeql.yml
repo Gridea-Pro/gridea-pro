@@ -1,0 +1,58 @@
+# CodeQL 深度安全扫描（GitHub 官方，公开仓库免费）：Go + JS/TS 两个语言通道。
+# 结果进仓库 Security → Code scanning，PR 上有新增告警会以 check 形式标出。
+# Go 不支持 build-mode none，用 manual：dist 占位满足 //go:embed + gtk 依赖 + 与 wails build 同款 tags。
+name: CodeQL
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 3 * * 1" # 每周一全量扫一次，覆盖新披露的漏洞规则
+
+jobs:
+  analyze:
+    name: codeql (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: go
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+    steps:
+      - uses: actions/checkout@v4
+
+      - if: matrix.language == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - if: matrix.language == 'go'
+        name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev build-essential pkg-config
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      # manual 构建必须在 init 之后执行，CodeQL 追踪器才能截获编译过程
+      - if: matrix.language == 'go'
+        name: Manual Go build
+        run: |
+          mkdir -p frontend/dist && touch frontend/dist/index.html
+          go build -tags webkit2_41 ./...
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

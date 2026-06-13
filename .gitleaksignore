@@ -1,0 +1,8 @@
+# gitleaks 豁免清单：每条必须注明理由；新增豁免前先确认不是真实泄漏。
+
+# OAuth client_id 按协议设计本就公开（出现在每次授权跳转 URL 中），
+# 敏感的是 client_secret，example 文件中该行为占位符
+.env.example:generic-api-key:6
+
+# 内置免费 AI Key（智谱）的 AES-GCM 密文，刻意随源码分发供内置额度使用，非明文泄漏
+backend/internal/service/ai/builtin.go:generic-api-key:15

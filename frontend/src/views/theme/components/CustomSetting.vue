@@ -298,10 +298,10 @@ const currentThemeConfig = computed<IThemeConfigItem[]>(() => {
 
 const groups = computed(() => {
   if (!currentThemeConfig.value.length) return []
-  let list = currentThemeConfig.value.map((item) => item.group)
-  list = list.filter((g) => g) // filter undefined or null
-  list = [...new Set(list)]
-  return list
+  const list = currentThemeConfig.value
+    .map((item) => item.group)
+    .filter((g): g is string => Boolean(g)) // 类型谓词收窄，剔除 undefined/null/空串
+  return [...new Set(list)]
 })
 
 const activeGroup = ref('')
@@ -429,8 +429,10 @@ const handleImageUpload = async (formItemName: string, arrayFieldItemName?: stri
 
 const resetFormItem = (formItemName: string, arrayFieldItemName?: string, configItemIndex?: number) => {
   const originalItem = currentThemeConfig.value.find((item) => item.name === formItemName)
+  if (!originalItem) return
   if (arrayFieldItemName && typeof configItemIndex === 'number') {
-    const foundItem = originalItem?.arrayItems?.find((item) => item.name === arrayFieldItemName)
+    const foundItem = originalItem.arrayItems?.find((item) => item.name === arrayFieldItemName)
+    if (!foundItem) return
     form[formItemName][configItemIndex][arrayFieldItemName] = foundItem.value
   } else {
     form[formItemName] = originalItem.value

@@ -1,5 +1,9 @@
-# PR 自动检查：三个 job 全绿才允许合并（配合 main 分支保护规则）。
-# 任一检查不过 → PR 红 ❌、合并按钮禁用；修复后 push 自动重跑。
+# PR 自动检查门禁。
+# 必过项（main 分支保护 required）：build-test / frontend-lint / i18n-check —— 任一不过合并按钮禁用。
+# 观察项（暂未设为 required，跑稳后再升级）：typecheck / security / build-macos / build-windows。
+# 深度安全扫描（CodeQL）见 codeql.yml。
+# 注意：frontend/src/wailsjs 为构建时生成、不入库，任何需要完整解析代码的检查
+# （golangci-lint / vue-tsc / 裸 go build）都必须先经 wails build 或 wails generate module。
 name: PR Check
 
 on:
@@ -47,11 +51,59 @@ jobs:
       - name: wails build (linux)
         run: wails build -platform linux/amd64 -tags webkit2_41
 
-      - name: go vet
-        run: go vet ./...
+      # 取代裸 go vet：聚合 staticcheck/errcheck 等几十个检查器。
+      # only-new-issues 只阻断本 PR 引入的新问题，存量问题不追溯，避免惩罚无辜 PR。
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          only-new-issues: true
 
-      - name: go test
-        run: go test ./backend/...
+      - name: go test（含竞态检测 + 覆盖率）
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./backend/...
+
+      - name: 覆盖率摘要（信息展示，暂不设门槛）
+        run: |
+          go tool cover -func=coverage.out | tail -1 | awk '{printf "### Go 后端测试覆盖率：%s\n", $3}' >> "$GITHUB_STEP_SUMMARY"
+
+  # vue-tsc 类型检查：ESLint 不查类型，models.ts 手动同步出的类型错误只有这里能拦。
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev build-essential pkg-config
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      # dist 占位：根包 //go:embed 要求目录非空，否则绑定生成阶段编译失败
+      - name: Generate wailsjs bindings
+        run: |
+          mkdir -p frontend/dist && touch frontend/dist/index.html
+          wails generate module
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm install --force --no-audit --no-fund
+
+      - name: vue-tsc 类型检查
+        working-directory: frontend
+        run: npx vue-tsc --noEmit
 
   frontend-lint:
     name: frontend-lint
@@ -83,3 +135,72 @@ jobs:
 
       - name: i18n 完整性（12 语言 key 对齐 zh-CN；en.json 不得残留中文）
         run: python3 scripts/check_i18n.py frontend/src/locales
+
+  # 依赖漏洞 + 密钥泄露。govulncheck 只查 backend（根包依赖 embed 产物无法独立编译，
+  # 业务逻辑全部在 backend 下，覆盖面足够）。
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: govulncheck（Go 依赖与可达代码漏洞）
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-file: go.mod
+          repo-checkout: false
+          go-package: ./backend/...
+
+      - name: npm audit（high 及以上阻断，豁免清单见脚本头部）
+        working-directory: frontend
+        run: |
+          npm audit --json > /tmp/audit.json || true
+          python3 ../scripts/check_npm_audit.py /tmp/audit.json
+
+      - name: gitleaks 密钥扫描（工作区内容）
+        run: |
+          curl -sSfL -o /tmp/gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz
+          tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+          /tmp/gitleaks dir . --no-banner --redact -v
+
+  # 多平台构建：用户主要在 macOS / Windows，平台特定 break 不能拖到发版构建才暴露。
+  # 公开仓库标准 runner 免费，无计费顾虑。
+  build-macos:
+    name: build-macos
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: wails build (macos)
+        run: wails build -platform darwin/arm64
+
+  build-windows:
+    name: build-windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: wails build (windows)
+        run: wails build -platform windows/amd64
