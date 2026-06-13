@@ -29,7 +29,7 @@ func (r *mediaRepository) SaveImages(ctx context.Context, files []domain.Uploade
 	_ = os.MkdirAll(postImageDir, 0755)
 
 	// 检查 WebP 转换设置
-	webpEnabled, webpQuality := r.getWebpSetting(ctx)
+	webpEnabled, webpQuality := GetWebpSetting(r.imageOptRepo, ctx)
 
 	var results []string
 	for i, file := range files {
@@ -57,16 +57,4 @@ func (r *mediaRepository) SaveImages(ctx context.Context, files []domain.Uploade
 	}
 
 	return results, nil
-}
-
-// getWebpSetting 获取 WebP 转换设置。设置不可用时返回关闭状态。
-func (r *mediaRepository) getWebpSetting(ctx context.Context) (enabled bool, quality int) {
-	if r.imageOptRepo == nil {
-		return false, 80
-	}
-	setting, err := r.imageOptRepo.GetImageOptimizeSetting(ctx)
-	if err != nil {
-		return false, 80
-	}
-	return setting.Enabled, setting.GetQuality()
 }

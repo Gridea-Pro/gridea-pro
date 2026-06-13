@@ -186,7 +186,7 @@ func (r *postRepository) save(ctx context.Context, post *domain.Post, isUpdate b
 		ext := filepath.Ext(post.FeatureImage.Name)
 
 		// 如果启用了 WebP 转换且格式支持，先转换
-		if webpEnabled, webpQuality := r.getWebpSetting(ctx); webpEnabled && webpconvert.NeedsConversion(srcPath) {
+		if webpEnabled, webpQuality := GetWebpSetting(r.imageOptRepo, ctx); webpEnabled && webpconvert.NeedsConversion(srcPath) {
 			if tmpPath, err := webpconvert.ConvertToWebP(srcPath, webpQuality); err == nil && tmpPath != "" {
 				srcPath = tmpPath
 				ext = ".webp"
@@ -526,17 +526,4 @@ func (r *postRepository) extractAbstract(content string) string {
 		return strings.TrimSpace(content[:loc[0]])
 	}
 	return ""
-}
-
-// getWebpSetting 获取 WebP 转换设置。设置不可用时返回关闭状态。
-// getWebpSetting 获取 WebP 转换设置。imageOptRepo 为 nil 或读取失败时返回关闭状态。
-func (r *postRepository) getWebpSetting(ctx context.Context) (enabled bool, quality int) {
-	if r.imageOptRepo == nil {
-		return false, 80
-	}
-	setting, err := r.imageOptRepo.GetImageOptimizeSetting(ctx)
-	if err != nil {
-		return false, 80
-	}
-	return setting.Enabled, setting.GetQuality()
 }

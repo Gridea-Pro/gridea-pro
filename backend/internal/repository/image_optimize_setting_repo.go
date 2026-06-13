@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"gridea-pro/backend/internal/domain"
+	"log"
+	"os"
 	"path/filepath"
 	"sync"
 )
@@ -42,6 +44,9 @@ func (r *imageOptimizeSettingRepository) loadIfNeeded() error {
 	settingPath := filepath.Join(r.appDir, "config", "image_optimize_setting.json") // 站点级配置
 	var setting domain.ImageOptimizeSetting
 	if err := LoadJSONFile(settingPath, &setting); err != nil {
+		if !os.IsNotExist(err) {
+			log.Printf("[imageOptRepo] 读取配置失败，使用默认值: %v", err)
+		}
 		r.cache = &domain.ImageOptimizeSetting{} // 文件不存在 → 零值（功能关闭）
 		r.loaded = true
 		return nil

@@ -5,7 +5,7 @@ import "context"
 // ImageOptimizeSetting 图片优化设置
 type ImageOptimizeSetting struct {
 	Enabled bool `json:"enabled"`
-	Quality int  `json:"quality"` // 1-100，默认 80
+	Quality int  `json:"quality"` // 保留字段，暂固定为 80，后续版本开放可配置
 }
 
 // GetQuality 返回压缩质量，未设置时默认 80。

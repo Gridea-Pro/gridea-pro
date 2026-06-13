@@ -176,7 +176,7 @@ func TestNeedsConversion(t *testing.T) {
 		{"image.jpg", true},
 		{"image.jpeg", true},
 		{"image.png", true},
-		{"image.gif", true},
+		{"image.gif", false}, // 动画 GIF 不转换，避免丢失动画
 		{"image.bmp", true},
 		{"image.webp", false},
 		{"image.svg", false},

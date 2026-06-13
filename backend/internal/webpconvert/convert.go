@@ -21,7 +21,6 @@ var convertibleExts = map[string]bool{
 	".jpg":  true,
 	".jpeg": true,
 	".png":  true,
-	".gif":  true,
 	".bmp":  true,
 }
 
@@ -30,6 +29,7 @@ var skipExts = map[string]bool{
 	".webp": true,
 	".svg":  true,
 	".ico":  true,
+	".gif":  true, // 动画 GIF 只能读取第一帧，转 WebP 会静默丢失动画
 }
 
 // ConvertToWebP 将图片文件转换为 WebP 格式。
