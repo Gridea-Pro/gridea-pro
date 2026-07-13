@@ -12,9 +12,10 @@ import { Chrome } from '@ckpack/vue-color'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { normalizeCssColor } from '../extensions/RichTextStyle'
 
-const props = withDefaults(defineProps<{ type?: 'text' | 'highlight'; modelValue?: string }>(), {
+const props = withDefaults(defineProps<{ type?: 'text' | 'highlight'; modelValue?: string; disabled?: boolean }>(), {
   type: 'text',
   modelValue: '',
+  disabled: false,
 })
 
 const emit = defineEmits<{ select: [color: string | null] }>()
@@ -136,8 +137,9 @@ function onOpenChange(v: boolean) {
     <PopoverTrigger as-child>
       <button
         type="button"
-        class="inline-flex h-8 items-center gap-0.5 rounded-md px-1 text-foreground ed-ctl"
+        class="inline-flex h-8 items-center gap-0.5 rounded-md px-1 text-foreground ed-ctl disabled:cursor-not-allowed disabled:opacity-40"
         :title="type === 'text' ? t('editor.color.textTitle') : t('editor.color.highlightTitle')"
+        :disabled="disabled"
         @mousedown.prevent
       >
         <span class="flex flex-col items-center gap-0.5">

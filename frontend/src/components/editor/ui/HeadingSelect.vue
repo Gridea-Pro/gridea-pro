@@ -14,7 +14,11 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
 
-const props = defineProps<{ editor: Editor | null | undefined }>()
+const props = defineProps<{
+  editor: Editor | null | undefined
+  /** 源码模式回调：非空时选择项走 Markdown 行前缀（0=正文，1-6=# 级别），不再碰 Tiptap */
+  sourceHeading?: ((level: number) => void) | null
+}>()
 const { t } = useI18n()
 
 const isMac = /mac/i.test(navigator.platform)
@@ -57,6 +61,8 @@ const options: HeadingOption[] = [
 
 const currentId = computed(() => {
   void tick.value
+  // 源码模式不解析光标上下文，触发器恒显"正文"（Tiptap 的选区此时是陈旧的）
+  if (props.sourceHeading) return 'paragraph'
   const e = props.editor
   if (!e) return 'paragraph'
   for (let i = 1; i <= 6; i++) {
@@ -71,6 +77,10 @@ const currentLabel = computed(() => {
 })
 
 function select(id: HeadingOption['id']) {
+  if (props.sourceHeading) {
+    props.sourceHeading(id === 'paragraph' ? 0 : parseInt(id, 10))
+    return
+  }
   const e = props.editor
   if (!e) return
   if (id === 'paragraph') {

@@ -15,6 +15,14 @@ export interface TocItem {
 /** 编辑器显示模式 */
 export type EditorMode = 'rich' | 'source' | 'split'
 
+/** SourceEditor（CodeMirror 源码栏）暴露给工具栏的 API（defineExpose 的结构化投影） */
+export interface SourcePaneApi {
+  cmd: import('./sourceCommands').SourceCommandApi
+  canUndo: boolean
+  canRedo: boolean
+  focus: () => void
+}
+
 /** 斜杠命令项 */
 export interface SlashCommandItem {
   /** 唯一标识 */

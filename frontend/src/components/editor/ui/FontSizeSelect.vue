@@ -13,7 +13,7 @@ import {
   DropdownMenuContent,
 } from '@/components/ui/dropdown-menu'
 
-const props = defineProps<{ editor: Editor | null | undefined }>()
+const props = defineProps<{ editor: Editor | null | undefined; disabled?: boolean }>()
 const { t } = useI18n()
 
 const sizes = ['10', '12', '14', '16', '18', '20', '22', '24', '26', '28', '30', '32', '36', '40', '48']
@@ -65,8 +65,9 @@ function reset() {
     <DropdownMenuTrigger as-child>
       <button
         type="button"
-        class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-sm tabular-nums text-foreground ed-ctl"
+        class="inline-flex h-8 items-center gap-1 rounded-md px-2 text-sm tabular-nums text-foreground ed-ctl disabled:cursor-not-allowed disabled:opacity-40"
         :title="t('editor.fontSize.title')"
+        :disabled="disabled"
         @mousedown.prevent
       >
         <span class="min-w-5 text-center">{{ current }}</span>

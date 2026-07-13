@@ -3,6 +3,7 @@
     <Toolbar
       :editor="editor"
       :mode="mode"
+      :source="sourceApi"
       @link="openLink"
       @image="imageOpen = true"
       @color="onColorSelect"
@@ -36,7 +37,7 @@
           <EditorContent :editor="editor" class="rich-content" @keydown="onKeydown" @focus.capture="emit('focus')" />
         </div>
         <div v-show="mode !== 'rich'" ref="sourcePaneRef" class="source-pane" @keydown="onKeydown" @focusin="emit('focus')">
-          <SourceEditor v-model:value="model" />
+          <SourceEditor ref="sourceRef" v-model:value="model" />
         </div>
       </div>
     </div>
@@ -104,7 +105,7 @@ import ImageEditDialog from './ui/ImageEditDialog.vue'
 import ImageLightbox from './ui/ImageLightbox.vue'
 import SummaryDialog from './ui/SummaryDialog.vue'
 import MathPopover from './ui/MathPopover.vue'
-import type { EditorMode } from './types'
+import type { EditorMode, SourcePaneApi } from './types'
 import { toast } from '@/helpers/toast'
 import { OpenImageDialog } from '@/wailsjs/go/app/App'
 import { UploadImagesFromFrontend, SaveImageBytesFromFrontend } from '@/wailsjs/go/facade/PostFacade'
@@ -121,6 +122,11 @@ const emit = defineEmits<{ keydown: [e: KeyboardEvent]; focus: [] }>()
 
 const mode = ref<EditorMode>('rich')
 const { t, tm } = useI18n()
+
+// 源码栏（CodeMirror）API：源码模式下工具栏/链接/图片/emoji/润色都走它，不碰陈旧的 Tiptap
+const sourceRef = ref<SourcePaneApi | null>(null)
+const sourceApi = computed<SourcePaneApi | null>(() => sourceRef.value)
+const inSource = computed(() => mode.value === 'source')
 
 // 防止「外部回填 → setContent → onUpdate → 回写 model」的回环
 let applyingExternal = false
@@ -294,8 +300,13 @@ async function uploadBytes(file: File): Promise<string> {
 }
 
 function insertImageByPath(path: string) {
+  if (!path) return
+  if (inSource.value) {
+    sourceApi.value?.cmd.insertText(`![](${path})`)
+    return
+  }
   const e = editor.value
-  if (!e || !path) return
+  if (!e) return
   e.chain().focus().setImage({ src: path }).run()
 }
 
@@ -329,6 +340,14 @@ const linkText = ref('')
 const imageOpen = ref(false)
 
 function openLink() {
+  if (inSource.value) {
+    const s = sourceApi.value
+    if (!s) return
+    linkUrl.value = ''
+    linkText.value = s.cmd.getSelectionText()
+    linkOpen.value = true
+    return
+  }
   const e = editor.value
   if (!e) return
   const { from, to } = e.state.selection
@@ -337,6 +356,11 @@ function openLink() {
   linkOpen.value = true
 }
 function onLinkSave(payload: { url: string; text: string }) {
+  if (inSource.value) {
+    const { url, text } = payload
+    sourceApi.value?.cmd.replaceSelection(`[${text || url}](${url})`)
+    return
+  }
   const e = editor.value
   if (!e) return
   const { url, text } = payload
@@ -356,6 +380,7 @@ function onLinkSave(payload: { url: string; text: string }) {
   }
 }
 function onLinkRemove() {
+  if (inSource.value) return // 源码模式弹窗仅用于插入，无"取消链接"语义
   editor.value?.chain().focus().extendMarkRange('link').unsetLink().run()
 }
 function onImageInsertUrl(src: string) {
@@ -386,13 +411,13 @@ function openImagePreview() {
 }
 function onColorSelect(color: string | null) {
   const e = editor.value
-  if (!e) return
+  if (!e || inSource.value) return
   if (color) e.chain().focus().setColor(color).run()
   else e.chain().focus().unsetColor().run()
 }
 function onHighlightSelect(color: string | null) {
   const e = editor.value
-  if (!e) return
+  if (!e || inSource.value) return
   if (color) e.chain().focus().setHighlight({ color }).run()
   else e.chain().focus().unsetHighlight().run()
 }
@@ -489,8 +514,16 @@ async function generateSummary() {
 }
 
 function onSummaryInsert(text: string) {
+  if (!text) return
+  if (inSource.value) {
+    // 源码模式直接改 model（CodeMirror 经 watch 同步）：摘要置顶，无 more 分隔则补一个
+    const hasMore = (model.value ?? '').includes('<!-- more -->')
+    const block = hasMore ? text : `${text}\n\n<!-- more -->`
+    model.value = `${block}\n\n${model.value ?? ''}`
+    return
+  }
   const e = editor.value
-  if (!e || !text) return
+  if (!e) return
   // 已有 <!-- more --> 则只插摘要段；否则补一个 more 分隔（Gridea 的发布摘要 = more 之前内容）
   let hasMore = false
   e.state.doc.descendants((n) => {
@@ -503,6 +536,10 @@ function onSummaryInsert(text: string) {
   e.chain().focus().insertContentAt(0, content).run()
 }
 function onEmojiSelect(emoji: string) {
+  if (inSource.value) {
+    sourceApi.value?.cmd.insertText(emoji)
+    return
+  }
   editor.value?.chain().focus().insertContent(emoji).run()
 }
 
@@ -528,6 +565,23 @@ watch(
 
 // ── AI 润色 ──────────────────────────────────────────
 async function polishSelection() {
+  // 源码模式取 CodeMirror 选区，结果按 Markdown 原文回填
+  if (inSource.value) {
+    const s = sourceApi.value
+    if (!s) return
+    const text = s.cmd.getSelectionText()
+    if (!text) {
+      toast.warning('请先选中要润色的文本')
+      return
+    }
+    try {
+      const polished = await Polish(text)
+      if (polished) s.cmd.replaceSelection(polished)
+    } catch (err: unknown) {
+      handlePolishError(err)
+    }
+    return
+  }
   const e = editor.value
   if (!e) return
   const { from, to } = e.state.selection
@@ -543,13 +597,17 @@ async function polishSelection() {
       e.chain().focus().insertContentAt({ from, to }, polished, { contentType: 'markdown' }).run()
     }
   } catch (err: unknown) {
-    console.error('[editor] polish failed:', err)
-    const msg = String((err as { message?: string })?.message || err || '')
-    if (msg.includes('[DAILY_LIMIT]')) toast.error(t('settings.ai.dailyLimitReached'))
-    else if (msg.includes('[RATE_LIMIT]')) toast.error(t('settings.ai.rateLimited'))
-    else if (msg.includes('[UPSTREAM_429]') || msg.includes('429')) toast.error(t('settings.ai.upstream429'))
-    else toast.error('润色失败')
+    handlePolishError(err)
   }
+}
+
+function handlePolishError(err: unknown) {
+  console.error('[editor] polish failed:', err)
+  const msg = String((err as { message?: string })?.message || err || '')
+  if (msg.includes('[DAILY_LIMIT]')) toast.error(t('settings.ai.dailyLimitReached'))
+  else if (msg.includes('[RATE_LIMIT]')) toast.error(t('settings.ai.rateLimited'))
+  else if (msg.includes('[UPSTREAM_429]') || msg.includes('429')) toast.error(t('settings.ai.upstream429'))
+  else toast.error('润色失败')
 }
 
 // ── 数学公式编辑弹层 ─────────────────────────────────
@@ -604,12 +662,20 @@ function onMathCancel() {
 
 // ── 暴露给父组件 ─────────────────────────────────────
 function insertMore() {
+  if (inSource.value) {
+    sourceApi.value?.cmd.insertBlock('<!-- more -->')
+    return
+  }
   editor.value?.chain().focus().insertContent({ type: 'moreBreak' }).run()
 }
 function insertEmoji(emoji: string) {
-  editor.value?.chain().focus().insertContent(emoji).run()
+  onEmojiSelect(emoji)
 }
 function focus() {
+  if (inSource.value) {
+    sourceApi.value?.focus()
+    return
+  }
   editor.value?.commands.focus()
 }
 
