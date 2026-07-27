@@ -69,6 +69,8 @@ export interface BuildEditorOptions {
   aiComplete?: (prefix: string, suffix: string) => Promise<string>
   /** AI 润色：给定文本返回润色结果 */
   aiPolish?: (text: string) => Promise<string>
+  /** 点击数学公式：打开 LaTeX 编辑（仅富文本环境注入；测试台不传 → 公式仅渲染） */
+  onMathEdit?: (p: { kind: 'inline' | 'block'; pos: number; latex: string }) => void
   /** 内容更新回调（markdown） */
   onUpdate?: (markdown: string) => void
   /** 目录更新回调 */

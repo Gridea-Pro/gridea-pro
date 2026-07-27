@@ -89,6 +89,13 @@ function isTableRow(s: string | undefined): boolean {
   return !!s && /^\s{0,3}\|.*\|/.test(s.trimEnd())
 }
 
+// 折叠面板 raw-html 标记行（<details>/<summary>…</summary>/</details>）：
+// 这些是 HTML 而非正文，summary 里的实体是 Details.ts 刻意转义的（防 XSS / 防 <、& 破坏结构），
+// 不可像正文那样反解回字面，否则会重新注入可执行 HTML。
+function isRawHtmlMarkerLine(t: string): boolean {
+  return /^<\/?details\b/i.test(t) || /^<summary>/i.test(t) || /<\/summary>\s*$/i.test(t)
+}
+
 function normalizeTable(block: string[]): string[] {
   if (block.length < 2 || !isSeparatorRow(block[1])) return block
   const rows = block.map(splitRow)
@@ -141,7 +148,8 @@ export function canonicalizeMarkdown(md: string): string {
         continue
       }
     }
-    out.push(decodeEntitiesOutsideCode(line.replace(/[ \t]+$/g, '')))
+    const stripped = line.replace(/[ \t]+$/g, '')
+    out.push(isRawHtmlMarkerLine(stripped.trim()) ? stripped : decodeEntitiesOutsideCode(stripped))
   }
   return out
     .join('\n')

@@ -661,7 +661,11 @@
     "orderedList": "Ordered list",
     "taskList": "Task list",
     "blockquote": "Blockquote",
-    "codeBlock": "Code block",
+    "codeBlock": {
+      "plain": "Plain text",
+      "copy": "Copy",
+      "copied": "Copied"
+    },
     "hr": "Divider",
     "alignLeft": "Align left",
     "alignCenter": "Align center",
@@ -696,7 +700,9 @@
         "block": "Block",
         "insert": "Insert"
       },
-      "mermaid": "Mermaid diagram"
+      "mermaid": "Mermaid diagram",
+      "details": "Collapsible",
+      "footnote": "Footnote"
     },
     "dragHandle": {
       "title": "Drag to move, click for options",
@@ -751,6 +757,18 @@
       "placeholder": "Enter Mermaid syntax, e.g. graph TD; A-->B",
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "math": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "empty": "Enter LaTeX below"
+    },
+    "footnote": {
+      "placeholder": "Footnote text…",
+      "back": "Back to reference"
+    },
+    "details": {
+      "summary": "Summary title"
     }
   }
 }

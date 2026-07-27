@@ -240,3 +240,17 @@
   color: var(--editor-muted);
   opacity: 0.6;
 }
+
+/* 脚注引用 ↔ 定义互跳时的高亮闪烁（classList 动态加，故为全局规则） */
+.footnote-flash {
+  animation: footnote-flash-kf 1.2s ease;
+}
+@keyframes footnote-flash-kf {
+  0%,
+  100% {
+    background: transparent;
+  }
+  30% {
+    background: color-mix(in srgb, var(--editor-accent) 28%, transparent);
+  }
+}

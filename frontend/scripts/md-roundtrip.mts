@@ -35,6 +35,7 @@ for (const k of [
 const { MarkdownManager } = await import('@tiptap/markdown')
 const { buildExtensions } = await import('../src/components/editor/extensions/index.ts')
 const { canonicalizeMarkdown } = await import('../src/components/editor/markdown/canonicalize.ts')
+const { foldDetailsContent } = await import('../src/components/editor/markdown/foldDetails.ts')
 
 const manager = new (MarkdownManager as unknown as {
   new (o: { extensions: unknown[] }): { parse(md: string): unknown; serialize(json: unknown): string }
@@ -105,6 +106,7 @@ const SAMPLES: Array<{ name: string; md: string; expect?: string }> = [
   { name: 'emoji', md: 'hello :smile: world' },
   { name: 'more-break', md: 'intro\n\n<!-- more -->\n\nbody' },
   { name: 'footnote', md: 'text with note[^1]\n\n[^1]: the note' },
+  { name: 'footnote-dup-ref', md: 'see[^1] and again[^1] here\n\n[^1]: shared note' },
   { name: 'task-list', md: '- [ ] todo\n- [x] done' },
   { name: 'bullet-list', md: '- one\n- two\n  - nested' },
   { name: 'ordered-list', md: '1. one\n2. two' },
@@ -118,6 +120,8 @@ const SAMPLES: Array<{ name: string; md: string; expect?: string }> = [
   { name: 'table-pipe', md: '| a | `x \\| y` | b |\n| --- | --- | --- |\n| 1 | 2 | 3 |' },
   { name: 'soft-break', md: 'line one\nline two' },
   { name: 'raw-html', md: '<div class="x">raw block</div>' },
+  // details 在 manager 直通路径（无折叠）下的 raw-html 三段式往返
+  { name: 'details-raw', md: '<details>\n<summary>T</summary>\n\nbody\n\n</details>' },
   // 转义保真：转义字符不得丢失（反斜杠会规范化掉，字面字符保留）
   { name: 'escape-dollar', md: 'it costs \\$5 and \\$6 total', expect: 'it costs $5 and $6 total' },
   { name: 'escape-pipe', md: 'a \\| b \\| c', expect: 'a | b | c' },
@@ -213,8 +217,101 @@ for (const c of cases) {
   else if (!exact && verbose) fails.push({ name: c.name, kind: 'reformat', detail: firstDiff(norm(target), norm(out1)) })
 }
 
-// 硬门槛：无 THREW/UNSTABLE/CONTENT-LOSS/ENTITY-ENCODED/DIALECT。1-pass/exact 仅信息性。
-const GATING = new Set(['THREW', 'UNSTABLE', 'CONTENT-LOSS', 'ENTITY-ENCODED', 'DIALECT'])
+// ── Details 折叠/序列化幂等测试（编辑器 I/O 路径，无需 EditorView）──────────
+// manager 往返本身走 raw-html 形态（在上面的 SAMPLES 里已覆盖）；这里额外验证
+// 「折叠成 details 节点 → 序列化回 <details> → 再解析折叠」整条编辑器链路幂等且无损。
+function testDetails() {
+  const cases = [
+    {
+      name: 'details-basic',
+      md: '<details open>\n<summary>注意</summary>\n\n正文段落\n\n- 项目 A\n- 项目 B\n\n</details>',
+    },
+    {
+      name: 'details-closed',
+      md: '<details>\n<summary>展开看代码</summary>\n\n```js\nconst a = 1\n```\n\n</details>',
+    },
+    // summary 含 HTML 实体（已转义形态）：折叠解码 → 再序列化转义 应稳定回到同一形态
+    {
+      name: 'details-summary-entities',
+      md: '<details>\n<summary>Title with &lt;tag&gt; &amp; x</summary>\n\nbody\n\n</details>',
+    },
+    // 多行 summary（marked 仍作单个 html token，OPEN_RE 的 [\\s\\S]*? 跨行匹配）
+    {
+      name: 'details-summary-multiline',
+      md: '<details>\n<summary>第一行\n第二行</summary>\n\nbody\n\n</details>',
+    },
+  ]
+  for (const c of cases) {
+    try {
+      // 1) manager 解析 → rawHtml(开)+正文+rawHtml(闭)
+      const doc1 = manager.parse(c.md) as any
+      // 2) 折叠成 details 节点
+      const { content, changed } = foldDetailsContent(doc1.content || [])
+      if (!changed) {
+        fails.push({ name: c.name, kind: 'DETAILS', detail: '  未折叠出 details 节点（开/闭标签匹配失败）' })
+        continue
+      }
+      const detailsNode = content.find((n: any) => n.type === 'details')
+      if (!detailsNode) {
+        fails.push({ name: c.name, kind: 'DETAILS', detail: '  折叠结果中无 details 节点' })
+        continue
+      }
+      // 3) 序列化折叠后的文档 → <details> 文本（用生产 canonicalizeMarkdown，忠实于 getMarkdown，
+      //    以捕捉实体反解等规范化交互；harness 局部 canon 不解码实体，会漏掉该类问题）
+      const out1 = canonicalizeMarkdown(manager.serialize({ type: 'doc', content }))
+      // 4) 再解析 + 折叠 + 序列化 → 幂等
+      const doc2 = manager.parse(out1) as any
+      const fold2 = foldDetailsContent(doc2.content || [])
+      const out2 = canonicalizeMarkdown(manager.serialize({ type: 'doc', content: fold2.content }))
+      if (out1 !== out2) {
+        fails.push({ name: c.name, kind: 'DETAILS', detail: firstDiff(out1, out2) })
+        continue
+      }
+      // 5) 无损：原文词级 token 不得丢失
+      const miss = missingWords(c.md, out1)
+      if (miss.length) {
+        fails.push({ name: c.name, kind: 'DETAILS', detail: `  missing(${miss.length}): ${miss.slice(0, 8).join(' · ')}` })
+        continue
+      }
+      // 6) 必须仍是 <details> HTML（可被 goldmark unsafe 发布）
+      if (!/<details[^>]*>[\s\S]*<\/details>/.test(out1)) {
+        fails.push({ name: c.name, kind: 'DETAILS', detail: '  序列化结果不含 <details> 标签' })
+        continue
+      }
+    } catch (e) {
+      fails.push({ name: c.name, kind: 'DETAILS', detail: `  ${(e as Error).message}` })
+    }
+  }
+
+  // XSS 防护断言：summary 属性里的脚本必须被转义，绝不能原样进入 <summary>
+  try {
+    const malicious = `<script>alert('xss')</script>`
+    const docJson = {
+      type: 'doc',
+      content: [
+        {
+          type: 'details',
+          attrs: { summary: malicious, open: true },
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'body' }] }],
+        },
+      ],
+    }
+    // 必须走生产 canonicalizeMarkdown：它会反解正文实体，但 summary 标记行须豁免，否则转义被撤销
+    const serialized = canonicalizeMarkdown(manager.serialize(docJson))
+    if (serialized.includes('<script>')) {
+      fails.push({ name: 'details-xss-escape', kind: 'DETAILS', detail: '  canonicalize 后 summary 仍含可执行 <script>，存在已发布页面 XSS' })
+    }
+    if (!serialized.includes('&lt;script&gt;')) {
+      fails.push({ name: 'details-xss-escape', kind: 'DETAILS', detail: '  summary 未保持 &lt;script&gt; 转义形态' })
+    }
+  } catch (e) {
+    fails.push({ name: 'details-xss-escape', kind: 'DETAILS', detail: `  ${(e as Error).message}` })
+  }
+}
+testDetails()
+
+// 硬门槛：无 THREW/UNSTABLE/CONTENT-LOSS/ENTITY-ENCODED/DIALECT/DETAILS。1-pass/exact 仅信息性。
+const GATING = new Set(['THREW', 'UNSTABLE', 'CONTENT-LOSS', 'ENTITY-ENCODED', 'DIALECT', 'DETAILS'])
 const blocking = fails.filter((f) => GATING.has(f.kind))
 console.log(
   `\n==== stable ${stable}/${cases.length} | lossless ${lossless}/${cases.length} | 1-pass-idempotent ${idem1}/${cases.length} | exact ${exactPass}/${cases.length} ====`,

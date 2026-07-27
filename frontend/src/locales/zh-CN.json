@@ -661,7 +661,11 @@
     "orderedList": "有序列表",
     "taskList": "任务列表",
     "blockquote": "引用",
-    "codeBlock": "代码块",
+    "codeBlock": {
+      "plain": "纯文本",
+      "copy": "复制",
+      "copied": "已复制"
+    },
     "hr": "分割线",
     "alignLeft": "左对齐",
     "alignCenter": "居中对齐",
@@ -696,7 +700,9 @@
         "block": "块",
         "insert": "插入"
       },
-      "mermaid": "Mermaid 流程图"
+      "mermaid": "Mermaid 流程图",
+      "details": "折叠面板",
+      "footnote": "脚注"
     },
     "dragHandle": {
       "title": "拖拽以移动，点击打开菜单",
@@ -751,6 +757,18 @@
       "placeholder": "输入 Mermaid 语法，如 graph TD; A-->B",
       "cancel": "取消",
       "save": "保存"
+    },
+    "math": {
+      "cancel": "取消",
+      "save": "保存",
+      "empty": "在下方输入 LaTeX"
+    },
+    "footnote": {
+      "placeholder": "脚注内容…",
+      "back": "返回引用处"
+    },
+    "details": {
+      "summary": "摘要标题"
     }
   }
 }

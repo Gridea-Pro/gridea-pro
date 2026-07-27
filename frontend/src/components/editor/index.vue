@@ -25,6 +25,15 @@
 
     <LinkDialog v-model:open="linkOpen" :url="linkUrl" :text="linkText" @save="onLinkSave" @remove="onLinkRemove" />
     <ImageDialog v-model:open="imageOpen" @insert-url="onImageInsertUrl" @pick-local="pickImageFromDialog" />
+    <MathPopover
+      :open="mathEdit.open"
+      :kind="mathEdit.kind"
+      :latex="mathEdit.latex"
+      :x="mathEdit.x"
+      :y="mathEdit.y"
+      @save="onMathSave"
+      @cancel="onMathCancel"
+    />
   </div>
 </template>
 
@@ -45,6 +54,11 @@ import TableMenu from './ui/TableMenu.vue'
 import LinkDialog from './ui/LinkDialog.vue'
 import ImageDialog from './ui/ImageDialog.vue'
 import MermaidView from './ui/MermaidView.vue'
+import CodeBlockView from './ui/CodeBlockView.vue'
+import FootnoteRefView from './ui/FootnoteRefView.vue'
+import FootnoteDefView from './ui/FootnoteDefView.vue'
+import DetailsView from './ui/DetailsView.vue'
+import MathPopover from './ui/MathPopover.vue'
 import type { EditorMode } from './types'
 import { toast } from '@/helpers/toast'
 import { OpenImageDialog } from '@/wailsjs/go/app/App'
@@ -76,7 +90,13 @@ const editor = useEditor({
       placeholder: props.placeholder,
       upload: async (file: File) => uploadBytes(file),
       // NodeView 与 AI 续写仅在富文本环境注入（测试台不传，节点退回 renderHTML、AI 续写惰性）
-      nodeViews: { mermaid: MermaidView },
+      nodeViews: {
+        mermaid: MermaidView,
+        codeBlock: CodeBlockView,
+        footnoteRef: FootnoteRefView,
+        footnoteDef: FootnoteDefView,
+        details: DetailsView,
+      },
       aiComplete: async (prefix: string, suffix: string) => {
         try {
           return await Complete(prefix, suffix)
@@ -84,6 +104,8 @@ const editor = useEditor({
           return ''
         }
       },
+      // 点击公式 → 打开 LaTeX 编辑弹层
+      onMathEdit: openMathEdit,
     }),
     // UI 耦合扩展在此加入（不进 buildExtensions，避免污染纯 Markdown 测试台）
     SlashCommand,
@@ -280,6 +302,56 @@ async function polishSelection() {
     else if (msg.includes('[UPSTREAM_429]') || msg.includes('429')) toast.error(t('settings.ai.upstream429'))
     else toast.error('润色失败')
   }
+}
+
+// ── 数学公式编辑弹层 ─────────────────────────────────
+const mathEdit = ref<{
+  open: boolean
+  kind: 'inline' | 'block'
+  pos: number
+  latex: string
+  x: number
+  y: number
+}>({ open: false, kind: 'inline', pos: -1, latex: '', x: 0, y: 0 })
+
+function openMathEdit(p: { kind: 'inline' | 'block'; pos: number; latex: string }) {
+  const e = editor.value
+  if (!e) return
+  let x = window.innerWidth / 2 - 160
+  let y = 120
+  try {
+    const coords = e.view.coordsAtPos(p.pos)
+    x = Math.min(Math.max(8, coords.left), window.innerWidth - 340)
+    // y 也要夹住，避免视口底部的公式弹层落到折叠线以下不可见
+    y = Math.min(coords.bottom + 6, window.innerHeight - 300)
+  } catch {
+    /* 坐标取不到时退回默认位置 */
+  }
+  mathEdit.value = { open: true, kind: p.kind, pos: p.pos, latex: p.latex, x, y }
+}
+function onMathSave(latex: string) {
+  const e = editor.value
+  const pos = mathEdit.value.pos
+  if (e && pos >= 0) {
+    e.chain()
+      .command(({ tr }) => {
+        // 弹层打开期间文档可能被改动 → 校验 pos 仍指向公式节点，避免写错节点/静默抛错
+        const node = tr.doc.nodeAt(pos)
+        if (!node || (node.type.name !== 'inlineMath' && node.type.name !== 'blockMath')) return false
+        if (!latex.trim()) {
+          // 清空即删除，避免遗留空公式孤儿节点
+          tr.delete(pos, pos + node.nodeSize)
+        } else {
+          tr.setNodeAttribute(pos, 'latex', latex)
+        }
+        return true
+      })
+      .run()
+  }
+  mathEdit.value.open = false
+}
+function onMathCancel() {
+  mathEdit.value.open = false
 }
 
 // ── 暴露给父组件 ─────────────────────────────────────

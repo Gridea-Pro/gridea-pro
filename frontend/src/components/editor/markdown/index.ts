@@ -5,6 +5,7 @@
  */
 import type { Editor } from '@tiptap/core'
 import { canonicalizeMarkdown } from './canonicalize'
+import { foldDetailsContent } from './foldDetails'
 
 /** 导出 Markdown（规范化为幂等形式：表格最小内边距等，保证 once-saved-then-stable） */
 export function getMarkdown(editor: Editor): string {
@@ -22,7 +23,19 @@ export function getMarkdown(editor: Editor): string {
  */
 export function setMarkdown(editor: Editor, md: string, emitUpdate = false): void {
   try {
-    editor.commands.setContent(md ?? '', { contentType: 'markdown', emitUpdate })
+    // details 折叠需要先不触发 update，折叠后的二次回灌再按需 emit，避免两次 onUpdate
+    const hasDetails = !!md && md.includes('<details')
+    editor.commands.setContent(md ?? '', { contentType: 'markdown', emitUpdate: hasDetails ? false : emitUpdate })
+    if (!hasDetails) return
+    // 把 marked 拆出的 rawHtml(开)+正文+rawHtml(闭) 折叠回富文本 details 节点
+    const json = editor.getJSON()
+    const { content, changed } = foldDetailsContent((json.content as never[]) || [])
+    if (changed) {
+      editor.commands.setContent({ ...json, content }, { emitUpdate })
+    } else if (emitUpdate) {
+      // 无折叠但调用方要求 emit：补一次（不改内容）
+      editor.commands.setContent(json, { emitUpdate })
+    }
   } catch (e) {
     console.error('[editor] setContent(markdown) failed:', e)
   }

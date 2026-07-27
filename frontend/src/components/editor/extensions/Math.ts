@@ -40,15 +40,41 @@ const inlineMathTokenizer = {
   },
 }
 
-export const CustomInlineMath = InlineMath.extend({
+/** 点击数学公式时回调（仅富文本环境注入；测试台不传 → 公式仅渲染，不可编辑） */
+export interface MathEditPayload {
+  kind: 'inline' | 'block'
+  pos: number
+  latex: string
+}
+export type OnMathEdit = (p: MathEditPayload) => void
+
+const InlineMathNode = InlineMath.extend({
   markdownTokenName: 'inlineMath',
   markdownTokenizer: inlineMathTokenizer,
   parseMarkdown: (token: any, helpers: any) =>
     helpers.createNode('inlineMath', { latex: token.latex ?? token.text ?? '' }),
   renderMarkdown: (node: any) => `$${node.attrs?.latex ?? ''}$`,
-} as any).configure({ katexOptions: { throwOnError: false } })
+} as any)
 
-export const CustomBlockMath = BlockMath.extend({
+const BlockMathNode = BlockMath.extend({
   markdownTokenName: 'blockMath',
   renderMarkdown: (node: any) => `$$\n${node.attrs?.latex ?? ''}\n$$`,
-} as any).configure({ katexOptions: { throwOnError: false, displayMode: true } })
+} as any)
+
+export function createInlineMath(onEdit?: OnMathEdit) {
+  return InlineMathNode.configure({
+    katexOptions: { throwOnError: false },
+    ...(onEdit
+      ? { onClick: (node: any, pos: number) => onEdit({ kind: 'inline', pos, latex: node.attrs?.latex ?? '' }) }
+      : {}),
+  } as any)
+}
+
+export function createBlockMath(onEdit?: OnMathEdit) {
+  return BlockMathNode.configure({
+    katexOptions: { throwOnError: false, displayMode: true },
+    ...(onEdit
+      ? { onClick: (node: any, pos: number) => onEdit({ kind: 'block', pos, latex: node.attrs?.latex ?? '' }) }
+      : {}),
+  } as any)
+}

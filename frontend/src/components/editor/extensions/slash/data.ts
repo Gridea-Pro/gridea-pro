@@ -7,7 +7,7 @@ import type { Editor, Range } from '@tiptap/core'
 import {
   Heading1, Heading2, Heading3, List, ListOrdered, ListChecks, Quote, Code2, Minus,
   Table as TableIcon, Image as ImageIcon, Link as LinkIcon, Sigma, FunctionSquare,
-  SeparatorHorizontal, Workflow,
+  SeparatorHorizontal, Workflow, ListCollapse, Asterisk,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 
@@ -51,6 +51,10 @@ export const SLASH_ITEMS: SlashItem[] = [
     command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
   { key: 'mermaid', group: 'block', icon: Workflow, keywords: 'mermaid flow diagram 流程图 liuchengtu tu',
     command: ({ editor, range }) => (editor.chain().focus().deleteRange(range) as any).setMermaid({ code: '' }).run() },
+  { key: 'details', group: 'block', icon: ListCollapse, keywords: 'details collapse fold 折叠 折叠面板 zhedie zhediemianban',
+    command: ({ editor, range }) => (editor.chain().focus().deleteRange(range) as any).setDetails().run() },
+  { key: 'footnote', group: 'insert', icon: Asterisk, keywords: 'footnote 脚注 jiaozhu zhushi',
+    command: ({ editor, range }) => (editor.chain().focus().deleteRange(range) as any).insertFootnote().run() },
   { key: 'more', group: 'block', icon: SeparatorHorizontal, keywords: 'more readmore 摘要 阅读更多 yuedugengduo zhaiyao',
     command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'moreBreak' }).run() },
   { key: 'image', group: 'insert', icon: ImageIcon, keywords: 'image picture 图片 tupian',
