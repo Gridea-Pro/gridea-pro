@@ -2,9 +2,7 @@
     <div v-if="visible" class="article-update-page" :class="{ 'is-entering': entering }"
         @mousemove="handlePageMousemove">
         <!-- Header & Tools -->
-        <EditorHeader :can-submit="canSubmit" :article-stats="articleStats" @close="close" @save-draft="saveDraft"
-            @publish="publishPost" @emoji-select="handleEmojiSelect" @insert-image="insertImage"
-            @insert-more="insertMore" @open-settings="handleArticleSettingClick" @preview="previewPost(form.content)" />
+        <EditorHeader :can-submit="canSubmit" @close="close" @save-draft="saveDraft" @publish="publishPost" />
 
         <!-- Content -->
         <div class="page-content">
@@ -112,7 +110,6 @@ const {
     changedAfterLastSave,
     articleStatusTip,
     canSubmit,
-    articleStats,
     availableTags,
     availableCategories,
     dateValue,
@@ -166,7 +163,6 @@ const {
     saveDraft,
     publishPost,
     handleConfirmPublish,
-    handleArticleSettingClick,
     setupEvents,
     cleanupEvents,
 } = useArticleActions({
@@ -184,10 +180,6 @@ const {
     tiptapEditor,
     previewVisible,
     entering,
-    insertImage,
-    insertMore,
-    handleEmojiSelect,
-    previewPost,
     handleInputKeydown,
     handlePageMousemove,
     openPage,
