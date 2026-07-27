@@ -1,20 +1,17 @@
 /**
- * 编辑器交互辅助 Composable
+ * 编辑器交互辅助 Composable（TipTap 版）
  *
  * 职责：
- * - 插入图片 (uploadInputRef 触发 + 文件上传 + Monaco 插入)
+ * - 插入图片（OS 文件对话框 + Wails facade 上传 + TiptapEditor 插入）
  * - 插入更多分隔符 (<!-- more -->)
  * - Emoji 插入
- * - Markdown 预览 (Prism 高亮)
- * - 文件选择回调
- * - 快捷键处理
+ * - Markdown 预览 (markdown-it 渲染)
+ * - 快捷键处理 / 外部链接
  *
- * 从 ArticleUpdate.vue 精确迁移，零回归。
+ * 与 TiptapEditor（`@/components/editor`）通过其 defineExpose 的命令式 API 协作。
  */
 
-import { ref, type ShallowRef } from 'vue'
-import * as monaco from 'monaco-editor'
-import Prism from 'prismjs'
+import { ref } from 'vue'
 import markdown from '@/helpers/markdown'
 import ga from '@/helpers/analytics'
 import { toast } from '@/helpers/toast'
@@ -23,170 +20,97 @@ import { UploadImagesFromFrontend } from '@/wailsjs/go/facade/PostFacade'
 import { OpenImageDialog } from '@/wailsjs/go/app/App'
 import { domain } from '@/wailsjs/go/models'
 
-/** Monaco 编辑器组件 ref 类型（editor 为 shallowRef 包装） */
-export type MonacoEditorRef = {
-    editor: ShallowRef<monaco.editor.IStandaloneCodeEditor | null>
-} | null
+/** TiptapEditor 暴露给父级的命令式 API（见 components/editor/index.vue defineExpose） */
+export interface TiptapEditorExposed {
+  editor: unknown
+  insertImageByPath: (path: string) => void
+  insertImageBytes: (file: File) => Promise<void>
+  insertMore: () => void
+  insertEmoji: (emoji: string) => void
+  focus: () => void
+}
 
 export function useEditorHelper() {
-    // ── DOM Refs ──────────────────────────────────────────
+  const tiptapEditor = ref<TiptapEditorExposed | null>(null)
+  const previewHtml = ref('')
 
-    const monacoMarkdownEditor = ref<MonacoEditorRef>(null)
-    const previewHtml = ref('')
+  const previewVisible = ref(false)
+  const entering = ref(false)
 
-    // ── UI 状态 ───────────────────────────────────────────
-
-    const previewVisible = ref(false)
-    const entering = ref(false)
-
-    // ── 获取 Monaco Editor 实例的安全方法 ──────────────────
-
-    const getEditor = (): monaco.editor.IStandaloneCodeEditor | null => {
-        // Vue ref 嵌套 ShallowRef 时会自动解包，editor 已是裸值
-        const editorInstance = monacoMarkdownEditor.value?.editor as monaco.editor.IStandaloneCodeEditor | null
-        if (!editorInstance) {
-            console.error('Monaco editor is not ready')
-            return null
-        }
-        return editorInstance
+  // ── 插入图片（选择文件） ───────────────────────────────
+  const insertImage = async () => {
+    ga('Post', 'Post - click-insert-image', '')
+    try {
+      const filePath = await OpenImageDialog()
+      if (!filePath) return
+      const name = filePath.split('/').pop() || filePath.split('\\').pop() || 'image'
+      const paths = await UploadImagesFromFrontend([new domain.UploadedFile({ name, path: filePath })])
+      paths.forEach((p) => tiptapEditor.value?.insertImageByPath(p))
+    } catch (e) {
+      console.error(e)
+      toast.error('上传图片失败')
     }
+  }
 
-    // ── 在编辑器光标处插入文本 ─────────────────────────────
+  // ── 插入更多分隔符 ────────────────────────────────────
+  const insertMore = () => {
+    tiptapEditor.value?.insertMore()
+    ga('Post', 'Post - click-add-more', '')
+  }
 
-    const insertTextAtCursor = (text: string) => {
-        const editor = getEditor()
-        if (!editor) return
+  // ── Emoji 插入 ────────────────────────────────────────
+  const handleEmojiSelect = (emoji: string) => {
+    tiptapEditor.value?.insertEmoji(emoji)
+  }
 
-        const position = editor.getPosition()
-        if (!position) return
+  // ── Markdown 预览 ─────────────────────────────────────
+  const previewPost = (content: string) => {
+    previewVisible.value = true
+    previewHtml.value = markdown.render(content)
+    ga('Post', 'Post - click-preview-post', '')
+  }
 
-        editor.executeEdits('', [
-            {
-                range: monaco.Range.fromPositions(position),
-                text,
-                forceMoveMarkers: true,
-            },
-        ])
-        editor.focus()
+  // ── 快捷键处理 ────────────────────────────────────────
+  const handleInputKeydown = (e: KeyboardEvent, content: string) => {
+    entering.value = true
+    if (e.ctrlKey && e.key === 'p') {
+      e.preventDefault()
+      previewPost(content)
     }
+  }
 
-    // ── 插入图片 ──────────────────────────────────────────
+  const handlePageMousemove = () => {
+    entering.value = false
+  }
 
-    const insertImage = async () => {
-        ga('Post', 'Post - click-insert-image', '')
-        try {
-            const filePath = await OpenImageDialog()
-            if (!filePath) return
+  // ── GA 辅助 ───────────────────────────────────────────
+  const handleInfoClick = () => {
+    ga('Post', 'Post - click-post-info', '')
+  }
 
-            const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || 'image'
-            const uploadedFile = new domain.UploadedFile({
-                name: fileName,
-                path: filePath,
-            })
-            await uploadImageFiles([uploadedFile])
-        } catch (e) {
-            console.error(e)
-            toast.error('上传图片失败')
-        }
-    }
+  const handleEmojiClick = () => {
+    ga('Post', 'Post - click-emoji-card', '')
+  }
 
-    const uploadImageFiles = async (files: domain.UploadedFile[]) => {
-        try {
-            const data = await UploadImagesFromFrontend(files)
-            const editor = getEditor()
-            if (!editor) return
+  // ── 外部链接 ──────────────────────────────────────────
+  const openPage = (url: string) => {
+    BrowserOpenURL(url)
+  }
 
-            for (const path of data) {
-                const url = `![](${path})`
-                const position = editor.getPosition()
-                if (!position) return
-                editor.executeEdits('', [
-                    {
-                        range: monaco.Range.fromPositions(position),
-                        text: url,
-                        forceMoveMarkers: true,
-                    },
-                ])
-            }
-            editor.focus()
-        } catch (e) {
-            console.error(e)
-            toast.error('上传图片失败')
-        }
-    }
-
-    // ── 插入更多分隔符 ────────────────────────────────────
-
-    const insertMore = () => {
-        insertTextAtCursor('\n<!-- more -->\n')
-        ga('Post', 'Post - click-add-more', '')
-    }
-
-    // ── Emoji 插入 ────────────────────────────────────────
-
-    const handleEmojiSelect = (emoji: string) => {
-        insertTextAtCursor(emoji)
-    }
-
-    // ── Markdown 预览 ──────────────────────────────────────
-
-    const previewPost = (content: string) => {
-        console.log('Preview post clicked')
-        previewVisible.value = true
-        previewHtml.value = markdown.render(content)
-        ga('Post', 'Post - click-preview-post', '')
-    }
-
-    // ── 快捷键处理 ────────────────────────────────────────
-
-    const handleInputKeydown = (e: KeyboardEvent, content: string) => {
-        entering.value = true
-        if (e.ctrlKey && e.key === 'p') {
-            e.preventDefault()
-            previewPost(content)
-        }
-    }
-
-    const handlePageMousemove = () => {
-        entering.value = false
-    }
-
-    // ── GA 辅助 ───────────────────────────────────────────
-
-    const handleInfoClick = () => {
-        ga('Post', 'Post - click-post-info', '')
-    }
-
-    const handleEmojiClick = () => {
-        ga('Post', 'Post - click-emoji-card', '')
-    }
-
-    // ── 外部链接 ──────────────────────────────────────────
-
-    const openPage = (url: string) => {
-        BrowserOpenURL(url)
-    }
-
-    return {
-        // DOM Refs
-        monacoMarkdownEditor,
-        previewHtml,
-        // UI 状态
-        previewVisible,
-        entering,
-        // 编辑器操作
-        insertImage,
-        insertMore,
-        handleEmojiSelect,
-        // 预览
-        previewPost,
-        // 快捷键
-        handleInputKeydown,
-        handlePageMousemove,
-        // GA
-        handleInfoClick,
-        handleEmojiClick,
-        // 外部链接
-        openPage,
-    }
+  return {
+    // 编辑器实例引用（指向 TiptapEditor 组件）
+    tiptapEditor,
+    previewHtml,
+    previewVisible,
+    entering,
+    insertImage,
+    insertMore,
+    handleEmojiSelect,
+    previewPost,
+    handleInputKeydown,
+    handlePageMousemove,
+    handleInfoClick,
+    handleEmojiClick,
+    openPage,
+  }
 }

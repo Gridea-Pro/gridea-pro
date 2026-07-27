@@ -643,5 +643,35 @@
     "render": {
       "failed": "渲染失败"
     }
+  },
+  "editor": {
+    "undo": "撤销",
+    "redo": "重做",
+    "h1": "一级标题",
+    "h2": "二级标题",
+    "h3": "三级标题",
+    "bold": "加粗",
+    "italic": "斜体",
+    "strike": "删除线",
+    "code": "行内代码",
+    "highlight": "高亮",
+    "sub": "下标",
+    "sup": "上标",
+    "bulletList": "无序列表",
+    "orderedList": "有序列表",
+    "taskList": "任务列表",
+    "blockquote": "引用",
+    "codeBlock": "代码块",
+    "hr": "分割线",
+    "alignLeft": "左对齐",
+    "alignCenter": "居中对齐",
+    "alignRight": "右对齐",
+    "link": "链接",
+    "image": "图片",
+    "table": "表格",
+    "aiPolish": "AI 润色",
+    "rich": "富文本",
+    "split": "分屏",
+    "source": "源码"
   }
 }

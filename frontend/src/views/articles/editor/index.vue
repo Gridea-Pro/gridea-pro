@@ -32,10 +32,10 @@
                     </span>
                 </div>
 
-                <monaco-markdown-editor ref="monacoMarkdownEditor" v-model:value="form.content" :is-post-page="true"
+                <TiptapEditor ref="tiptapEditor" v-model:value="form.content" :is-post-page="true"
                     :placeholder="$t('article.editorPlaceholder')"
                     class="post-editor" @focus="handleEditorFocus"
-                    @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)"></monaco-markdown-editor>
+                    @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)"></TiptapEditor>
             </div>
 
             <div class="footer-info">
@@ -71,7 +71,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useSiteStore } from '@/stores/site'
-import MonacoMarkdownEditor from '@/components/MonacoMarkdownEditor/index.vue'
+import TiptapEditor from '@/components/editor/index.vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from '@/helpers/toast'
 import { GenerateSlug } from '@/wailsjs/go/facade/AIFacade'
@@ -177,7 +177,7 @@ const {
 })
 
 const {
-    monacoMarkdownEditor,
+    tiptapEditor,
     previewVisible,
     entering,
     insertImage,
@@ -194,15 +194,12 @@ const titleInputRef = ref<HTMLInputElement | null>(null)
 
 // 焦点互斥逻辑：修复标题和正文同时出现光标
 const handleTitleFocus = () => {
-    // 当点击标题时，确保 monaco 失去焦点
-    const editor = monacoMarkdownEditor.value?.editor
-    if (editor && (editor as any)._focusTracker) {
-        // 让编辑器失去焦点，使用更安全的方式
-        try {
-            (editor as any)._focusTracker.onBlur()
-        } catch (e) {
-            console.warn('[Focus] Failed to blur monaco editor', e)
-        }
+    // 当点击标题时，确保编辑器失去焦点
+    const ed = tiptapEditor.value?.editor as any
+    try {
+        ed?.commands?.blur?.()
+    } catch (e) {
+        console.warn('[Focus] Failed to blur editor', e)
     }
 }
 
@@ -340,22 +337,26 @@ onUnmounted(() => {
 
     .post-editor {
         flex: 1;
+        min-height: 0;
 
-        :deep(.monaco-markdown-editor) {
-            width: 728px;
+        :deep(.gridea-tiptap) {
+            height: 100%;
         }
 
-        :deep(.monaco-editor),
-        :deep(.monaco-editor-background) {
-            background-color: transparent !important;
+        :deep(.gridea-tiptap .editor-toolbar) {
+            max-width: 760px;
+            margin: 0 auto;
+            background: transparent;
         }
 
-        :deep(.monaco-editor .inputarea.ime-input) {
-            z-index: 100 !important;
+        :deep(.gridea-tiptap .ProseMirror) {
+            max-width: 728px;
+            margin: 0 auto;
         }
 
-        :deep(.monaco-editor .view-lines) {
-            user-select: none !important;
+        :deep(.gridea-tiptap .source-pane) {
+            max-width: 728px;
+            margin: 0 auto;
         }
     }
 }

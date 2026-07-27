@@ -2,6 +2,7 @@ package facade
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"gridea-pro/backend/internal/domain"
 	"gridea-pro/backend/internal/service"
@@ -137,6 +138,19 @@ func (f *PostFacade) DeletePostFromFrontend(fileName string) ([]domain.Post, err
 func (f *PostFacade) UploadImagesFromFrontend(files []domain.UploadedFile) ([]string, error) {
 	// reuse wrapper with context logic
 	return f.UploadImages(files)
+}
+
+// SaveImageBytesFromFrontend 保存粘贴 / 拖拽的图片字节（前端以 base64 传入），返回相对路径 /post-images/xxx
+func (f *PostFacade) SaveImageBytesFromFrontend(name string, dataBase64 string) (string, error) {
+	ctx := WailsContext
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	data, err := base64.StdEncoding.DecodeString(dataBase64)
+	if err != nil {
+		return "", fmt.Errorf("图片数据解码失败: %w", err)
+	}
+	return f.internal.SaveImageBytes(ctx, name, data)
 }
 
 // Helper to map Form to Domain Entity

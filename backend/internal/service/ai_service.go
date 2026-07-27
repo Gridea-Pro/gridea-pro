@@ -244,6 +244,138 @@ func (s *AIService) GenerateSlug(ctx context.Context, title string) (string, err
 	return result, nil
 }
 
+// completePrompt 行内 AI 续写提示词（Fill-in-the-Middle 风格）
+func completePrompt(prefix, suffix string) string {
+	return fmt.Sprintf(
+		"You are an inline writing assistant embedded in a Markdown blog editor.\n"+
+			"Continue the text naturally at the cursor position marked by <CURSOR>.\n\n"+
+			"Rules:\n"+
+			"- Output ONLY the continuation that should be inserted at <CURSOR>. No explanation, no quotes, no code fences.\n"+
+			"- Keep the SAME language as the surrounding text.\n"+
+			"- Write a short, natural continuation (a clause or one sentence). Do not repeat the existing text.\n"+
+			"- Match the existing tone, Markdown style and formatting.\n"+
+			"- If the text before the cursor already ends a sentence, you may start a new one.\n\n"+
+			"Text before cursor:\n%s<CURSOR>\n\nText after cursor:\n%s\n\nContinuation:",
+		prefix, suffix,
+	)
+}
+
+// polishPrompt 文本润色提示词
+func polishPrompt(text string) string {
+	return fmt.Sprintf(
+		"You are a writing assistant for a Markdown blog editor.\n"+
+			"Polish the following text: improve clarity, grammar, flow and word choice.\n\n"+
+			"Rules:\n"+
+			"- Keep the ORIGINAL meaning and the SAME language.\n"+
+			"- Preserve Markdown syntax (links, emphasis, code, lists, etc.).\n"+
+			"- Do NOT add new information or commentary.\n"+
+			"- Output ONLY the polished text, with no quotes, no explanation, no code fences.\n\n"+
+			"Text:\n%s\n\nPolished:",
+		text,
+	)
+}
+
+// stripWrapping 去除模型输出常见的包裹（首尾引号 / ``` 代码围栏）
+func stripWrapping(raw string) string {
+	s := strings.TrimSpace(raw)
+	// 去除整体代码围栏：需确有闭合 ``` 才剥离，避免误伤正文中的反引号
+	if strings.HasPrefix(s, "```") {
+		if nl := strings.IndexByte(s, '\n'); nl >= 0 {
+			body := s[nl+1:]
+			if end := strings.LastIndex(body, "```"); end >= 0 {
+				s = strings.TrimSpace(body[:end])
+			}
+		}
+	}
+	// 去除整体包裹引号：仅当首尾为同种引号、且内部不再出现该引号（即确为整段包裹）
+	if len(s) >= 2 {
+		q := s[0]
+		if (q == '"' || q == '\'') && s[len(s)-1] == q {
+			if inner := s[1 : len(s)-1]; !strings.ContainsRune(inner, rune(q)) {
+				s = inner
+			}
+		}
+	}
+	return s
+}
+
+// Complete 行内 AI 续写：给定光标前后文，返回应插入光标处的补全文本
+func (s *AIService) Complete(ctx context.Context, prefix, suffix string) (string, error) {
+	if strings.TrimSpace(prefix) == "" && strings.TrimSpace(suffix) == "" {
+		return "", errors.New("上下文为空")
+	}
+
+	provider, model, apiKey, isBuiltIn, err := s.resolveProvider(ctx)
+	if err != nil {
+		return "", err
+	}
+	if isBuiltIn {
+		if err := s.checkBuiltInQuota(ctx); err != nil {
+			return "", err
+		}
+	}
+
+	req := ai.ChatRequest{
+		Model:       model,
+		Prompt:      completePrompt(prefix, suffix),
+		Temperature: 0.3,
+		MaxTokens:   160,
+	}
+	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
+	if err != nil {
+		return "", err
+	}
+
+	if isBuiltIn {
+		s.recordBuiltInUsage(ctx)
+	}
+	return stripWrapping(raw), nil
+}
+
+// Polish 文本润色：返回润色后的文本
+func (s *AIService) Polish(ctx context.Context, text string) (string, error) {
+	if strings.TrimSpace(text) == "" {
+		return "", errors.New("待润色文本为空")
+	}
+
+	provider, model, apiKey, isBuiltIn, err := s.resolveProvider(ctx)
+	if err != nil {
+		return "", err
+	}
+	if isBuiltIn {
+		if err := s.checkBuiltInQuota(ctx); err != nil {
+			return "", err
+		}
+	}
+
+	// 输出 token 上限按输入长度放宽（粗略：rune 数 + 余量）
+	maxTokens := len([]rune(text)) + 200
+	if maxTokens > 2000 {
+		maxTokens = 2000
+	}
+
+	req := ai.ChatRequest{
+		Model:       model,
+		Prompt:      polishPrompt(text),
+		Temperature: 0.4,
+		MaxTokens:   maxTokens,
+	}
+	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
+	if err != nil {
+		return "", err
+	}
+
+	result := stripWrapping(raw)
+	if result == "" {
+		return "", errors.New("润色结果为空，请重试")
+	}
+
+	if isBuiltIn {
+		s.recordBuiltInUsage(ctx)
+	}
+	return result, nil
+}
+
 // TestConnection 测试自定义厂商的连接性（最小 chat 请求）
 func (s *AIService) TestConnection(ctx context.Context, providerID, model, apiKey string) error {
 	return s.TestConnectionWithBaseURL(ctx, providerID, model, apiKey, "")

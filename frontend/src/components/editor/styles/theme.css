@@ -1,0 +1,44 @@
+/**
+ * 编辑器自包含主题变量。
+ * 默认映射 Gridea 的设计令牌（--background 等），并提供独立 fallback，
+ * 使编辑器既能继承宿主主题（含 warm/sakura/twilight + .dark），也能脱离宿主独立工作。
+ * @ctzhian 正文 CSS 中引用的 --mui-palette-* 在此统一重映射到 --editor-*。
+ */
+
+.gridea-tiptap {
+  --editor-bg: var(--background, #ffffff);
+  --editor-fg: var(--foreground, #1b1b1b);
+  --editor-muted: var(--muted-foreground, #64748b);
+  --editor-secondary: var(--secondary, #f1f5f9);
+  --editor-secondary-fg: var(--secondary-foreground, #0f172a);
+  --editor-border: var(--border, #e2e8f0);
+  --editor-accent: var(--primary, #d47b4a);
+  --editor-accent-fg: var(--primary-foreground, #ffffff);
+  --editor-popover: var(--popover, #ffffff);
+  --editor-popover-fg: var(--popover-foreground, #1b1b1b);
+  --editor-code-bg: color-mix(in srgb, var(--muted, #f1f5f9) 70%, transparent);
+  --editor-code-fg: var(--foreground, #1b1b1b);
+  --editor-quote-border: var(--primary, #d47b4a);
+  --editor-selection: color-mix(in srgb, var(--primary, #d47b4a) 24%, transparent);
+  --editor-hover: color-mix(in srgb, var(--muted-foreground, #64748b) 12%, transparent);
+  --editor-radius: var(--radius, 0.5rem);
+  --editor-font: var(--font-sans, system-ui, sans-serif);
+  --editor-mono: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Courier New", monospace;
+
+  /* @ctzhian / MUI 兼容别名（照搬其 CSS 时无需改名） */
+  --mui-palette-background-default: var(--editor-bg);
+  --mui-palette-background-paper: var(--editor-popover);
+  --mui-palette-background-paper2: var(--editor-secondary);
+  --mui-palette-background-paper3: var(--editor-secondary);
+  --mui-palette-text-primary: var(--editor-fg);
+  --mui-palette-text-secondary: var(--editor-muted);
+  --mui-palette-divider: var(--editor-border);
+  --mui-palette-primary-main: var(--editor-accent);
+  --mui-palette-action-hover: var(--editor-hover);
+  --mui-shape-borderRadius: var(--editor-radius);
+}
+
+/* 选区高亮 */
+.gridea-tiptap .ProseMirror ::selection {
+  background: var(--editor-selection);
+}

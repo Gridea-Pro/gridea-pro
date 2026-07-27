@@ -39,6 +39,16 @@ func (f *AIFacade) GenerateSlug(title string) (string, error) {
 	return f.service.GenerateSlug(f.ctx(), title)
 }
 
+// Complete 行内 AI 续写：给定光标前后文，返回应插入的补全文本
+func (f *AIFacade) Complete(prefix, suffix string) (string, error) {
+	return f.service.Complete(f.ctx(), prefix, suffix)
+}
+
+// Polish 文本润色：返回润色后的文本
+func (f *AIFacade) Polish(text string) (string, error) {
+	return f.service.Polish(f.ctx(), text)
+}
+
 // TestConnection 测试自定义厂商连接
 func (f *AIFacade) TestConnection(provider, model, apiKey string) error {
 	return f.service.TestConnection(f.ctx(), provider, model, apiKey)
