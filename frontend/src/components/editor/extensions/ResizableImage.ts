@@ -71,9 +71,11 @@ export const ImageHtmlParser = Extension.create({
   parseMarkdown(token: any, helpers: any) {
     const raw = String(token.raw ?? token.text ?? '').trim()
     if (!/^<img\s[^>]*\/?>$/i.test(raw)) return null
-    const host = document.createElement('div')
-    host.innerHTML = raw
-    const img = host.querySelector('img')
+    // 安全：用无 browsing context 的 DOMParser 解析，不要用 document.createElement + innerHTML——
+    // 后者挂在活文档上，解析出 <img> 时浏览器会立即发起加载，`<img src=x onerror=...>` 会在
+    // 文档"加载"阶段就执行内联 onerror（无需任何用户交互）。DOMParser 生成惰性文档不触发加载。
+    const doc = new DOMParser().parseFromString(raw, 'text/html')
+    const img = doc.querySelector('img')
     if (!img || !img.getAttribute('src')) return null
     const w = parseInt(img.getAttribute('width') || '', 10)
     return helpers.createNode('image', {

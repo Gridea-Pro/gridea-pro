@@ -62,6 +62,8 @@ export const useCommentStore = defineStore('comment', () => {
       }
     } catch (error) {
       console.error('加载评论设置失败:', error)
+      // 向上抛出：让设置面板能识别"加载失败"并禁止保存，避免空表单覆盖评论平台密钥。
+      throw error
     }
   }
 

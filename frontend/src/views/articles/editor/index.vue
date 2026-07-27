@@ -85,6 +85,8 @@ import TiptapEditor from '@/components/editor/index.vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from '@/helpers/toast'
 import { GenerateSlug } from '@/wailsjs/go/facade/AIFacade'
+import { EventsOn, EventsOff } from '@/wailsjs/runtime'
+import markdownIt from '@/helpers/markdown'
 
 import { CalendarIcon, FolderIcon, TagIcon, DocumentTextIcon, ClockIcon } from '@heroicons/vue/24/outline'
 
@@ -237,13 +239,37 @@ const confirmClose = () => {
 
 // ── 生命周期 ────────────────────────────────────────────
 
+// ── 菜单事件：预览 / 复制 HTML ────────────────────────────
+// 后端菜单发 menu:toggle-preview / menu:copy-html → MainLayout 转 editor:* → 此处消费。
+// 此前这两个事件（及 find/replace）全无监听，点了菜单/按快捷键静默无响应。
+// find/replace 因 Tiptap 无内置查找替换，已从原生菜单移除，不在此处接。
+const handleTogglePreview = () => {
+    previewHtml.value = markdownIt.render(form.content || '')
+    previewVisible.value = !previewVisible.value
+}
+
+const handleCopyHtml = async () => {
+    try {
+        const html = markdownIt.render(form.content || '')
+        await navigator.clipboard.writeText(html)
+        toast.success(t('editor.copyHtmlSuccess'))
+    } catch (e) {
+        console.error('复制 HTML 失败', e)
+        toast.error(t('editor.copyHtmlFailed'))
+    }
+}
+
 onMounted(() => {
     buildCurrentForm()
     setupEvents()
+    EventsOn('editor:toggle-preview', handleTogglePreview)
+    EventsOn('editor:copy-html', handleCopyHtml)
 })
 
 onUnmounted(() => {
     cleanupEvents()
+    EventsOff('editor:toggle-preview')
+    EventsOff('editor:copy-html')
 })
 </script>
 

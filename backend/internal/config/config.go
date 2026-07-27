@@ -2,8 +2,11 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gridea-pro/backend/internal/domain"
 )
@@ -53,7 +56,15 @@ type ConfigManager struct {
 func NewConfigManager() (*ConfigManager, error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
-		return nil, err
+		// 极端环境（容器/沙箱/无图形会话缺 HOME/XDG_CONFIG_HOME/%AppData%）兜底到临时目录，
+		// 保证返回非 nil 实例——调用方常写 `cm, _ := NewConfigManager()` 后立即 cm.AppConfigDir()，
+		// 返回 nil 会直接空指针 panic 崩溃整个应用。仍返回 err 供关心降级的调用方感知。
+		log.Printf("[config] os.UserConfigDir 失败，降级到临时目录: %v", err)
+		appConfigDir := filepath.Join(os.TempDir(), AppName)
+		return &ConfigManager{
+			configDir:  appConfigDir,
+			configPath: filepath.Join(appConfigDir, ConfigFileName),
+		}, err
 	}
 
 	appConfigDir := filepath.Join(configDir, AppName)
@@ -78,7 +89,18 @@ func (m *ConfigManager) LoadConfig() (*AppConfig, error) {
 	var config AppConfig
 	err = json.Unmarshal(data, &config)
 	if err != nil {
-		return nil, err
+		// config.json 损坏（如写入中途被杀留下的半截 JSON）。
+		// 关键：绝不能直接返回空配置继续用同一路径——否则上层写操作会用空配置覆盖磁盘上
+		// 的多站点列表 / AI Key / OAuth 身份。这里把损坏文件改名保留现场（config.json.corrupted-<ts>），
+		// 再让应用以空配置从头开始：既避免覆盖损坏但可人工抢救的原文件，又让应用可继续使用而非半瘫。
+		backupPath := fmt.Sprintf("%s.corrupted-%d", m.configPath, time.Now().Unix())
+		if renameErr := os.Rename(m.configPath, backupPath); renameErr != nil {
+			// 连改名都失败（权限/占用）时，退回严格模式：返回错误阻止写入，绝不用空配置覆盖。
+			log.Printf("[config] config.json 解析失败且无法改名保留现场，已阻止后续写入以防覆盖: parse=%v rename=%v", err, renameErr)
+			return nil, fmt.Errorf("parse config.json: %w", err)
+		}
+		log.Printf("[config] config.json 解析失败（可能损坏），已改名保留为 %s，应用以空配置继续: %v", backupPath, err)
+		return &AppConfig{}, nil
 	}
 
 	return &config, nil
@@ -97,8 +119,17 @@ func (m *ConfigManager) SaveConfig(config *AppConfig) error {
 		return err
 	}
 
-	// 使用 0600 权限增强安全性
-	return os.WriteFile(m.configPath, data, 0600)
+	// 原子写：先写临时文件再 rename，避免写入中途被杀/断电留下半截 JSON，
+	// 那种损坏文件会在下次启动时触发配置读取失败。使用 0600 权限增强安全性。
+	tmpPath := m.configPath + ".tmp"
+	if err := os.WriteFile(tmpPath, data, 0600); err != nil {
+		return err
+	}
+	if err := os.Rename(tmpPath, m.configPath); err != nil {
+		_ = os.Remove(tmpPath)
+		return err
+	}
+	return nil
 }
 
 // GetSites 获取站点列表
@@ -114,7 +145,8 @@ func (m *ConfigManager) GetSites() ([]SiteEntry, error) {
 func (m *ConfigManager) SaveSites(sites []SiteEntry) error {
 	config, err := m.LoadConfig()
 	if err != nil {
-		config = &AppConfig{}
+		// 配置损坏时中止，不能用空配置覆盖掉 AISetting / PlatformMeta 等其他字段。
+		return err
 	}
 	config.Sites = sites
 	return m.SaveConfig(config)
@@ -150,7 +182,8 @@ func (m *ConfigManager) GetAISetting() (domain.AISetting, error) {
 func (m *ConfigManager) SaveAISetting(setting domain.AISetting) error {
 	cfg, err := m.LoadConfig()
 	if err != nil {
-		cfg = &AppConfig{}
+		// 配置损坏时中止，不能用空配置覆盖掉 Sites / PlatformMeta 等其他字段。
+		return err
 	}
 	cfg.AISetting = &setting
 	return m.SaveConfig(cfg)
@@ -176,7 +209,8 @@ func (m *ConfigManager) GetPlatformMeta(providerID string) PlatformMeta {
 func (m *ConfigManager) SavePlatformMeta(providerID string, meta PlatformMeta) error {
 	cfg, err := m.LoadConfig()
 	if err != nil {
-		cfg = &AppConfig{}
+		// 配置损坏时中止，不能用空配置覆盖掉 Sites / AISetting 等其他字段。
+		return err
 	}
 	if cfg.PlatformMeta == nil {
 		cfg.PlatformMeta = make(map[string]PlatformMeta)
@@ -203,7 +237,8 @@ func (m *ConfigManager) GetAllPlatformMeta() map[string]PlatformMeta {
 func (m *ConfigManager) MigrateToSites(defaultPath string) ([]SiteEntry, error) {
 	config, err := m.LoadConfig()
 	if err != nil {
-		config = &AppConfig{}
+		// 配置损坏时中止，不能用空配置覆盖并把默认站点写回去（会抹掉真实的多站点列表）。
+		return nil, err
 	}
 
 	if len(config.Sites) > 0 {

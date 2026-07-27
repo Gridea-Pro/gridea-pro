@@ -2,7 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"gridea-pro/backend/internal/domain"
+	"io/fs"
+	"log"
 	"path/filepath"
 	"sync"
 )
@@ -41,12 +45,17 @@ func (r *commentRepository) loadIfNeeded() error {
 	var settings domain.CommentSettings
 
 	if err := LoadJSONFile(dbPath, &settings); err != nil {
-		if filepath.Base(dbPath) == "comment.json" {
+		// 文件不存在：合法初始状态，锁进 cache。
+		// （原判断 filepath.Base(dbPath)=="comment.json" 恒真，等于吞掉一切错误，是 bug。）
+		if errors.Is(err, fs.ErrNotExist) {
 			r.cache = &domain.CommentSettings{}
 			r.loaded = true
 			return nil
 		}
-		return err
+		// 其他错误（JSON 损坏/权限/IO）：不能把空配置锁进 cache，
+		// 否则用户保存时会用空评论平台配置覆盖磁盘真实配置——必须向上抛，让下次访问重试。
+		log.Printf("[repo] commentRepo load %s failed: %v", dbPath, err)
+		return fmt.Errorf("load comment settings: %w", err)
 	}
 
 	r.cache = &settings

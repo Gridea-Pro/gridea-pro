@@ -11,6 +11,7 @@ import MarkdownItFootnote from 'markdown-it-footnote'
 import { full as MarkdownItEmoji } from 'markdown-it-emoji'
 import MarkdownItImplicitFigures from 'markdown-it-implicit-figures'
 // import MarkdownItImageLazyLoading from 'markdown-it-image-lazy-loading' // Disabled for browser compatibility as it uses 'fs'
+import DOMPurify from 'dompurify'
 
 const markdownIt = new MarkdownIt({
   html: true,
@@ -48,5 +49,15 @@ markdownIt.use(MarkdownItImplicitFigures, {
   link: false, // <a href="img.png"><img src="img.png"></a>, default: false
 })
 // markdownIt.use(MarkdownItImageLazyLoading)
+
+// 评论专用渲染器：评论内容来自第三方评论平台的访客输入，完全不可信。
+// 用 html:false（不解析源码里的原始 HTML 标签）+ DOMPurify 净化最终输出，双重防止存储型 XSS。
+// 在 Wails 桌面环境里，评论区一旦 XSS 可调用 window.go.* 后端方法，危害等同本地任意文件读写。
+const commentMd = new MarkdownIt({ html: false, breaks: true, linkify: true })
+commentMd.validateLink = markdownIt.validateLink
+
+export function renderCommentMarkdown(raw: string): string {
+  return DOMPurify.sanitize(commentMd.render(raw))
+}
 
 export default markdownIt

@@ -872,13 +872,7 @@ onMounted(() => {
     console.log('[Menu] Export - TODO: 待实现')
   })
 
-  // 编辑菜单
-  EventsOn('menu:find', () => {
-    EventsEmit('editor:find')
-  })
-  EventsOn('menu:replace', () => {
-    EventsEmit('editor:replace')
-  })
+  // 编辑菜单：复制 HTML（find/replace 已从原生菜单移除——Tiptap 无内置查找替换）
   EventsOn('menu:copy-html', () => {
     EventsEmit('editor:copy-html')
   })

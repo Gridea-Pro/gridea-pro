@@ -79,6 +79,7 @@
           <div class="flex justify-end items-center w-full">
             <Button
               variant="default"
+              :disabled="loadFailed"
               class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
               @click="submit">
               {{ t('common.save') }}
@@ -233,6 +234,10 @@ const form = reactive<Record<string, any>>({
   customBodyEndCode: '',
 })
 
+// 加载失败标志：后端读设置若因文件损坏/IO 失败而报错，表单会是空的。
+// 此时必须禁止保存——否则空表单一提交就把磁盘上损坏但可抢救的配置覆盖成空值。
+const loadFailed = ref(false)
+
 onMounted(async () => {
   try {
     const setting = await GetSeoSetting() as Record<string, any>
@@ -245,10 +250,16 @@ onMounted(async () => {
     }
   } catch (e) {
     console.error('Failed to load SEO settings', e)
+    loadFailed.value = true
+    toast.error(t('settings.loadFailedNoSave'))
   }
 })
 
 const submit = async () => {
+  if (loadFailed.value) {
+    toast.error(t('settings.loadFailedNoSave'))
+    return
+  }
   try {
     const settingDomain = new domain.SeoSetting(form)
     await SaveSeoSettingFromFrontend(settingDomain)

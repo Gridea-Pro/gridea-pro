@@ -2,28 +2,36 @@ package facade
 
 import (
 	"context"
-	"gridea-pro/backend/internal/engine"
 	"log/slog"
+	"sync/atomic"
+
+	"gridea-pro/backend/internal/engine"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // RendererFacade wraps RendererService
 type RendererFacade struct {
-	internal *engine.Engine
+	// internal 用原子读写保存：切站（UpdateAppDir）会热替换它，
+	// 而 Wails 可能并发调用本 facade 的方法，原子读写避免"读到替换一半的状态"的 data race。
+	internal atomic.Pointer[engine.Engine]
 	logger   *slog.Logger
 }
 
 func NewRendererFacade(s *engine.Engine) *RendererFacade {
-	return &RendererFacade{internal: s, logger: slog.Default()}
+	f := &RendererFacade{logger: slog.Default()}
+	f.internal.Store(s)
+	return f
 }
+
+func (f *RendererFacade) svc() *engine.Engine { return f.internal.Load() }
 
 func (f *RendererFacade) RenderAll() error {
 	ctx := WailsContext
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.RenderAll(ctx)
+	return f.svc().RenderAll(ctx)
 }
 
 // RegisterEvents 注册渲染相关事件监听器

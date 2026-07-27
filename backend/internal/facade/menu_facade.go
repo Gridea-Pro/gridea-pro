@@ -5,23 +5,30 @@ import (
 	"fmt"
 	"gridea-pro/backend/internal/domain"
 	"gridea-pro/backend/internal/service"
+	"sync/atomic"
 )
 
 // MenuFacade wraps MenuService
 type MenuFacade struct {
-	internal *service.MenuService
+	// internal 用原子读写保存：切站（UpdateAppDir）会热替换它，
+	// 而 Wails 可能并发调用本 facade 的方法，原子读写避免"读到替换一半的状态"的 data race。
+	internal atomic.Pointer[service.MenuService]
 }
 
 func NewMenuFacade(s *service.MenuService) *MenuFacade {
-	return &MenuFacade{internal: s}
+	f := &MenuFacade{}
+	f.internal.Store(s)
+	return f
 }
+
+func (f *MenuFacade) svc() *service.MenuService { return f.internal.Load() }
 
 func (f *MenuFacade) LoadMenus() ([]domain.Menu, error) {
 	ctx := WailsContext
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.LoadMenus(ctx)
+	return f.svc().LoadMenus(ctx)
 }
 
 func (f *MenuFacade) SaveMenus(menus []domain.Menu) error {
@@ -29,7 +36,7 @@ func (f *MenuFacade) SaveMenus(menus []domain.Menu) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.SaveMenus(ctx, menus)
+	return f.svc().SaveMenus(ctx, menus)
 }
 
 // MenuForm for frontend usage
@@ -47,8 +54,11 @@ func (f *MenuFacade) SaveMenuFromFrontend(form MenuForm) ([]domain.Menu, error) 
 		ctx = context.TODO()
 	}
 
+	// 一次调用内只取一次 svc 快照，避免"读旧站菜单、写新站"被切站劈成两半。
+	svc := f.svc()
+
 	// 加载现有菜单列表
-	menus, err := f.internal.LoadMenus(ctx)
+	menus, err := svc.LoadMenus(ctx)
 	if err != nil {
 		menus = []domain.Menu{}
 	}
@@ -81,7 +91,7 @@ func (f *MenuFacade) SaveMenuFromFrontend(form MenuForm) ([]domain.Menu, error) 
 	}
 
 	// 保存菜单列表
-	if err := f.internal.SaveMenus(ctx, menus); err != nil {
+	if err := svc.SaveMenus(ctx, menus); err != nil {
 		return nil, err
 	}
 
@@ -96,8 +106,10 @@ func (f *MenuFacade) DeleteMenuFromFrontend(index int) ([]domain.Menu, error) {
 		ctx = context.TODO()
 	}
 
+	svc := f.svc()
+
 	// 加载现有菜单列表
-	menus, err := f.internal.LoadMenus(ctx)
+	menus, err := svc.LoadMenus(ctx)
 	if err != nil {
 		menus = []domain.Menu{}
 	}
@@ -110,7 +122,7 @@ func (f *MenuFacade) DeleteMenuFromFrontend(index int) ([]domain.Menu, error) {
 	}
 
 	// 保存更新后的菜单列表
-	if err := f.internal.SaveMenus(ctx, menus); err != nil {
+	if err := svc.SaveMenus(ctx, menus); err != nil {
 		return nil, err
 	}
 

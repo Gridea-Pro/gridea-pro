@@ -7,17 +7,24 @@ import (
 	"gridea-pro/backend/internal/domain"
 	"gridea-pro/backend/internal/service"
 	"gridea-pro/backend/internal/utils"
+	"sync/atomic"
 	"time"
 )
 
 // PostFacade wraps PostService
 type PostFacade struct {
-	internal *service.PostService
+	// internal 用原子读写保存：切站（UpdateAppDir）会热替换它，
+	// 而 Wails 可能并发调用本 facade 的方法，原子读写避免"读到替换一半的状态"的 data race。
+	internal atomic.Pointer[service.PostService]
 }
 
 func NewPostFacade(s *service.PostService) *PostFacade {
-	return &PostFacade{internal: s}
+	f := &PostFacade{}
+	f.internal.Store(s)
+	return f
 }
+
+func (f *PostFacade) svc() *service.PostService { return f.internal.Load() }
 
 // PostDashboardDTO defines the data structure for post dashboard
 type PostDashboardDTO struct {
@@ -49,7 +56,7 @@ func (f *PostFacade) LoadPosts() ([]domain.Post, error) {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.LoadPosts(ctx)
+	return f.svc().LoadPosts(ctx)
 }
 
 func (f *PostFacade) LoadTags() ([]domain.Tag, error) {
@@ -57,7 +64,7 @@ func (f *PostFacade) LoadTags() ([]domain.Tag, error) {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.LoadTags(ctx)
+	return f.svc().LoadTags(ctx)
 }
 
 func (f *PostFacade) SavePost(form PostForm) error {
@@ -71,7 +78,7 @@ func (f *PostFacade) SavePost(form PostForm) error {
 		return err
 	}
 
-	return f.internal.SavePost(ctx, post)
+	return f.svc().SavePost(ctx, post)
 }
 
 func (f *PostFacade) DeletePost(fileName string) error {
@@ -79,7 +86,7 @@ func (f *PostFacade) DeletePost(fileName string) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.DeletePost(ctx, fileName)
+	return f.svc().DeletePost(ctx, fileName)
 }
 
 func (f *PostFacade) UploadImages(files []domain.UploadedFile) ([]string, error) {
@@ -87,7 +94,7 @@ func (f *PostFacade) UploadImages(files []domain.UploadedFile) ([]string, error)
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.UploadImages(ctx, files)
+	return f.svc().UploadImages(ctx, files)
 }
 
 // SavePostFromFrontend handles post saving from the frontend
@@ -97,20 +104,23 @@ func (f *PostFacade) SavePostFromFrontend(form PostForm) (*PostDashboardDTO, err
 		ctx = context.TODO()
 	}
 
+	// 一次调用内只取一次 svc 快照，避免"保存到旧站、返回新站文章/标签列表"被切站劈成两半。
+	svc := f.svc()
+
 	post, err := f.mapFormToPost(form)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := f.internal.SavePost(ctx, post); err != nil {
+	if err := svc.SavePost(ctx, post); err != nil {
 		return nil, err
 	}
 
-	posts, err := f.internal.LoadPosts(ctx)
+	posts, err := svc.LoadPosts(ctx)
 	if err != nil {
 		return nil, err
 	}
-	tags, err := f.internal.LoadTags(ctx)
+	tags, err := svc.LoadTags(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -128,10 +138,11 @@ func (f *PostFacade) DeletePostFromFrontend(fileName string) ([]domain.Post, err
 		ctx = context.TODO()
 	}
 
-	if err := f.internal.DeletePost(ctx, fileName); err != nil {
+	svc := f.svc()
+	if err := svc.DeletePost(ctx, fileName); err != nil {
 		return nil, err
 	}
-	return f.internal.LoadPosts(ctx)
+	return svc.LoadPosts(ctx)
 }
 
 // UploadImagesFromFrontend handles image uploading from the frontend
@@ -150,7 +161,7 @@ func (f *PostFacade) SaveImageBytesFromFrontend(name string, dataBase64 string) 
 	if err != nil {
 		return "", fmt.Errorf("图片数据解码失败: %w", err)
 	}
-	return f.internal.SaveImageBytes(ctx, name, data)
+	return f.svc().SaveImageBytes(ctx, name, data)
 }
 
 // Helper to map Form to Domain Entity

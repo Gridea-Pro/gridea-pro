@@ -47,6 +47,13 @@ jobs:
       - name: wails build (linux)
         run: wails build -platform linux/amd64 -tags webkit2_41
 
+      # 前端类型门禁：必须在 wails build 之后跑——此时 wailsjs 绑定已生成，vue-tsc 才能解析
+      # facade / models 类型。收住 models.ts 手工契约漂移、缺字段、TS2339/TS18048 等（此前被
+      # tsconfig skipLibCheck + 构建不做类型检查掩盖）。
+      - name: vue-tsc type-check
+        working-directory: frontend
+        run: npx vue-tsc --noEmit
+
       - name: go vet
         run: go vet ./...
 

@@ -122,44 +122,39 @@ func (s *CategoryService) GetByID(ctx context.Context, id string) (*domain.Categ
 }
 
 func (s *CategoryService) cascadeCategoryRename(ctx context.Context, oldName, newName string) error {
-	posts, err := s.postRepo.GetAll(ctx)
-	if err != nil {
-		return err
-	}
-	for i := range posts {
+	// 走 RewritePostTags：读-改-写全程持 postRepo 写锁，与用户 SavePost 互斥、只改分类字段，
+	// 杜绝级联抹掉用户刚保存的正文。
+	return s.postRepo.RewritePostTags(ctx, func(p *domain.Post) bool {
 		changed := false
-		for j, c := range posts[i].Categories {
+		newCats := make([]string, len(p.Categories))
+		for j, c := range p.Categories {
 			if c == oldName {
-				posts[i].Categories[j] = newName
+				newCats[j] = newName
 				changed = true
+			} else {
+				newCats[j] = c
 			}
 		}
 		if changed {
-			if err := s.postRepo.Update(ctx, &posts[i]); err != nil {
-				return err
-			}
+			p.Categories = newCats
 		}
-	}
-	return nil
+		return changed
+	})
 }
 
 func (s *CategoryService) cascadeCategoryDelete(ctx context.Context, categoryID, categoryName string) error {
-	posts, err := s.postRepo.GetAll(ctx)
-	if err != nil {
-		return err
-	}
-	for i := range posts {
+	return s.postRepo.RewritePostTags(ctx, func(p *domain.Post) bool {
 		changed := false
-		var newCats []string
-		for _, c := range posts[i].Categories {
+		newCats := make([]string, 0, len(p.Categories))
+		for _, c := range p.Categories {
 			if c != categoryName {
 				newCats = append(newCats, c)
 			} else {
 				changed = true
 			}
 		}
-		var newCatIDs []string
-		for _, id := range posts[i].CategoryIDs {
+		newCatIDs := make([]string, 0, len(p.CategoryIDs))
+		for _, id := range p.CategoryIDs {
 			if id != categoryID {
 				newCatIDs = append(newCatIDs, id)
 			} else {
@@ -167,18 +162,9 @@ func (s *CategoryService) cascadeCategoryDelete(ctx context.Context, categoryID,
 			}
 		}
 		if changed {
-			posts[i].Categories = newCats
-			if posts[i].Categories == nil {
-				posts[i].Categories = []string{}
-			}
-			posts[i].CategoryIDs = newCatIDs
-			if posts[i].CategoryIDs == nil {
-				posts[i].CategoryIDs = []string{}
-			}
-			if err := s.postRepo.Update(ctx, &posts[i]); err != nil {
-				return err
-			}
+			p.Categories = newCats
+			p.CategoryIDs = newCatIDs
 		}
-	}
-	return nil
+		return changed
+	})
 }

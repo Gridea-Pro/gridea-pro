@@ -158,6 +158,7 @@
         </Button>
         <Button
           variant="default"
+          :disabled="loadFailed"
           class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
           @click="submit">
           {{ t('common.save') }}
@@ -184,6 +185,8 @@ const { t } = useI18n()
 
 const showToken = ref(false)
 const testLoading = ref(false)
+// 加载失败标志：设置读取失败时表单为空，禁止保存以免空值覆盖磁盘配置。
+const loadFailed = ref(false)
 const showVarsHelp = ref(false)
 
 const presetPaths = [
@@ -238,10 +241,16 @@ onMounted(async () => {
     }
   } catch (e) {
     console.error('Failed to load CDN settings', e)
+    loadFailed.value = true
+    toast.error(t('settings.loadFailedNoSave'))
   }
 })
 
 const submit = async () => {
+  if (loadFailed.value) {
+    toast.error(t('settings.loadFailedNoSave'))
+    return
+  }
   try {
     const settingDomain = new domain.CdnSetting(form)
     await SaveCdnSettingFromFrontend(settingDomain)

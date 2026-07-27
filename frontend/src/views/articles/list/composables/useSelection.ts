@@ -70,6 +70,10 @@ export function useSelection() {
         } catch (e) {
             console.error(e)
             toast.error('删除失败')
+            // 批量删除中途失败：循环前面的文章可能已真实删除，但 siteStore.posts 未更新，
+            // 会继续显示已不存在的文章。强制重载让前端状态与磁盘真实状态对齐。
+            selectedPost.value = []
+            EventsEmit('app-site-reload')
         }
     }
 

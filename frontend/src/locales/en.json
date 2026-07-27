@@ -128,7 +128,9 @@
     "selectLocalImage": "Click to select a local image",
     "contextMenuTip": "Right-click in the editor to open the context menu",
     "editorPlaceholder": "Write something...",
-    "wordsUnit": "words"
+    "wordsUnit": "words",
+    "saveBlocked": "Please add a title before saving",
+    "saveFailed": "Failed to save"
   },
   "tag": {
     "new": "New",
@@ -556,7 +558,8 @@
       "copyFailed": "Failed to copy",
       "deleteSuccess": "Deleted successfully",
       "deleteFailed": "Failed to delete"
-    }
+    },
+    "loadFailedNoSave": "Failed to load settings. Do not save, or you may overwrite your config with empty values."
   },
   "comment": {
     "empty": "No comments",
@@ -884,6 +887,9 @@
       "Start a line with 1. or - plus space for lists",
       "Double-click an image to preview, drag corners to resize",
       "⌘S to save draft, keyboard icon (bottom right) for all shortcuts"
-    ]
+    ],
+    "copyHtmlSuccess": "HTML copied",
+    "copyHtmlFailed": "Failed to copy HTML",
+    "serializeFailed": "Failed to serialize content; kept the last good version. Please review your recent edits."
   }
 }

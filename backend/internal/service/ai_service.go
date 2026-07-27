@@ -105,41 +105,19 @@ func (s *AIService) resolveProvider(ctx context.Context) (ai.Provider, string, s
 	return provider, strings.TrimSpace(cfg.Model), strings.TrimSpace(cfg.APIKey), false, nil
 }
 
-// checkBuiltInQuota 检查内置 Key 的调用配额（不增加计数）
-// 错误信息使用 [DAILY_LIMIT] / [RATE_LIMIT] 前缀，供前端 i18n 匹配
-func (s *AIService) checkBuiltInQuota(ctx context.Context) error {
+// reserveBuiltInQuota 原子地"检查并预占"一次内置 Key 配额（检查+自增在同一把锁内完成）。
+// 这样并发请求不会都通过检查、再各自计数导致超配额。配额已满则返回错误且不占用。
+// 错误信息使用 [DAILY_LIMIT] / [RATE_LIMIT] 前缀，供前端 i18n 匹配。
+func (s *AIService) reserveBuiltInQuota(ctx context.Context) error {
 	s.usageMu.Lock()
 	defer s.usageMu.Unlock()
 
-	usage, _ := s.usageRepo.GetAIUsage(ctx)
-	now := time.Now()
-	today := now.Format("2006-01-02")
-	minute := now.Format("2006-01-02 15:04")
-
-	dailyCount := usage.DailyCount
-	if usage.Date != today {
-		dailyCount = 0
+	// 读用量失败（IO/权限/损坏）时 fail-closed：宁可拒绝本次免费调用，也不放行不计数——
+	// 否则读失败就等于无限额度。not-exist 由 repo 内部当新设备处理，不会走到这里。
+	usage, err := s.usageRepo.GetAIUsage(ctx)
+	if err != nil {
+		return fmt.Errorf("[QUOTA_UNAVAILABLE] 无法读取免费额度用量，请稍后再试：%w", err)
 	}
-	minuteCount := usage.MinuteCount
-	if usage.Minute != minute {
-		minuteCount = 0
-	}
-
-	if dailyCount >= builtInDailyLimit {
-		return fmt.Errorf("[DAILY_LIMIT] 今日免费额度已用完（%d 次/天），请明日再试，或在「偏好设置 → AI 配置」中切换为自定义模型", builtInDailyLimit)
-	}
-	if minuteCount >= builtInMinuteLimit {
-		return fmt.Errorf("[RATE_LIMIT] 调用过于频繁，请稍后再试（限制 %d 次/分钟）", builtInMinuteLimit)
-	}
-	return nil
-}
-
-// recordBuiltInUsage 在调用成功后增加内置 Key 计数
-func (s *AIService) recordBuiltInUsage(ctx context.Context) {
-	s.usageMu.Lock()
-	defer s.usageMu.Unlock()
-
-	usage, _ := s.usageRepo.GetAIUsage(ctx)
 	now := time.Now()
 	today := now.Format("2006-01-02")
 	minute := now.Format("2006-01-02 15:04")
@@ -152,8 +130,39 @@ func (s *AIService) recordBuiltInUsage(ctx context.Context) {
 		usage.Minute = minute
 		usage.MinuteCount = 0
 	}
+
+	if usage.DailyCount >= builtInDailyLimit {
+		return fmt.Errorf("[DAILY_LIMIT] 今日免费额度已用完（%d 次/天），请明日再试，或在「偏好设置 → AI 配置」中切换为自定义模型", builtInDailyLimit)
+	}
+	if usage.MinuteCount >= builtInMinuteLimit {
+		return fmt.Errorf("[RATE_LIMIT] 调用过于频繁，请稍后再试（限制 %d 次/分钟）", builtInMinuteLimit)
+	}
+	// 预占：检查通过即自增计数并落盘，后续并发请求会看到已占用的额度。
 	usage.DailyCount++
 	usage.MinuteCount++
+	// 落盘失败视为预占失败：否则计数没持久化，并发/重启后额度形同虚设。
+	if err := s.usageRepo.SaveAIUsage(ctx, usage); err != nil {
+		return fmt.Errorf("[QUOTA_UNAVAILABLE] 无法记录免费额度用量，请稍后再试：%w", err)
+	}
+	return nil
+}
+
+// refundBuiltInUsage 在预占配额后、真实 AI 调用失败（未实际消耗）时回滚一次计数。
+func (s *AIService) refundBuiltInUsage(ctx context.Context) {
+	s.usageMu.Lock()
+	defer s.usageMu.Unlock()
+
+	usage, _ := s.usageRepo.GetAIUsage(ctx)
+	now := time.Now()
+	today := now.Format("2006-01-02")
+	minute := now.Format("2006-01-02 15:04")
+	// 仅在同一天/同一分钟窗口内回滚才有意义（跨窗口计数已重置）。
+	if usage.Date == today && usage.DailyCount > 0 {
+		usage.DailyCount--
+	}
+	if usage.Minute == minute && usage.MinuteCount > 0 {
+		usage.MinuteCount--
+	}
 	_ = s.usageRepo.SaveAIUsage(ctx, usage)
 }
 
@@ -215,9 +224,9 @@ func (s *AIService) GenerateSlug(ctx context.Context, title string) (string, err
 		return "", err
 	}
 
-	// 仅对使用内置模型的用户做本地配额检查
+	// 仅对使用内置模型的用户做本地配额检查（原子预占，避免并发绕过）
 	if isBuiltIn {
-		if err := s.checkBuiltInQuota(ctx); err != nil {
+		if err := s.reserveBuiltInQuota(ctx); err != nil {
 			return "", err
 		}
 	}
@@ -230,6 +239,10 @@ func (s *AIService) GenerateSlug(ctx context.Context, title string) (string, err
 	}
 	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
 	if err != nil {
+		// 真实 AI 调用失败（未实际消耗），回滚上面预占的配额。
+		if isBuiltIn {
+			s.refundBuiltInUsage(ctx)
+		}
 		return "", err
 	}
 
@@ -237,10 +250,7 @@ func (s *AIService) GenerateSlug(ctx context.Context, title string) (string, err
 	if result == "" {
 		return "", errors.New("生成的 Slug 无效，请重试")
 	}
-
-	if isBuiltIn {
-		s.recordBuiltInUsage(ctx)
-	}
+	// 成功：配额已在 reserveBuiltInQuota 预占，无需再计数。
 	return result, nil
 }
 
@@ -310,7 +320,7 @@ func (s *AIService) Complete(ctx context.Context, prefix, suffix string) (string
 		return "", err
 	}
 	if isBuiltIn {
-		if err := s.checkBuiltInQuota(ctx); err != nil {
+		if err := s.reserveBuiltInQuota(ctx); err != nil {
 			return "", err
 		}
 	}
@@ -323,12 +333,12 @@ func (s *AIService) Complete(ctx context.Context, prefix, suffix string) (string
 	}
 	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
 	if err != nil {
+		if isBuiltIn {
+			s.refundBuiltInUsage(ctx)
+		}
 		return "", err
 	}
 
-	if isBuiltIn {
-		s.recordBuiltInUsage(ctx)
-	}
 	return stripWrapping(raw), nil
 }
 
@@ -343,7 +353,7 @@ func (s *AIService) Polish(ctx context.Context, text string) (string, error) {
 		return "", err
 	}
 	if isBuiltIn {
-		if err := s.checkBuiltInQuota(ctx); err != nil {
+		if err := s.reserveBuiltInQuota(ctx); err != nil {
 			return "", err
 		}
 	}
@@ -362,6 +372,9 @@ func (s *AIService) Polish(ctx context.Context, text string) (string, error) {
 	}
 	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
 	if err != nil {
+		if isBuiltIn {
+			s.refundBuiltInUsage(ctx)
+		}
 		return "", err
 	}
 
@@ -370,9 +383,6 @@ func (s *AIService) Polish(ctx context.Context, text string) (string, error) {
 		return "", errors.New("润色结果为空，请重试")
 	}
 
-	if isBuiltIn {
-		s.recordBuiltInUsage(ctx)
-	}
 	return result, nil
 }
 
@@ -396,7 +406,7 @@ func (s *AIService) Summary(ctx context.Context, content string) (string, error)
 		return "", err
 	}
 	if isBuiltIn {
-		if err := s.checkBuiltInQuota(ctx); err != nil {
+		if err := s.reserveBuiltInQuota(ctx); err != nil {
 			return "", err
 		}
 	}
@@ -415,6 +425,9 @@ func (s *AIService) Summary(ctx context.Context, content string) (string, error)
 	}
 	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
 	if err != nil {
+		if isBuiltIn {
+			s.refundBuiltInUsage(ctx)
+		}
 		return "", err
 	}
 
@@ -423,9 +436,6 @@ func (s *AIService) Summary(ctx context.Context, content string) (string, error)
 		return "", errors.New("摘要生成为空，请重试")
 	}
 
-	if isBuiltIn {
-		s.recordBuiltInUsage(ctx)
-	}
 	return result, nil
 }
 

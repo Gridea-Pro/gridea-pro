@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"gridea-pro/backend/internal/template"
 
@@ -40,7 +42,7 @@ type EjsRenderer struct {
 }
 
 // NewEjsRenderer 创建 EJS 渲染器
-func NewEjsRenderer(config RenderConfig) *EjsRenderer {
+func NewEjsRenderer(config RenderConfig) (*EjsRenderer, error) {
 	r := &EjsRenderer{
 		config: config,
 		cache:  make(map[string]string),
@@ -51,18 +53,27 @@ func NewEjsRenderer(config RenderConfig) *EjsRenderer {
 	// 预热 VM 池 (Pre-fill)
 	// 这样可以确保我们有一个固定大小的池，且不会动态无限制创建
 	// 虽然启动时会有短暂开销，但保证了运行时的稳定性
+	var lastErr error
+	created := 0
 	for i := 0; i < MaxPoolSize; i++ {
 		vm, err := r.createVM()
 		if err != nil {
-			// 如果初始化失败，记录错误但继续（容错）
-			// 实际运行时可能会因为 pool 不满而导致吞吐量略低，但不会崩溃
+			// 单个 VM 初始化失败容错：池不满只是吞吐量略低，不影响正确性。
 			r.logger.Warn("Failed to initialize VM", "index", i, "error", err)
+			lastErr = err
 			continue
 		}
 		r.pool <- vm
+		created++
 	}
 
-	return r
+	// 全部失败则返回错误，绝不返回空池：空池会让每次取 VM 都空等到超时才失败，
+	// 把整站渲染拖成分钟级假死，还占着 renderMu 拖垮其它请求——不如启动即失败可诊断。
+	if created == 0 {
+		return nil, fmt.Errorf("EJS 渲染器初始化失败：VM 池预热全部失败，最后错误：%w", lastErr)
+	}
+
+	return r, nil
 }
 
 // createVM 创建新的 VM 实例
@@ -148,12 +159,27 @@ func (r *EjsRenderer) renderViaGoja(templateName string, data *template.Template
 		return "", fmt.Errorf("序列化数据失败: %w", err)
 	}
 
-	// 4. 获取 VM (Blocked until available)
-	vm := <-r.pool
+	// 4. 获取 VM（带超时兜底：若 VM 池初始化全部失败导致池为空，避免在此永久阻塞、
+	//    进而拖垮持有 renderMu 的整条渲染流水线）
+	var vm *goja.Runtime
+	select {
+	case vm = <-r.pool:
+	case <-time.After(30 * time.Second):
+		return "", fmt.Errorf("EJS 渲染无可用 VM（VM 池可能初始化失败）")
+	}
+	var vmInterrupted atomic.Bool
 	defer func() {
-		// 任务完成后归还 VM
-		// 为了防止污染，我们可以选择 reset 某些全局变量，但 EJS 是函数式调用的，风险较小
-		// 最重要的是把 vm 放回池子
+		if vmInterrupted.Load() {
+			// 被超时中断的 VM 内部状态不可信，绝不放回池子。尝试补一个新 VM 保持池容量；
+			// 补建失败就让池缩容（谁也不还）——宁可少一个 VM，也不能把坏 VM 放回污染后续渲染。
+			if nvm, cerr := r.createVM(); cerr == nil {
+				r.pool <- nvm
+			} else {
+				r.logger.Warn("EJS: 中断的 VM 已丢弃，补建替换 VM 失败，池容量 -1", "error", cerr)
+			}
+			return
+		}
+		// 正常归还池子。
 		r.pool <- vm
 	}()
 
@@ -192,7 +218,14 @@ func (r *EjsRenderer) renderViaGoja(templateName string, data *template.Template
 		})();
 	`, string(dataJSON), r.escapeForJS(templateContent), r.escapeForJS(templateAbsPath), r.escapeForJS(themePath))
 
+	// 超时看门狗：第三方主题模板若存在死循环（哪怕只是作者手误），goja 执行无法被 ctx 抢占，
+	// 用 Interrupt 强制中断，避免一段死循环耗尽 VM 池、挂死整条渲染流水线。
+	timer := time.AfterFunc(15*time.Second, func() {
+		vmInterrupted.Store(true)
+		vm.Interrupt("EJS 渲染超时（模板可能存在死循环）")
+	})
 	result, err := vm.RunString(script)
+	timer.Stop()
 	if err != nil {
 		return "", fmt.Errorf("EJS 执行系统错误: %w", err)
 	}

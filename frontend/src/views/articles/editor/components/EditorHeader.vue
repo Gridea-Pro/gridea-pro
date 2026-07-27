@@ -18,8 +18,8 @@ variant="ghost" size="sm"
 
             <Button
 variant="ghost" size="sm"
-                class="rounded-full text-primary hover:bg-primary/10 hover:text-primary h-8 w-12 p-0"
-                :title="$t('article.publish')" @click="$emit('publish')">
+                class="rounded-full text-primary hover:bg-primary/10 hover:text-primary h-8 w-12 p-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                :disabled="!canSubmit" :title="$t('article.publish')" @click="$emit('publish')">
                 <PaperAirplaneIcon class="size-3 -rotate-45" />
             </Button>
         </div>

@@ -77,6 +77,7 @@ const defaultThemeConfig: ITheme = {
   feedFullText: true,
   postPath: DEFAULT_POST_PATH,
   tagPath: DEFAULT_TAG_PATH,
+  katexEnabled: true, // 与后端老配置默认开启 KaTeX 的语义保持一致
 }
 
 // 默认设置

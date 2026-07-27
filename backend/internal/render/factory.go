@@ -42,7 +42,7 @@ func (f *RendererFactory) CreateRenderer() (ThemeRenderer, error) {
 	case "gotemplate":
 		return NewGoTemplateRenderer(f.config), nil
 	case "ejs":
-		return NewEjsRenderer(f.config), nil
+		return NewEjsRenderer(f.config)
 	case "jinja2":
 		return NewJinja2Renderer(f.config), nil
 	default:

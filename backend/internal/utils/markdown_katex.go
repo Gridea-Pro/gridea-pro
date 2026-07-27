@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/bluele/gcache"
 	"github.com/yuin/goldmark"
@@ -325,6 +326,11 @@ func renderKatex(eq []byte, display bool) (out []byte) {
 		if err != nil {
 			return fallbackHTML(eq, display)
 		}
+		// 防病态/超大公式（如超大 \begin{matrix}、深层嵌套 \frac）拖死渲染：
+		// 限制单次 Eval 的执行时间与内存。超限时 Eval 返回错误，走下方 fallback 并重建 VM，
+		// 避免一个坏公式永久挂住全局 vmMu、进而拖垮所有含公式文章的渲染。
+		_ = v.SetEvalTimeout(5 * time.Second)
+		v.SetMemoryLimit(256 << 20) // 256 MiB
 		if _, err := v.Eval(katexjs.Script, quickjs.EvalGlobal); err != nil {
 			v.Close()
 			return fallbackHTML(eq, display)

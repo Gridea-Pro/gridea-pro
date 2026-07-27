@@ -254,9 +254,13 @@ export function useArticleForm(articleFileName: () => string) {
 
     // ── 表单初始化 ────────────────────────────────────────
 
+    // 表单是否已从后端数据成功初始化。用它替代"标题是否为空"的脆弱启发式——
+    // 否则用户编辑空标题草稿时，任意外部文件变动触发的 posts 刷新会把正在编辑的内容覆盖丢失。
+    let formInitialized = false
     const buildCurrentForm = () => {
         const fileName = articleFileName()
         previewTimestamp.value = Date.now()
+        formInitialized = false
 
         if (fileName) {
             fileNameChanged = true
@@ -301,6 +305,7 @@ export function useArticleForm(articleFileName: () => string) {
                     ? dayjs(createTime)
                     : dayjs()
                 form.content = currentPost.content
+                formInitialized = true
                 console.log('[useArticleForm] Form populated:', {
                     title: form.title,
                     contentLength: form.content?.length || 0,
@@ -454,8 +459,8 @@ export function useArticleForm(articleFileName: () => string) {
     // 监听 posts 变化，防止进入编辑器时数据还没从后端推送过来（Wails 异步推送）
     watch(() => siteStore.posts, () => {
         const fileName = articleFileName()
-        if (fileName && !form.title) {
-            console.log('[useArticleForm] Posts updated, re-building form for:', fileName)
+        // 仅在"表单尚未成功初始化"（后端数据还没到）时重建，避免覆盖用户正在编辑的内容。
+        if (fileName && !formInitialized) {
             buildCurrentForm()
         }
     }, { deep: true })

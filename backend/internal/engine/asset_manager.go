@@ -291,6 +291,14 @@ func (m *AssetManager) applyStyleOverride(jsPath string) (string, error) {
 	// 创建 JS 运行时
 	vm := goja.New()
 
+	// 超时看门狗：第三方主题的 style-override.js 若存在死循环（哪怕作者手误），goja 执行无法被
+	// ctx 抢占，会永久占住渲染 goroutine、挂死整条发布/预览流水线。用 Interrupt 强制中断。
+	// 覆盖本函数内所有 RunString / 函数调用，函数返回时 defer 停表。
+	styleTimer := time.AfterFunc(10*time.Second, func() {
+		vm.Interrupt("style-override.js 执行超时（可能存在死循环）")
+	})
+	defer styleTimer.Stop()
+
 	// 注入 module 和 exports 环境，解决 module is not defined 报错
 	moduleObj := vm.NewObject()
 	exportsObj := vm.NewObject()
@@ -557,6 +565,14 @@ func (m *AssetManager) BundleCSS(buildDir, themePath string) error {
 
 // copyFile 复制文件
 func copyFile(src, dst string) error {
+	// 安全：拒绝跟随符号链接。恶意/第三方主题可在 assets/ 放一个指向站点目录外
+	// （如 ~/.ssh/id_rsa）的符号链接，os.Open 会跟随链接并把目标文件内容复制进公开构建产物、
+	// 随部署推到公网。用 Lstat 识别符号链接并跳过。
+	if li, lerr := os.Lstat(src); lerr == nil && li.Mode()&os.ModeSymlink != 0 {
+		slog.Warn("跳过符号链接资源（安全）", "path", src)
+		return nil
+	}
+
 	// Check if destination exists and is up to date
 	srcInfo, err := os.Stat(src)
 	if err != nil {

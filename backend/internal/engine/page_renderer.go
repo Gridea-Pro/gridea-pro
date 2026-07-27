@@ -424,6 +424,11 @@ func (r *PageRenderer) RenderTagPages(ctx context.Context, buildDir string, data
 			// 保证，重名 Name 也不会导致错误的文章分组。
 			var tagPosts []template.PostView
 			for _, post := range data.Posts {
+				// 过滤草稿与"不在列表显示"的文章，避免设为 HideInList 的直链分享文章
+				// 通过标签页泄露（与首页/归档/RSS/sitemap 一致）。
+				if post.HideInList || !post.Published {
+					continue
+				}
 				for _, pt := range post.Tags {
 					if pt.Slug == tg.Slug {
 						tagPosts = append(tagPosts, post)
@@ -469,6 +474,10 @@ func (r *PageRenderer) RenderCategoryPages(ctx context.Context, buildDir string,
 	categoryPosts := make(map[string][]template.PostView)
 	categoryNames := make(map[string]string) // slug -> name
 	for _, post := range data.Posts {
+		// 过滤草稿与"不在列表显示"的文章，避免通过分类页泄露（与首页/归档/RSS/sitemap 一致）。
+		if post.HideInList || !post.Published {
+			continue
+		}
 		for _, cat := range post.Categories {
 			categoryPosts[cat.Slug] = append(categoryPosts[cat.Slug], post)
 			categoryNames[cat.Slug] = cat.Name

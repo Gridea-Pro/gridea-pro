@@ -128,7 +128,9 @@
     "selectLocalImage": "点击选择本地图片",
     "contextMenuTip": "编辑区域右键能弹出快捷菜单哦",
     "editorPlaceholder": "随便写点什么...",
-    "wordsUnit": "字"
+    "wordsUnit": "字",
+    "saveBlocked": "请先填写标题再保存",
+    "saveFailed": "保存失败"
   },
   "tag": {
     "new": "新标签",
@@ -553,7 +555,8 @@
     "system": {
       "displayLanguage": "显示语言",
       "version": "版本"
-    }
+    },
+    "loadFailedNoSave": "设置加载失败，请勿保存，以免用空值覆盖磁盘上的配置"
   },
   "comment": {
     "empty": "暂无评论",
@@ -881,6 +884,9 @@
       "行首输入 1. 或 - 加空格，快速开始列表",
       "双击图片可预览，拖动四角可调整大小",
       "⌘S 保存草稿，右下角键盘图标查看全部快捷键"
-    ]
+    ],
+    "copyHtmlSuccess": "已复制 HTML",
+    "copyHtmlFailed": "复制 HTML 失败",
+    "serializeFailed": "内容序列化失败，已保留上次正常内容，请检查最近的编辑（如复杂表格/公式）"
   }
 }

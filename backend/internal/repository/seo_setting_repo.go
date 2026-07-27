@@ -2,7 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"gridea-pro/backend/internal/domain"
+	"io/fs"
+	"log"
 	"path/filepath"
 	"sync"
 )
@@ -40,10 +44,17 @@ func (r *seoSettingRepository) loadIfNeeded() error {
 	settingPath := filepath.Join(r.appDir, "config", "seo_setting.json")
 	var setting domain.SeoSetting
 	if err := LoadJSONFile(settingPath, &setting); err != nil {
-		def := domain.DefaultSeoSetting()
-		r.cache = &def
-		r.loaded = true
-		return nil
+		// 文件不存在：合法初始状态，锁进 cache。
+		if errors.Is(err, fs.ErrNotExist) {
+			def := domain.DefaultSeoSetting()
+			r.cache = &def
+			r.loaded = true
+			return nil
+		}
+		// 其他错误（JSON 损坏/权限/IO）：绝不能把默认值锁进 cache，
+		// 否则用户在设置页保存时会用空配置整体覆盖磁盘真实配置——必须向上抛，让下次访问重试。
+		log.Printf("[repo] seoSettingRepo load %s failed: %v", settingPath, err)
+		return fmt.Errorf("load seo setting: %w", err)
 	}
 
 	r.cache = &setting

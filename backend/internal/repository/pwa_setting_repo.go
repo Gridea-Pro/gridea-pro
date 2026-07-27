@@ -2,7 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"gridea-pro/backend/internal/domain"
+	"io/fs"
+	"log"
 	"path/filepath"
 	"sync"
 )
@@ -40,9 +44,16 @@ func (r *pwaSettingRepository) loadIfNeeded() error {
 	settingPath := filepath.Join(r.appDir, "config", "pwa_setting.json")
 	var setting domain.PwaSetting
 	if err := LoadJSONFile(settingPath, &setting); err != nil {
-		r.cache = &domain.PwaSetting{}
-		r.loaded = true
-		return nil
+		// 文件不存在：合法初始状态，锁进 cache。
+		if errors.Is(err, fs.ErrNotExist) {
+			r.cache = &domain.PwaSetting{}
+			r.loaded = true
+			return nil
+		}
+		// 其他错误（JSON 损坏/权限/IO）：不能把空配置锁进 cache，
+		// 否则用户保存时会用空 PWA 配置覆盖磁盘真实配置——必须向上抛，让下次访问重试。
+		log.Printf("[repo] pwaSettingRepo load %s failed: %v", settingPath, err)
+		return fmt.Errorf("load pwa setting: %w", err)
 	}
 
 	r.cache = &setting

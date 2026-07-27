@@ -298,10 +298,11 @@ const currentThemeConfig = computed<IThemeConfigItem[]>(() => {
 
 const groups = computed(() => {
   if (!currentThemeConfig.value.length) return []
-  let list = currentThemeConfig.value.map((item) => item.group)
-  list = list.filter((g) => g) // filter undefined or null
-  list = [...new Set(list)]
-  return list
+  // 用类型守卫过滤，narrow 成 string[]，避免 group 为 string|undefined 触发 activeGroup 赋值的 TS2322。
+  const list = currentThemeConfig.value
+    .map((item) => item.group)
+    .filter((g): g is string => !!g)
+  return [...new Set(list)]
 })
 
 const activeGroup = ref('')
@@ -429,8 +430,18 @@ const handleImageUpload = async (formItemName: string, arrayFieldItemName?: stri
 
 const resetFormItem = (formItemName: string, arrayFieldItemName?: string, configItemIndex?: number) => {
   const originalItem = currentThemeConfig.value.find((item) => item.name === formItemName)
+  // 主题更新后可能重命名/删除了某配置项，而 form 里还留着旧字段名。此时 originalItem/foundItem
+  // 为 undefined，直接访问 .value 会抛 TypeError 崩溃整个主题自定义面板，必须守卫。
+  if (!originalItem) {
+    console.warn('[CustomSetting] resetFormItem: 配置项已不存在于当前主题:', formItemName)
+    return
+  }
   if (arrayFieldItemName && typeof configItemIndex === 'number') {
-    const foundItem = originalItem?.arrayItems?.find((item) => item.name === arrayFieldItemName)
+    const foundItem = originalItem.arrayItems?.find((item) => item.name === arrayFieldItemName)
+    if (!foundItem) {
+      console.warn('[CustomSetting] resetFormItem: 数组字段已不存在于当前主题:', arrayFieldItemName)
+      return
+    }
     form[formItemName][configItemIndex][arrayFieldItemName] = foundItem.value
   } else {
     form[formItemName] = originalItem.value

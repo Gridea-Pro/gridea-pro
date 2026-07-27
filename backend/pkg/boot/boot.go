@@ -7,6 +7,7 @@ import (
 	"gridea-pro/backend/internal/app"
 	"gridea-pro/backend/internal/config"
 	"gridea-pro/backend/internal/facade"
+	"gridea-pro/backend/internal/localfileauth"
 	versionpkg "gridea-pro/backend/internal/version"
 	"log"
 	"net/http"
@@ -45,7 +46,10 @@ func NewFileServerMiddleware(rootPath string) func(http.Handler) http.Handler {
 			if strings.HasPrefix(r.URL.Path, "/post-images/") {
 				filePath := filepath.Join(rootPath, r.URL.Path)
 				absPath, err := filepath.Abs(filePath)
-				if err != nil || !strings.HasPrefix(absPath, rootPath) {
+				cleanRoot := filepath.Clean(rootPath)
+				// 前缀比较必须带路径分隔符边界，否则同级目录（如 "<root>-backup"）能被
+				// ../ 穿透读取——例如另一个站点含 AI Key 的 config.json。
+				if err != nil || (absPath != cleanRoot && !strings.HasPrefix(absPath, cleanRoot+string(os.PathSeparator))) {
 					http.Error(w, "Invalid path", http.StatusBadRequest)
 					return
 				}
@@ -74,10 +78,24 @@ func NewFileServerMiddleware(rootPath string) func(http.Handler) http.Handler {
 				return
 			}
 
-			// 2. We intentionally omit the check if the file is physically located within the allowed root directory
-			//    because users often select images from Downloads/Desktop and we need to allow previewing them before uploading.
-			//    Gridea Pro uses localhost for Wails, which is securely confined to the local user context.
-			//    Just ensure absolute path is used.
+			// 安全 1：只允许常见图片扩展名，堵住"webview XSS → fetch('/local-file?path=/任意文件') 外传"。
+			switch strings.ToLower(filepath.Ext(absRequestedPath)) {
+			case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".ico", ".avif", ".tiff", ".tif":
+			default:
+				http.Error(w, "Forbidden file type", http.StatusForbidden)
+				return
+			}
+
+			// 安全 2：仅放行「站点目录内」或「用户经文件对话框主动选择并授权」的路径。
+			// 单靠扩展名白名单仍允许读取站点外任意图片（隐私图片外传）；这里再收一道：
+			//  - 站点内路径（配置里的头像/特色图/主题资源，均在 appDir 下）：直接放行；
+			//  - 站点外绝对路径：必须由 OpenImageDialog 等主动选择入口授权过（localfileauth）。
+			cleanRoot := filepath.Clean(rootPath)
+			inSite := absRequestedPath == cleanRoot || strings.HasPrefix(absRequestedPath, cleanRoot+string(os.PathSeparator))
+			if !inSite && !localfileauth.IsAuthorized(absRequestedPath) {
+				http.Error(w, "Forbidden path", http.StatusForbidden)
+				return
+			}
 
 			// 3. Ensure the file exists and is not a directory
 			fileInfo, err := os.Stat(absRequestedPath)
@@ -94,6 +112,11 @@ func NewFileServerMiddleware(rootPath string) func(http.Handler) http.Handler {
 				http.Error(w, "Cannot serve directories", http.StatusForbidden)
 				return
 			}
+
+			// 安全 3：SVG 可内嵌脚本，若被直接导航/加载为文档会在应用同源执行。加 CSP 禁掉脚本与插件，
+			// 既不影响 <img> 内联预览，也堵死"同源 SVG 脚本"这条 XSS 路径。
+			w.Header().Set("Content-Security-Policy", "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
 
 			// Serve the validated file
 			http.ServeFile(w, r, absRequestedPath)
@@ -402,14 +425,9 @@ func buildMenu(
 		appMenu.Append(menu.EditMenu())
 	} else {
 		// Windows/Linux: WebView2/WebKit2GTK 原生处理 Ctrl+C/V
+		// 注：Tiptap 编辑器无内置查找/替换，故不再提供 Find/Replace 菜单项——
+		// 保留会让用户按 Cmd+F 却毫无反应，反成体验缺陷。仅保留已实现的「复制 HTML」。
 		editMenu := appMenu.AddSubmenu(T("edit"))
-		editMenu.AddText(T("edit.find"), keys.CmdOrCtrl("f"), func(_ *menu.CallbackData) {
-			emitEvent("menu:find")
-		})
-		editMenu.AddText(T("edit.replace"), keys.Combo("f", keys.CmdOrCtrlKey, keys.OptionOrAltKey), func(_ *menu.CallbackData) {
-			emitEvent("menu:replace")
-		})
-		editMenu.AddSeparator()
 		editMenu.AddText(T("edit.copyHTML"), nil, func(_ *menu.CallbackData) {
 			emitEvent("menu:copy-html")
 		})
@@ -421,14 +439,8 @@ func buildMenu(
 	viewMenu := appMenu.AddSubmenu(T("view"))
 
 	if runtime.GOOS == "darwin" {
-		// macOS: Find/Replace/CopyHTML 放入 View 菜单（原生 Edit 菜单无法自定义）
-		viewMenu.AddText(T("edit.find"), keys.CmdOrCtrl("f"), func(_ *menu.CallbackData) {
-			emitEvent("menu:find")
-		})
-		viewMenu.AddText(T("edit.replace"), keys.Combo("f", keys.CmdOrCtrlKey, keys.OptionOrAltKey), func(_ *menu.CallbackData) {
-			emitEvent("menu:replace")
-		})
-		viewMenu.AddSeparator()
+		// macOS: CopyHTML 放入 View 菜单（原生 Edit 菜单无法自定义）。
+		// Find/Replace 已移除——Tiptap 无内置查找替换，保留只会让 Cmd+F 无响应误导用户。
 		viewMenu.AddText(T("edit.copyHTML"), nil, func(_ *menu.CallbackData) {
 			emitEvent("menu:copy-html")
 		})

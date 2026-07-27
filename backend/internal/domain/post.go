@@ -33,6 +33,21 @@ type Post struct {
 	Abstract       string `json:"abstract"`
 }
 
+// IsSafeFileName 校验文章文件名是否安全：不得包含路径分隔符或 ".." 穿越片段。
+// 文件名会被拼进 posts/ 与 post-images/ 目录，未经校验的 "../" 可写/删站点目录外的任意文件。
+func IsSafeFileName(name string) bool {
+	if name == "" {
+		return true // 空值由各自的必填校验负责
+	}
+	if strings.ContainsAny(name, `/\`) {
+		return false
+	}
+	if name == "." || name == ".." || strings.Contains(name, "..") {
+		return false
+	}
+	return true
+}
+
 // Validate validates the post
 func (p *Post) Validate() error {
 	if strings.TrimSpace(p.Title) == "" {
@@ -40,6 +55,12 @@ func (p *Post) Validate() error {
 	}
 	if strings.TrimSpace(p.FileName) == "" {
 		return errors.New("filename is required")
+	}
+	if !IsSafeFileName(p.FileName) {
+		return errors.New("invalid filename: must not contain path separators or '..'")
+	}
+	if !IsSafeFileName(p.DeleteFileName) {
+		return errors.New("invalid deleteFileName: must not contain path separators or '..'")
 	}
 	return nil
 }
@@ -93,6 +114,11 @@ type PostRepository interface {
 	// GetAll returns all posts (sorted by IsTop desc, then CreatedAt desc).
 	// 用于渲染、级联修改、数据迁移等需要全量遍历的场景。
 	GetAll(ctx context.Context) ([]Post, error)
+
+	// RewritePostTags 在持有仓库写锁的前提下，对每篇文章调用 mutate 就地改写标签字段并即时落盘。
+	// 整个"读-改-写"全程持锁，不会与并发 SavePost 交错——用于标签/分类级联改名或删除，
+	// 避免级联用旧快照整篇覆盖、抹掉用户此刻刚保存的正文。mutate 返回 true 表示该文章有改动需落盘。
+	RewritePostTags(ctx context.Context, mutate func(p *Post) bool) error
 
 	// Reload forces a rescan of the post directory
 	Reload(ctx context.Context) error

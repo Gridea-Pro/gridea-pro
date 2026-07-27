@@ -228,6 +228,7 @@ v-for="item in navItems" :key="item.key"
 
         <div class="flex justify-end mt-6">
           <Button variant="default"
+            :disabled="aiLoadFailed"
             class="h-8 px-5 text-xs rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
             @click="saveAISetting">
             {{ t('common.save') }}
@@ -297,11 +298,12 @@ variant="default"
     </Dialog>
 
     <!-- 删除确认对话框 -->
-    <DeleteConfirmDialog v-model:open="showDeleteDialog" :confirm-text="t('common.delete')" @confirm="confirmDeleteSite">
-      <template #description>
-        {{ t('settings.sites.confirmDelete') }}
-      </template>
-    </DeleteConfirmDialog>
+    <DeleteConfirmDialog
+      v-model:open="showDeleteDialog"
+      :confirm-text="t('common.delete')"
+      :content="t('settings.sites.confirmDelete')"
+      @confirm="confirmDeleteSite"
+    />
   </div>
 </template>
 
@@ -436,6 +438,8 @@ const useCustomModelId = ref(false) // 是否手动输入模型 ID（UI 状态�
 const customModelInput = ref('')
 const refreshingModels = ref(false)
 const testingConnection = ref(false)
+// AI 设置加载失败标志：读取失败时表单为空，禁止保存以免空值覆盖 AI Key/自定义厂商配置。
+const aiLoadFailed = ref(false)
 
 // 确保 customs[provider] 存在
 const ensureCustomEntry = (provider: string) => {
@@ -495,8 +499,13 @@ const loadAISetting = async () => {
     })
     // 同步当前厂商的 UI 状态
     refreshUIStateForCurrentProvider()
+    aiLoadFailed.value = false
   } catch (e) {
     console.error('Failed to load AI setting:', e)
+    // 加载失败（后端读配置报错，如文件损坏/IO）：禁止保存，否则空表单一存就把
+    // 磁盘上的 AI Key/自定义厂商配置覆盖成空值。
+    aiLoadFailed.value = true
+    toast.error(t('settings.loadFailedNoSave'))
   }
 }
 
@@ -604,6 +613,10 @@ const openApiKeyURL = (url: string) => {
 }
 
 const saveAISetting = async () => {
+  if (aiLoadFailed.value) {
+    toast.error(t('settings.loadFailedNoSave'))
+    return
+  }
   try {
     await SaveAISettingFromFrontend(aiForm.value)
     toast.success(t('settings.ai.saveSuccess'))

@@ -11,13 +11,16 @@
  */
 
 function decodeBasicEntities(s: string): string {
+  // 安全：刻意不反解 &lt; / &gt;。@tiptap/markdown 会把正文里字面的 < > 序列化成 &lt; &gt;，
+  // 若在此无差别反解回 < >，会把作者刻意用 &lt;script&gt; 安全展示的代码样例变回可执行标签，
+  // 而后端发布走 goldmark.WithUnsafe() 会当真标签渲染 → 存储型 XSS（仅"加载→保存"就能触发）。
+  // 只反解不构成可执行标签的实体（引号、&amp;），接受"字面 < > 以 &lt; &gt; 形式往返存储"这一
+  // 更安全的默认——发布时 goldmark 会把 &lt; 渲染为字面 <，显示正确且不可执行。
   return s
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#0?39;/g, "'")
     .replace(/&apos;/g, "'")
-    .replace(/&amp;/g, '&') // 必须最后，避免 &amp;lt; 被误解码为 <
+    .replace(/&amp;/g, '&') // 必须最后，避免把 &amp;lt; 误并成 &lt; 之外的形态
 }
 
 /** 仅在非行内代码（`...`/``..``）段反解实体 */
@@ -96,6 +99,15 @@ function isRawHtmlMarkerLine(t: string): boolean {
   return /^<\/?details\b/i.test(t) || /^<summary>/i.test(t) || /<\/summary>\s*$/i.test(t)
 }
 
+// 任何含原始 HTML 标签的行都豁免实体反解。原因：反解引号实体（&quot; / &#39;）在 HTML 属性值里
+// 会把转义的引号变回真引号，闭合属性并注入事件处理器，例如
+// `<div title="&quot; onmouseover=alert(1) x=&quot;">` 经反解后 title 提前闭合、onmouseover 生效，
+// 后端 goldmark.WithUnsafe() 当真属性渲染 → 存储型 XSS（仅"加载→保存"即触发）。
+// 对 HTML 行保留实体字面即可，goldmark 会正确显示，且不可执行。
+function containsRawHtmlTag(t: string): boolean {
+  return /<\/?[a-zA-Z][\w-]*(?:\s|>|\/|$)/.test(t)
+}
+
 function normalizeTable(block: string[]): string[] {
   if (block.length < 2 || !isSeparatorRow(block[1])) return block
   const rows = block.map(splitRow)
@@ -149,7 +161,10 @@ export function canonicalizeMarkdown(md: string): string {
       }
     }
     const stripped = line.replace(/[ \t]+$/g, '')
-    out.push(isRawHtmlMarkerLine(stripped.trim()) ? stripped : decodeEntitiesOutsideCode(stripped))
+    const t = stripped.trim()
+    // details/summary 标记行，或任何含 HTML 标签的行：一律不反解实体，防止引号实体反解注入属性。
+    const skipDecode = isRawHtmlMarkerLine(t) || containsRawHtmlTag(t)
+    out.push(skipDecode ? stripped : decodeEntitiesOutsideCode(stripped))
   }
   return out
     .join('\n')

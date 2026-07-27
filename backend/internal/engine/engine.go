@@ -10,12 +10,36 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"golang.org/x/sync/errgroup"
 )
+
+// shouldPreserveOnFullClean 判断首次渲染（无 manifest）逐项清理 output 时，某个顶层条目是否属于
+// 「用户自定义、非引擎产物」而必须保留。除固定名单外，还覆盖搜索引擎站长验证文件、静态托管配置等
+// 常见模式——这些文件一旦被误删，用户的域名验证/收录/CDN 规则就会失效且不易察觉。
+func shouldPreserveOnFullClean(name string) bool {
+	switch name {
+	case "CNAME", ".nojekyll", ".well-known", "ads.txt", "robots.txt",
+		"_headers", "_redirects", "favicon.ico", "security.txt",
+		".htaccess", "_worker.js", "BingSiteAuth.xml":
+		return true
+	}
+	lower := strings.ToLower(name)
+	switch {
+	// Google / 百度 / 站长平台的验证文件：google<token>.html、baidu_verify_<token>.html 等
+	case strings.HasPrefix(lower, "google") && strings.HasSuffix(lower, ".html"),
+		strings.HasPrefix(lower, "baidu_verify"),
+		strings.HasPrefix(lower, "baiduverify"),
+		strings.HasPrefix(lower, "yandex_") && strings.HasSuffix(lower, ".html"),
+		strings.HasSuffix(lower, ".txt") && strings.Contains(lower, "verification"):
+		return true
+	}
+	return false
+}
 
 // Engine 渲染协调器，组合各个独立的渲染子模块
 type Engine struct {
@@ -215,7 +239,17 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 		previousManifest = nil
 	}
 	if previousManifest == nil {
-		_ = os.RemoveAll(buildDir)
+		// 首次渲染（或 manifest 丢失/损坏被当作首次）：不能 RemoveAll 整个 buildDir，
+		// 否则会删掉用户放在 output 里的自定义文件（CNAME、ads.txt、.well-known 等静态托管必需文件、
+		// 以及搜索引擎站长验证文件）。改为逐项清理，保留这些用户文件，兼顾"清旧产物"与"不误删用户文件"。
+		if entries, derr := os.ReadDir(buildDir); derr == nil {
+			for _, e := range entries {
+				if shouldPreserveOnFullClean(e.Name()) {
+					continue
+				}
+				_ = os.RemoveAll(filepath.Join(buildDir, e.Name()))
+			}
+		}
 	}
 	_ = os.MkdirAll(buildDir, 0755)
 
@@ -365,6 +399,14 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 		{"PWA ServiceWorker(sw.js)", func() error {
 			if pwaSetting.Enabled {
 				return s.pwaGenerator.RenderServiceWorker(buildDir)
+			}
+			return nil
+		}},
+		{"PWA OfflinePage(offline.html)", func() error {
+			if pwaSetting.Enabled {
+				// sw.js 的 install 事件会执行 cache.add('/offline.html')，浏览器对 404 会 reject，
+				// 导致整个 Service Worker 安装失败、永不激活。因此开启 PWA 时必须一并生成离线页。
+				return s.pwaGenerator.RenderOfflinePage(buildDir, templateData.ThemeConfig.SiteName, pwaSetting.ThemeColor)
 			}
 			return nil
 		}},

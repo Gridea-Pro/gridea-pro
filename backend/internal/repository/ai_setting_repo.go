@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"gridea-pro/backend/internal/config"
@@ -31,11 +32,11 @@ func NewAISettingRepository(cm *config.ConfigManager) domain.AISettingRepository
 	return &aiSettingRepository{cm: cm}
 }
 
-func (r *aiSettingRepository) loadIfNeeded() {
+func (r *aiSettingRepository) loadIfNeeded() error {
 	r.mu.RLock()
 	if r.loaded {
 		r.mu.RUnlock()
-		return
+		return nil
 	}
 	r.mu.RUnlock()
 
@@ -43,20 +44,24 @@ func (r *aiSettingRepository) loadIfNeeded() {
 	defer r.mu.Unlock()
 
 	if r.loaded {
-		return
+		return nil
 	}
 
 	setting, err := r.cm.GetAISetting()
 	if err != nil {
-		r.cache = &domain.AISetting{}
-	} else {
-		r.cache = &setting
+		// config.json 损坏/读取失败：不能缓存空 AISetting，否则用户保存时会用空配置
+		// 覆盖 config.json（API Key 永久丢失）——必须向上抛，让下次访问重试。
+		return fmt.Errorf("load ai setting: %w", err)
 	}
+	r.cache = &setting
 	r.loaded = true
+	return nil
 }
 
 func (r *aiSettingRepository) GetAISetting(ctx context.Context) (domain.AISetting, error) {
-	r.loadIfNeeded()
+	if err := r.loadIfNeeded(); err != nil {
+		return domain.AISetting{}, err
+	}
 
 	r.mu.RLock()
 	defer r.mu.RUnlock()

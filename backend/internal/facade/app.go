@@ -225,25 +225,31 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 
 // InvalidateAllCaches 清除所有仓库的内存缓存，使下次访问时从磁盘重新加载
 func (s *AppServices) InvalidateAllCaches() {
+	// Repositories.* 是普通字段，切站（UpdateAppDir 持 s.mu 写锁）会整体替换它们。
+	// 这里先在 RLock 下取一份一致快照再操作，避免与切站并发时读到"替换一半"的指针集
+	// （本函数从"刷新/重载"路径调用，与用户切站可能并发）。
+	s.mu.RLock()
+	category := s.Repositories.Category
+	tag := s.Repositories.Tag
+	menu := s.Repositories.Menu
+	link := s.Repositories.Link
+	memo := s.Repositories.Memo
+	setting := s.Repositories.Setting
+	post := s.Repositories.Post
+	s.mu.RUnlock()
+
 	type invalidatable interface{ Invalidate() }
-	repos := []interface{}{
-		s.Repositories.Category,
-		s.Repositories.Tag,
-		s.Repositories.Menu,
-		s.Repositories.Link,
-		s.Repositories.Memo,
-		s.Repositories.Setting,
-	}
+	repos := []interface{}{category, tag, menu, link, memo, setting}
 	for _, r := range repos {
 		if inv, ok := r.(invalidatable); ok {
 			inv.Invalidate()
 		}
 	}
-	if s.Repositories.Post != nil {
+	if post != nil {
 		// Post repo 走的是 Reload（同步扫盘）而非 Invalidate。
 		// 历史代码这里直接丢错——issue #107 撞到时连"posts 加载失败"这条线索都没有。
 		// 至少 log 一笔，配合 Fix 1 的 partial scan / "all failed" 错误能精确定位。
-		if err := s.Repositories.Post.Reload(context.Background()); err != nil {
+		if err := post.Reload(context.Background()); err != nil {
 			slog.Error("InvalidateAllCaches: Post.Reload failed",
 				"error", err)
 		}
@@ -256,36 +262,58 @@ func (s *AppServices) UpdateAppDir(appDir string) {
 
 	// Re-initialize logic
 	newServices := NewAppServices(appDir, s.assets)
-	s.Category.internal = newServices.Services.Category
-	s.Post.internal = newServices.Services.Post
-	s.Menu.internal = newServices.Services.Menu
-	s.Link.internal = newServices.Services.Link
-	s.Tag.internal = newServices.Services.Tag
-	s.Deploy.internal = newServices.Services.Deploy
-	s.Renderer.internal = newServices.Services.Renderer
-	s.Theme.internal = newServices.Services.Theme
-	s.Setting.internal = newServices.Services.Setting
-	s.Comment.internal = newServices.Services.Comment
-	s.Memo.internal = newServices.Services.Memo
-	s.Preview.internal = newServices.Services.Preview
-	s.SeoSetting.repo = newServices.SeoSetting.repo
-	s.CdnSetting.repo = newServices.CdnSetting.repo
-	s.PwaSetting.repo = newServices.PwaSetting.repo
-	s.CdnUpload.internal = newServices.Services.CdnUpload
-	s.AI.repo = newServices.AI.repo
-	s.AI.service = newServices.AI.service
+	// 各 facade 的 internal/repo/service 字段已改为原子读写（消除切站热替换与 Wails 并发调用的
+	// data race），这里统一用 .Store 写入。从 newServices 取值：service 类走 newServices.Services.*
+	// 原始指针；repo/appDir 类走对应 facade 的私有 getter。
+	s.Category.internal.Store(newServices.Services.Category)
+	s.Post.internal.Store(newServices.Services.Post)
+	s.Menu.internal.Store(newServices.Services.Menu)
+	s.Link.internal.Store(newServices.Services.Link)
+	s.Tag.internal.Store(newServices.Services.Tag)
+	s.Deploy.internal.Store(newServices.Services.Deploy)
+	s.Renderer.internal.Store(newServices.Services.Renderer)
+	s.Theme.internal.Store(newServices.Services.Theme)
+	s.Setting.internal.Store(newServices.Services.Setting)
+	s.Comment.internal.Store(newServices.Services.Comment)
+	s.Memo.internal.Store(newServices.Services.Memo)
+	s.Preview.internal.Store(newServices.Services.Preview)
+	s.SeoSetting.repo.Store(newServices.SeoSetting.repository())
+	s.CdnSetting.repo.Store(newServices.CdnSetting.repository())
+	s.PwaSetting.repo.Store(newServices.PwaSetting.repository())
+	s.CdnUpload.internal.Store(newServices.Services.CdnUpload)
+	s.AI.repo.Store(newServices.AI.repository())
+	s.AI.service.Store(newServices.AI.svc())
 	// OAuth 服务是应用级单例（跨站点共享 Keychain 状态），但代理配置要跟随
 	// 当前站点——切站时更新其 settingRepo 指针
 	s.OAuth.service.SetSettingRepo(newServices.Repositories.Setting)
-	// ImageHosting repo doesn't have state that needs migration, but keep reference fresh
-	s.ImageHosting = newServices.ImageHosting
-	s.ImageOptimizeSetting.repo = newServices.ImageOptimizeSetting.repo
+	// ImageHosting：就地更新底层 service 指针，而非替换 facade 对象——Wails 绑定的是 boot 时的
+	// 原 facade 对象，替换字段无效会导致切站后图床读写仍打旧站点目录。
+	s.ImageHosting.internal.Store(newServices.ImageHosting.svc())
+	s.ImageOptimizeSetting.repo.Store(newServices.ImageOptimizeSetting.repository())
 	// Scaffold service doesn't need update generally, but good to keep in sync
 	s.Services.Scaffold = newServices.Services.Scaffold
 	s.Services.Comment = newServices.Services.Comment
 	s.Services.Memo = newServices.Services.Memo
 	s.Services.Preview = newServices.Services.Preview
 	s.Services.CdnUpload = newServices.Services.CdnUpload
+
+	// 补全切站时遗漏的字段（否则切站后出现跨站点数据串号）：
+	// 1) Repositories.* —— InvalidateAllCaches 只操作这些指针；不更新会导致"刷新/重载"
+	//    清的是旧站点的缓存，对当前站点无效。
+	s.Repositories.Category = newServices.Repositories.Category
+	s.Repositories.Tag = newServices.Repositories.Tag
+	s.Repositories.Post = newServices.Repositories.Post
+	s.Repositories.Menu = newServices.Repositories.Menu
+	s.Repositories.Link = newServices.Repositories.Link
+	s.Repositories.Memo = newServices.Repositories.Memo
+	s.Repositories.Setting = newServices.Repositories.Setting
+	// 2) Category/Tag Facade 各自持有的 postRepo —— 保存/删除分类标签时用它返回文章列表，
+	//    不更新会把旧站点的文章列表混进当前站点的返回结果。
+	s.Category.postRepo.Store(newServices.Repositories.Post)
+	s.Tag.postRepo.Store(newServices.Repositories.Post)
+	// 3) PwaSetting Facade 的 appDir —— PWA 图标检测/保存/删除用它拼路径，
+	//    不更新会把新站点的图标写进旧站点 images/ 目录。
+	s.PwaSetting.appDir.Store(appDir)
 }
 
 func (s *AppServices) RegisterEvents(ctx context.Context) {

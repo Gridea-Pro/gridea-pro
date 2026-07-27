@@ -4,17 +4,24 @@ import (
 	"context"
 	"gridea-pro/backend/internal/domain"
 	"gridea-pro/backend/internal/service"
+	"sync/atomic"
 )
 
 // CommentFacade 评论外观 - 暴露给前端的接口
 type CommentFacade struct {
-	internal *service.CommentService
+	// internal 用原子读写保存：切站（UpdateAppDir）会热替换它，
+	// 而 Wails 可能并发调用本 facade 的方法，原子读写避免"读到替换一半的状态"的 data race。
+	internal atomic.Pointer[service.CommentService]
 }
 
 // NewCommentFacade 创建评论外观
 func NewCommentFacade(s *service.CommentService) *CommentFacade {
-	return &CommentFacade{internal: s}
+	f := &CommentFacade{}
+	f.internal.Store(s)
+	return f
 }
+
+func (f *CommentFacade) svc() *service.CommentService { return f.internal.Load() }
 
 // GetSettings 获取评论设置
 func (f *CommentFacade) GetSettings() (domain.CommentSettings, error) {
@@ -22,7 +29,7 @@ func (f *CommentFacade) GetSettings() (domain.CommentSettings, error) {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	settings, err := f.internal.GetSettings(ctx)
+	settings, err := f.svc().GetSettings(ctx)
 	if err != nil {
 		return domain.CommentSettings{}, err
 	}
@@ -35,7 +42,7 @@ func (f *CommentFacade) SaveSettings(settings domain.CommentSettings) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.SaveSettings(ctx, settings)
+	return f.svc().SaveSettings(ctx, settings)
 }
 
 // FetchComments 获取评论列表
@@ -51,7 +58,7 @@ func (f *CommentFacade) FetchComments(page, pageSize int) (*domain.PaginatedComm
 	if pageSize < 1 {
 		pageSize = 50
 	}
-	return f.internal.FetchComments(ctx, page, pageSize)
+	return f.svc().FetchComments(ctx, page, pageSize)
 }
 
 // ReplyComment 回复评论
@@ -60,7 +67,7 @@ func (f *CommentFacade) ReplyComment(parentID string, content string, articleID 
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.ReplyComment(ctx, parentID, content, articleID)
+	return f.svc().ReplyComment(ctx, parentID, content, articleID)
 }
 
 // DeleteComment 删除评论
@@ -69,5 +76,5 @@ func (f *CommentFacade) DeleteComment(commentID string) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.DeleteComment(ctx, commentID)
+	return f.svc().DeleteComment(ctx, commentID)
 }

@@ -35,6 +35,37 @@ import { createDetails } from './Details'
 import { createAiWriting } from './AiWriting'
 import type { BuildEditorOptions } from '../types'
 
+// 危险协议判定：与 Link.configure.isAllowedUri 共用，保证 HTML 与 Markdown 两条路径口径一致。
+// 前导空白/大小写/制表符都规整掉再匹配，避免 "  JavaScript:" / "java\tscript:" 之类绕过。
+function isSafeHref(url: string): boolean {
+  // eslint-disable-next-line no-control-regex
+  const normalized = (url || '').replace(/[\u0000-\u0020]+/g, '').toLowerCase()
+  return !/^(javascript|vbscript|data|file):/.test(normalized)
+}
+
+// SafeLink 覆盖内置 Markdown 往返：内置 parseMarkdown/renderMarkdown 不校验 href，
+// javascript: 链接会原样吃进/写回 .md，发布后成存储型 XSS。此处非法 href 一律降级为纯文本。
+const SafeLink = Link.extend({
+  parseMarkdown(this: { parent?: any }, token: any, helpers: any) {
+    if (!isSafeHref(token?.href ?? '')) {
+      // 非法协议：丢弃 link 标记，仅保留可见文字，绝不让危险 href 进入文档模型。
+      return helpers.parseInline(token.tokens || [])
+    }
+    return helpers.applyMark('link', helpers.parseInline(token.tokens || []), {
+      href: token.href,
+      title: token.title || null,
+    })
+  },
+  renderMarkdown(node: any, h: any) {
+    const href = node?.attrs?.href ?? ''
+    const text = h.renderChildren(node)
+    // 双保险：即便非法 href 混进了文档模型，序列化落盘时也不写成链接。
+    if (!isSafeHref(href)) return text
+    const title = node?.attrs?.title ?? ''
+    return title ? `[${text}](${href} "${title}")` : `[${text}](${href})`
+  },
+})
+
 export function buildExtensions(options: BuildEditorOptions): Extensions {
   return [
     StarterKit.configure({
@@ -49,11 +80,20 @@ export function buildExtensions(options: BuildEditorOptions): Extensions {
     AlignedParagraph,
     AlignedHeading,
 
-    // 链接（自定义配置）
-    Link.configure({
+    // 链接（自定义配置 + Markdown 往返协议校验）
+    // 安全：只允许安全协议，阻断 javascript:/vbscript:/data:/file: 等——否则
+    // [文字](javascript:...) 这类链接会随 Markdown 存回、发布后在站点页面点击即触发存储型 XSS。
+    // isAllowedUri/protocols 只作用于 HTML/粘贴/autolink；Markdown 往返（.md 加载→序列化落盘）
+    // 走内置 parseMarkdown/renderMarkdown，二者默认不校验 href，故此处 .extend 覆盖，非法链接降级为纯文本。
+    SafeLink.configure({
       openOnClick: false,
       autolink: true,
       HTMLAttributes: { class: 'editor-link' },
+      protocols: ['http', 'https', 'mailto', 'tel'],
+      isAllowedUri: (url: string, ctx: { defaultValidate: (u: string) => boolean }) => {
+        if (!isSafeHref(url)) return false
+        return ctx.defaultValidate(url)
+      },
     }),
 
     // 反斜杠转义保真（必须，避免 \$ \* \| 等被静默丢弃）
