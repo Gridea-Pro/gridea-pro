@@ -49,6 +49,8 @@
       <ToolbarButton :title="t('editor.link')" :active="active('link')" @click="emit('link')"><LinkIcon /></ToolbarButton>
       <ToolbarButton :title="t('editor.image')" @click="emit('image')"><ImageIcon /></ToolbarButton>
       <ToolbarButton :title="t('editor.table')" @click="run((c) => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }))"><TableIcon /></ToolbarButton>
+      <ColorPicker :model-value="currentColor" @select="emit('color', $event)" />
+      <EmojiPicker @select="emit('emoji', $event)" />
       <ToolbarButton :title="t('editor.aiPolish')" @click="emit('polish')"><Sparkles /></ToolbarButton>
     </div>
 
@@ -63,10 +65,13 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Editor, ChainedCommands } from '@tiptap/vue-3'
 import type { EditorMode } from '../types'
 import ToolbarButton from './ToolbarButton.vue'
+import ColorPicker from './ColorPicker.vue'
+import EmojiPicker from './EmojiPicker.vue'
 import {
   Undo2, Redo2, Bold, Italic, Strikethrough, Code, Code2,
   Heading1, Heading2, Heading3, Highlighter,
@@ -81,10 +86,37 @@ const emit = defineEmits<{
   link: []
   image: []
   polish: []
+  color: [hex: string]
+  emoji: [emoji: string]
   'update:mode': [mode: EditorMode]
 }>()
 
 const { t } = useI18n()
+
+// 让 active/can/颜色 随选区与文档实时刷新；editor 异步就绪，用 watch 待其出现再绑定
+const tick = ref(0)
+function bump() {
+  tick.value++
+}
+watch(
+  () => props.editor,
+  (ed, prev) => {
+    prev?.off('transaction', bump)
+    prev?.off('selectionUpdate', bump)
+    ed?.on('transaction', bump)
+    ed?.on('selectionUpdate', bump)
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => {
+  props.editor?.off('transaction', bump)
+  props.editor?.off('selectionUpdate', bump)
+})
+
+const currentColor = computed(() => {
+  void tick.value
+  return (props.editor?.getAttributes('textStyle').color as string) || ''
+})
 
 function run(fn: (c: ChainedCommands) => ChainedCommands) {
   const e = props.editor
@@ -93,12 +125,14 @@ function run(fn: (c: ChainedCommands) => ChainedCommands) {
 }
 
 function can(name: 'undo' | 'redo'): boolean {
+  void tick.value
   const e = props.editor
   if (!e) return false
   return name === 'undo' ? e.can().undo() : e.can().redo()
 }
 
 function active(nameOrAttrs: string | Record<string, unknown>, attrs?: Record<string, unknown>): boolean {
+  void tick.value
   const e = props.editor
   if (!e) return false
   return typeof nameOrAttrs === 'string'

@@ -3,20 +3,28 @@
     <Toolbar
       :editor="editor"
       :mode="mode"
-      @link="toggleLink"
-      @image="pickImageFromDialog"
+      @link="openLink"
+      @image="imageOpen = true"
+      @color="onColorSelect"
+      @emoji="onEmojiSelect"
       @polish="polishSelection"
       @update:mode="setMode"
     />
 
     <div class="editor-body" :class="`mode-${mode}`">
       <div v-show="mode !== 'source'" class="rich-pane">
+        <EditorBubbleMenu :editor="editor ?? null" @link="openLink" @polish="polishSelection" />
+        <DragHandle :editor="editor ?? null" />
+        <TableMenu :editor="editor ?? null" />
         <EditorContent :editor="editor" class="rich-content" @keydown="onKeydown" @focus.capture="emit('focus')" />
       </div>
       <div v-show="mode !== 'rich'" class="source-pane" @keydown="onKeydown" @focusin="emit('focus')">
         <SourceEditor v-model:value="model" />
       </div>
     </div>
+
+    <LinkDialog v-model:open="linkOpen" :url="linkUrl" :text="linkText" @save="onLinkSave" @remove="onLinkRemove" />
+    <ImageDialog v-model:open="imageOpen" @insert-url="onImageInsertUrl" @pick-local="pickImageFromDialog" />
   </div>
 </template>
 
@@ -27,9 +35,15 @@ import { useEditor, EditorContent } from '@tiptap/vue-3'
 import './styles/theme.css'
 import './styles/editor.css'
 import { buildExtensions } from './extensions'
+import { SlashCommand } from './extensions/slash/SlashCommand'
 import { getMarkdown, setMarkdown } from './markdown'
 import Toolbar from './ui/Toolbar.vue'
 import SourceEditor from './SourceEditor.vue'
+import EditorBubbleMenu from './ui/BubbleMenu.vue'
+import DragHandle from './ui/DragHandle.vue'
+import TableMenu from './ui/TableMenu.vue'
+import LinkDialog from './ui/LinkDialog.vue'
+import ImageDialog from './ui/ImageDialog.vue'
 import type { EditorMode } from './types'
 import { toast } from '@/helpers/toast'
 import { OpenImageDialog } from '@/wailsjs/go/app/App'
@@ -55,11 +69,15 @@ const editor = useEditor({
   content: model.value || '',
   // contentType 由 @tiptap/markdown 增强：以 Markdown 解析初始内容
   contentType: 'markdown',
-  extensions: buildExtensions({
-    content: model.value || '',
-    placeholder: props.placeholder,
-    upload: async (file: File) => uploadBytes(file),
-  }),
+  extensions: [
+    ...buildExtensions({
+      content: model.value || '',
+      placeholder: props.placeholder,
+      upload: async (file: File) => uploadBytes(file),
+    }),
+    // UI 耦合扩展在此加入（不进 buildExtensions，避免污染纯 Markdown 测试台）
+    SlashCommand,
+  ],
   editorProps: {
     attributes: { class: 'markdown-body focus:outline-none' },
     handlePaste: (_view, event) => {
@@ -164,23 +182,69 @@ async function pickImageFromDialog() {
   }
 }
 
-// ── 链接 ─────────────────────────────────────────────
-function toggleLink() {
+// ── 链接 / 图片弹窗 + 颜色 / Emoji ─────────────────────
+const linkOpen = ref(false)
+const linkUrl = ref('')
+const linkText = ref('')
+const imageOpen = ref(false)
+
+function openLink() {
   const e = editor.value
   if (!e) return
-  if (e.isActive('link')) {
-    e.chain().focus().unsetLink().run()
-    return
-  }
-  const prev = (e.getAttributes('link').href as string) || ''
-  const url = window.prompt('链接地址', prev)
-  if (url === null) return
-  if (url === '') {
-    e.chain().focus().unsetLink().run()
-    return
-  }
-  e.chain().focus().setLink({ href: url }).run()
+  const { from, to } = e.state.selection
+  linkUrl.value = (e.getAttributes('link').href as string) || ''
+  linkText.value = from !== to ? e.state.doc.textBetween(from, to, '') : ''
+  linkOpen.value = true
 }
+function onLinkSave(payload: { url: string; text: string }) {
+  const e = editor.value
+  if (!e) return
+  const { url, text } = payload
+  const { from, to } = e.state.selection
+  if (from !== to) {
+    if (text && text !== e.state.doc.textBetween(from, to, '')) {
+      e.chain().focus().insertContentAt({ from, to }, text)
+        .setTextSelection({ from, to: from + text.length }).setLink({ href: url }).run()
+    } else {
+      e.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    }
+  } else {
+    // 无选区：结构化插入文本并套链接 mark（避免 label/url 中的 markdown 特殊字符被再解析）
+    const label = text || url
+    e.chain().focus().insertContent(label)
+      .setTextSelection({ from, to: from + label.length }).setLink({ href: url }).run()
+  }
+}
+function onLinkRemove() {
+  editor.value?.chain().focus().extendMarkRange('link').unsetLink().run()
+}
+function onImageInsertUrl(src: string) {
+  if (src) insertImageByPath(src)
+}
+function onColorSelect(hex: string) {
+  const e = editor.value
+  if (!e) return
+  if (hex) e.chain().focus().setColor(hex).run()
+  else e.chain().focus().unsetColor().run()
+}
+function onEmojiSelect(emoji: string) {
+  editor.value?.chain().focus().insertContent(emoji).run()
+}
+
+// 斜杠命令中的 UI 触发型动作（link/image）经编辑器 DOM 派发；监听绑在本编辑器 DOM 上（避免多实例 window 串扰）
+function onEditorAction(ev: Event) {
+  const action = (ev as CustomEvent<{ action?: string }>).detail?.action
+  if (action === 'link') openLink()
+  else if (action === 'image') imageOpen.value = true
+}
+watch(
+  () => editor.value,
+  (ed, prev) => {
+    ;(prev?.view?.dom as HTMLElement | undefined)?.removeEventListener('gridea-editor:action', onEditorAction)
+    ;(ed?.view?.dom as HTMLElement | undefined)?.addEventListener('gridea-editor:action', onEditorAction)
+  },
+  { immediate: true },
+)
 
 // ── AI 润色 ──────────────────────────────────────────
 async function polishSelection() {
@@ -210,7 +274,7 @@ async function polishSelection() {
 
 // ── 暴露给父组件 ─────────────────────────────────────
 function insertMore() {
-  editor.value?.chain().focus().insertContent('\n\n<!-- more -->\n\n').run()
+  editor.value?.chain().focus().insertContent({ type: 'moreBreak' }).run()
 }
 function insertEmoji(emoji: string) {
   editor.value?.chain().focus().insertContent(emoji).run()
@@ -245,6 +309,7 @@ defineExpose({
 })
 
 onBeforeUnmount(() => {
+  ;(editor.value?.view?.dom as HTMLElement | undefined)?.removeEventListener('gridea-editor:action', onEditorAction)
   editor.value?.destroy()
 })
 </script>

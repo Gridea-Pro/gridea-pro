@@ -672,6 +672,76 @@
     "aiPolish": "AI 润色",
     "rich": "富文本",
     "split": "分屏",
-    "source": "源码"
+    "source": "源码",
+    "slash": {
+      "h1": "一级标题",
+      "h2": "二级标题",
+      "h3": "三级标题",
+      "bulletList": "无序列表",
+      "orderedList": "有序列表",
+      "taskList": "任务列表",
+      "blockquote": "引用",
+      "codeBlock": "代码块",
+      "hr": "分割线",
+      "table": "表格",
+      "more": "阅读更多分隔",
+      "image": "图片",
+      "link": "链接",
+      "inlineMath": "行内公式",
+      "blockMath": "块级公式",
+      "emoji": "表情",
+      "empty": "无匹配命令",
+      "group": {
+        "basic": "基础",
+        "block": "块",
+        "insert": "插入"
+      }
+    },
+    "dragHandle": {
+      "title": "拖拽以移动，点击打开菜单",
+      "duplicate": "复制本块",
+      "clearFormat": "清除格式",
+      "delete": "删除本块"
+    },
+    "color": {
+      "title": "文字颜色",
+      "presets": "预设颜色",
+      "clear": "清除颜色"
+    },
+    "emoji": {
+      "title": "插入表情"
+    },
+    "linkDialog": {
+      "title": "编辑链接",
+      "url": "链接地址",
+      "urlPlaceholder": "https://example.com",
+      "text": "显示文本",
+      "textPlaceholder": "可选",
+      "remove": "移除",
+      "cancel": "取消",
+      "confirm": "确定"
+    },
+    "imageDialog": {
+      "insert": "插入图片",
+      "fromUrl": "网络地址",
+      "fromLocal": "本地文件",
+      "urlPlaceholder": "请输入图片链接（https://…）",
+      "localHint": "从本机选择一张图片插入到文档中。",
+      "pickLocal": "选择本地图片",
+      "cancel": "取消"
+    },
+    "tableMenu": {
+      "menu": "表格操作",
+      "addRowBefore": "上方插入行",
+      "addRowAfter": "下方插入行",
+      "addColumnBefore": "左侧插入列",
+      "addColumnAfter": "右侧插入列",
+      "deleteRow": "删除行",
+      "deleteColumn": "删除列",
+      "mergeCells": "合并单元格",
+      "splitCell": "拆分单元格",
+      "toggleHeaderRow": "切换表头行",
+      "deleteTable": "删除表格"
+    }
   }
 }
