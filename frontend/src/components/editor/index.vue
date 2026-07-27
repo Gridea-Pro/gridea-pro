@@ -44,11 +44,12 @@ import DragHandle from './ui/DragHandle.vue'
 import TableMenu from './ui/TableMenu.vue'
 import LinkDialog from './ui/LinkDialog.vue'
 import ImageDialog from './ui/ImageDialog.vue'
+import MermaidView from './ui/MermaidView.vue'
 import type { EditorMode } from './types'
 import { toast } from '@/helpers/toast'
 import { OpenImageDialog } from '@/wailsjs/go/app/App'
 import { UploadImagesFromFrontend, SaveImageBytesFromFrontend } from '@/wailsjs/go/facade/PostFacade'
-import { Polish } from '@/wailsjs/go/facade/AIFacade'
+import { Polish, Complete } from '@/wailsjs/go/facade/AIFacade'
 import { domain } from '@/wailsjs/go/models'
 
 const props = withDefaults(defineProps<{ isPostPage?: boolean; placeholder?: string }>(), {
@@ -74,6 +75,15 @@ const editor = useEditor({
       content: model.value || '',
       placeholder: props.placeholder,
       upload: async (file: File) => uploadBytes(file),
+      // NodeView 与 AI 续写仅在富文本环境注入（测试台不传，节点退回 renderHTML、AI 续写惰性）
+      nodeViews: { mermaid: MermaidView },
+      aiComplete: async (prefix: string, suffix: string) => {
+        try {
+          return await Complete(prefix, suffix)
+        } catch {
+          return ''
+        }
+      },
     }),
     // UI 耦合扩展在此加入（不进 buildExtensions，避免污染纯 Markdown 测试台）
     SlashCommand,

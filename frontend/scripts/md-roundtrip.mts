@@ -110,6 +110,7 @@ const SAMPLES: Array<{ name: string; md: string; expect?: string }> = [
   { name: 'ordered-list', md: '1. one\n2. two' },
   { name: 'blockquote', md: '> quoted line' },
   { name: 'code-block', md: '```js\nconst a = 1\n```' },
+  { name: 'mermaid', md: '```mermaid\ngraph TD\n  A --> B\n```' },
   { name: 'link', md: 'see [Gridea](https://gridea.pro)' },
   { name: 'image', md: '![alt](/post-images/x.png)' },
   { name: 'hr', md: 'a\n\n---\n\nb' },

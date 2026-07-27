@@ -7,7 +7,7 @@ import type { Editor, Range } from '@tiptap/core'
 import {
   Heading1, Heading2, Heading3, List, ListOrdered, ListChecks, Quote, Code2, Minus,
   Table as TableIcon, Image as ImageIcon, Link as LinkIcon, Sigma, FunctionSquare,
-  SeparatorHorizontal,
+  SeparatorHorizontal, Workflow,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 
@@ -49,6 +49,8 @@ export const SLASH_ITEMS: SlashItem[] = [
     command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setHorizontalRule().run() },
   { key: 'table', group: 'block', icon: TableIcon, keywords: 'table 表格 biaoge',
     command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+  { key: 'mermaid', group: 'block', icon: Workflow, keywords: 'mermaid flow diagram 流程图 liuchengtu tu',
+    command: ({ editor, range }) => (editor.chain().focus().deleteRange(range) as any).setMermaid({ code: '' }).run() },
   { key: 'more', group: 'block', icon: SeparatorHorizontal, keywords: 'more readmore 摘要 阅读更多 yuedugengduo zhaiyao',
     command: ({ editor, range }) => editor.chain().focus().deleteRange(range).insertContent({ type: 'moreBreak' }).run() },
   { key: 'image', group: 'insert', icon: ImageIcon, keywords: 'image picture 图片 tupian',

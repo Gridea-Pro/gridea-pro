@@ -75,4 +75,9 @@ export interface BuildEditorOptions {
   onTocUpdate?: (toc: TocItem[]) => void
   /** 错误回调 */
   onError?: (err: Error, context: string) => void
+  /**
+   * 节点 NodeView 组件（仅富文本环境注入；纯 Markdown 管线/测试台不传，节点退回 renderHTML）。
+   * key 为节点名：mermaid / codeBlock 等；值为 Vue 组件。
+   */
+  nodeViews?: Record<string, unknown>
 }

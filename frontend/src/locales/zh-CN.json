@@ -695,7 +695,8 @@
         "basic": "基础",
         "block": "块",
         "insert": "插入"
-      }
+      },
+      "mermaid": "Mermaid 流程图"
     },
     "dragHandle": {
       "title": "拖拽以移动，点击打开菜单",
@@ -742,6 +743,14 @@
       "splitCell": "拆分单元格",
       "toggleHeaderRow": "切换表头行",
       "deleteTable": "删除表格"
+    },
+    "mermaid": {
+      "error": "渲染失败",
+      "empty": "点击编辑 Mermaid 流程图",
+      "edit": "编辑",
+      "placeholder": "输入 Mermaid 语法，如 graph TD; A-->B",
+      "cancel": "取消",
+      "save": "保存"
     }
   }
 }

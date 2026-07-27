@@ -695,7 +695,8 @@
         "basic": "Basic",
         "block": "Block",
         "insert": "Insert"
-      }
+      },
+      "mermaid": "Mermaid diagram"
     },
     "dragHandle": {
       "title": "Drag to move, click for options",
@@ -742,6 +743,14 @@
       "splitCell": "Split cell",
       "toggleHeaderRow": "Toggle header row",
       "deleteTable": "Delete table"
+    },
+    "mermaid": {
+      "error": "Render failed",
+      "empty": "Click to edit Mermaid diagram",
+      "edit": "Edit",
+      "placeholder": "Enter Mermaid syntax, e.g. graph TD; A-->B",
+      "cancel": "Cancel",
+      "save": "Save"
     }
   }
 }

@@ -31,6 +31,8 @@ import { CustomEmoji } from './Emoji'
 import { FootnoteRef, FootnoteDef } from './Footnote'
 import { MoreBreak } from './MoreBreak'
 import { RawHtml } from './RawHtml'
+import { createMermaid } from './Mermaid'
+import { createAiWriting } from './AiWriting'
 import type { BuildEditorOptions } from '../types'
 
 const lowlight = createLowlight(common)
@@ -77,6 +79,9 @@ export function buildExtensions(options: BuildEditorOptions): Extensions {
     TaskList,
     TaskItem.configure({ nested: true }),
 
+    // Mermaid（须早于 CodeBlockLowlight 注册，以拦截 ```mermaid 围栏）
+    createMermaid(options.nodeViews?.mermaid),
+
     // 代码块高亮
     CodeBlockLowlight.configure({ lowlight }),
 
@@ -99,6 +104,11 @@ export function buildExtensions(options: BuildEditorOptions): Extensions {
       placeholder: options.placeholder || '输入 / 唤起命令，或直接开始写作…',
       showOnlyWhenEditable: true,
     }),
+
+    // 行内 AI 续写（仅在提供 aiComplete 时生效；纯 ProseMirror，无 .vue 依赖）
+    createAiWriting(
+      options.aiComplete ? (ctx) => options.aiComplete!(ctx.prefix, ctx.suffix) : undefined,
+    ),
 
     // Markdown 往返（必须在最后，读取各扩展的 renderMarkdown/parseMarkdown）
     // breaks:true 对齐 Gridea 的 helpers/markdown（markdown-it breaks:true），避免段内单换行漂移
