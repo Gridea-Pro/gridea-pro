@@ -12,7 +12,7 @@
 import Paragraph from '@tiptap/extension-paragraph'
 import Heading from '@tiptap/extension-heading'
 
-function wrapAlign(md: string, align: string | null | undefined): string {
+export function wrapAlign(md: string, align: string | null | undefined): string {
   if (!align || align === 'left') return md
   return `<div style="text-align: ${align}">\n\n${md}\n\n</div>`
 }

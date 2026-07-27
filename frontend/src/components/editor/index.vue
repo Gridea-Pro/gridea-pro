@@ -19,7 +19,13 @@
       </div>
       <div class="editor-body" :class="`mode-${mode}`">
         <div v-show="mode !== 'source'" ref="richPaneRef" class="rich-pane">
-          <EditorBubbleMenu :editor="editor ?? null" @link="openLink" @polish="polishSelection" />
+          <EditorBubbleMenu
+          :editor="editor ?? null"
+          @link="openLink"
+          @polish="polishSelection"
+          @image-edit="openImageEdit"
+          @image-preview="openImagePreview"
+        />
           <DragHandle :editor="editor ?? null" />
           <TableMenu :editor="editor ?? null" />
           <EditorContent :editor="editor" class="rich-content" @keydown="onKeydown" @focus.capture="emit('focus')" />
@@ -32,6 +38,8 @@
 
     <LinkDialog v-model:open="linkOpen" :url="linkUrl" :text="linkText" @save="onLinkSave" @remove="onLinkRemove" />
     <ImageDialog v-model:open="imageOpen" @insert-url="onImageInsertUrl" @pick-local="pickImageFromDialog" />
+    <ImageEditDialog v-model:open="imageEditOpen" :src="imageEditSrc" :alt="imageEditAlt" @save="onImageEditSave" />
+    <ImageLightbox :src="previewSrc" @close="previewSrc = null" />
     <MathPopover
       :open="mathEdit.open"
       :kind="mathEdit.kind"
@@ -79,6 +87,9 @@ import CodeBlockView from './ui/CodeBlockView.vue'
 import FootnoteRefView from './ui/FootnoteRefView.vue'
 import FootnoteDefView from './ui/FootnoteDefView.vue'
 import DetailsView from './ui/DetailsView.vue'
+import ImageView from './ui/ImageView.vue'
+import ImageEditDialog from './ui/ImageEditDialog.vue'
+import ImageLightbox from './ui/ImageLightbox.vue'
 import MathPopover from './ui/MathPopover.vue'
 import type { EditorMode } from './types'
 import { toast } from '@/helpers/toast'
@@ -117,6 +128,7 @@ const editor = useEditor({
         footnoteRef: FootnoteRefView,
         footnoteDef: FootnoteDefView,
         details: DetailsView,
+        image: ImageView,
       },
       aiComplete: async (prefix: string, suffix: string) => {
         try {
@@ -335,6 +347,29 @@ function onLinkRemove() {
 function onImageInsertUrl(src: string) {
   if (src) insertImageByPath(src)
 }
+
+// ── 图片编辑 / 预览 ──────────────────────────────────
+const imageEditOpen = ref(false)
+const imageEditSrc = ref('')
+const imageEditAlt = ref('')
+const previewSrc = ref<string | null>(null)
+
+function openImageEdit() {
+  const e = editor.value
+  if (!e || !e.isActive('image')) return
+  const attrs = e.getAttributes('image')
+  imageEditSrc.value = (attrs.src as string) || ''
+  imageEditAlt.value = (attrs.alt as string) || ''
+  imageEditOpen.value = true
+}
+function onImageEditSave(payload: { src: string; alt: string }) {
+  editor.value?.chain().focus().updateAttributes('image', { src: payload.src, alt: payload.alt || null }).run()
+}
+function openImagePreview() {
+  const e = editor.value
+  if (!e || !e.isActive('image')) return
+  previewSrc.value = (e.getAttributes('image').src as string) || null
+}
 function onColorSelect(color: string | null) {
   const e = editor.value
   if (!e) return
@@ -359,6 +394,7 @@ function onEditorAction(ev: Event) {
   const action = (ev as CustomEvent<{ action?: string }>).detail?.action
   if (action === 'link') openLink()
   else if (action === 'image') imageOpen.value = true
+  else if (action === 'image-preview') openImagePreview()
 }
 // 缓存挂载监听器的 DOM 元素：卸载时不能再读 editor.value.view —— @tiptap/vue-3 的 useEditor
 // 会先 destroy 编辑器，之后 view getter 返回一个抛错的 Proxy，取 .dom 即触发 Runtime Error。

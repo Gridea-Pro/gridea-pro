@@ -805,6 +805,22 @@
       "plain": "Plain text",
       "copy": "Copy",
       "copied": "Copied"
+    },
+    "imageMenu": {
+      "originalSize": "Original size",
+      "copySrc": "Copy image URL",
+      "delete": "Delete image",
+      "edit": "Edit image",
+      "preview": "Preview"
+    },
+    "imageEdit": {
+      "title": "Edit image",
+      "src": "Image URL",
+      "srcPlaceholder": "Enter image URL",
+      "alt": "Description (alt)",
+      "altPlaceholder": "Enter image description",
+      "save": "Save",
+      "cancel": "Cancel"
     }
   }
 }

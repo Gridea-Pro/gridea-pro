@@ -7,7 +7,7 @@
 import type { Extensions } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
-import { Image } from '@tiptap/extension-image'
+import { createImage, ImageHtmlParser } from './ResizableImage'
 import { CharacterCount } from '@tiptap/extension-character-count'
 import Link from '@tiptap/extension-link'
 import TextAlign from '@tiptap/extension-text-align'
@@ -71,8 +71,10 @@ export function buildExtensions(options: BuildEditorOptions): Extensions {
     // 对齐
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
 
-    // 图片
-    Image.configure({ inline: false, allowBase64: false }),
+    // 图片（width 属性 + 拖拽调宽 NodeView；带宽序列化为 <img>，无宽保持 ![]()）
+    createImage(options.nodeViews?.image),
+    // <img> html token → image 节点（独立解析器，须早于 RawHtml）
+    ImageHtmlParser,
 
     // 表格
     Table.configure({ resizable: true }),

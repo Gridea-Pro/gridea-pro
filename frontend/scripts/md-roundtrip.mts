@@ -115,6 +115,10 @@ const SAMPLES: Array<{ name: string; md: string; expect?: string }> = [
   { name: 'mermaid', md: '```mermaid\ngraph TD\n  A --> B\n```' },
   { name: 'link', md: 'see [Gridea](https://gridea.pro)' },
   { name: 'image', md: '![alt](/post-images/x.png)' },
+  // 带宽度图片：序列化为 <img>（goldmark unsafe 可发布），无宽度保持 ![]()
+  { name: 'image-width', md: '<img src="/post-images/x.png" alt="截图" width="640">' },
+  // 居中图片：对齐包裹（manager 直通路径走 raw-html 三段式）
+  { name: 'image-center', md: '<div style="text-align: center">\n\n![图](/post-images/x.png)\n\n</div>' },
   { name: 'hr', md: 'a\n\n---\n\nb' },
   { name: 'table', md: '| a | b |\n| --- | --- |\n| 1 | 2 |' },
   { name: 'table-pipe', md: '| a | `x \\| y` | b |\n| --- | --- | --- |\n| 1 | 2 | 3 |' },

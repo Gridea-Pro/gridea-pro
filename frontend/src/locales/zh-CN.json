@@ -805,6 +805,22 @@
       "plain": "纯文本",
       "copy": "复制",
       "copied": "已复制"
+    },
+    "imageMenu": {
+      "originalSize": "原始大小",
+      "copySrc": "复制图片地址",
+      "delete": "删除图片",
+      "edit": "编辑图片",
+      "preview": "预览"
+    },
+    "imageEdit": {
+      "title": "编辑图片",
+      "src": "图片地址",
+      "srcPlaceholder": "输入图片地址",
+      "alt": "描述（alt）",
+      "altPlaceholder": "输入图片描述",
+      "save": "保存",
+      "cancel": "取消"
     }
   }
 }

@@ -4,7 +4,80 @@
     :editor="editor"
     :should-show="shouldShow"
   >
+    <!-- 选中图片：显示图片相关操作（对齐 ctzhian 原版：编辑/对齐×3/预览/原始大小/复制/删除） -->
     <div
+      v-if="isImage"
+      class="flex items-center gap-0.5 p-1 bg-popover text-popover-foreground border border-border rounded-md shadow-md"
+    >
+      <button type="button" :class="baseBtn" :title="t('editor.imageMenu.edit')" @mousedown.prevent @click="emit('imageEdit')">
+        <Edit />
+      </button>
+      <div class="w-px h-[18px] mx-0.5 bg-border" />
+      <button
+        type="button"
+        :class="[baseBtn, imageAlign === null || imageAlign === 'left' ? activeCls : '']"
+        :title="t('editor.shortcuts.alignLeft')"
+        @mousedown.prevent
+        @click="setImageAlign(null)"
+      >
+        <AlignLeft />
+      </button>
+      <button
+        type="button"
+        :class="[baseBtn, imageAlign === 'center' ? activeCls : '']"
+        :title="t('editor.shortcuts.alignCenter')"
+        @mousedown.prevent
+        @click="setImageAlign('center')"
+      >
+        <AlignCenter />
+      </button>
+      <button
+        type="button"
+        :class="[baseBtn, imageAlign === 'right' ? activeCls : '']"
+        :title="t('editor.shortcuts.alignRight')"
+        @mousedown.prevent
+        @click="setImageAlign('right')"
+      >
+        <AlignRight />
+      </button>
+      <div class="w-px h-[18px] mx-0.5 bg-border" />
+      <button type="button" :class="baseBtn" :title="t('editor.imageMenu.preview')" @mousedown.prevent @click="emit('imagePreview')">
+        <ZoomIn />
+      </button>
+      <button
+        type="button"
+        :class="baseBtn"
+        :title="t('editor.imageMenu.originalSize')"
+        :disabled="!imageWidth"
+        :style="!imageWidth ? 'opacity:.4;cursor:default' : ''"
+        @mousedown.prevent
+        @click="resetImageSize"
+      >
+        <AspectRatio />
+      </button>
+      <button
+        type="button"
+        :class="baseBtn"
+        :title="t('editor.imageMenu.copySrc')"
+        @mousedown.prevent
+        @click="copyImageSrc"
+      >
+        <Copy />
+      </button>
+      <div class="w-px h-[18px] mx-0.5 bg-border" />
+      <button
+        type="button"
+        :class="baseBtn"
+        :title="t('editor.imageMenu.delete')"
+        @mousedown.prevent
+        @click="run((c) => c.deleteSelection())"
+      >
+        <Trash />
+      </button>
+    </div>
+
+    <div
+      v-else
       class="flex items-center gap-0.5 p-1 bg-popover text-popover-foreground border border-border rounded-md shadow-md"
     >
       <button
@@ -78,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { onBeforeUnmount, ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Editor, ChainedCommands } from '@tiptap/vue-3'
 import { BubbleMenu } from '@tiptap/vue-3/menus'
@@ -91,12 +164,22 @@ import {
   IconHighlight as Highlighter,
   IconLink as LinkIcon,
   IconSparkles as Sparkles,
+  IconAspectRatio as AspectRatio,
+  IconCopy as Copy,
+  IconTrash as Trash,
+  IconEdit as Edit,
+  IconZoomIn as ZoomIn,
+  IconAlignLeft as AlignLeft,
+  IconAlignCenter as AlignCenter,
+  IconAlignRight as AlignRight,
 } from '@tabler/icons-vue'
 
 const props = defineProps<{ editor: Editor | null }>()
 const emit = defineEmits<{
   link: []
   polish: []
+  imageEdit: []
+  imagePreview: []
 }>()
 
 const { t } = useI18n()
@@ -134,6 +217,36 @@ function shouldShow(p: any): boolean {
 
 const baseBtn =
   'inline-flex items-center justify-center w-7 h-7 rounded-md cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground'
+
+// ── 图片选中态：气泡切换为图片操作 ─────────────────────
+const isImage = computed(() => {
+  void tick.value
+  return !!props.editor?.isActive('image')
+})
+const imageWidth = computed(() => {
+  void tick.value
+  return (props.editor?.getAttributes('image').width as number | null) || null
+})
+const activeCls = 'bg-accent text-accent-foreground'
+const imageAlign = computed(() => {
+  void tick.value
+  return (props.editor?.getAttributes('image').textAlign as string | null) || null
+})
+function setImageAlign(align: string | null) {
+  props.editor?.chain().focus().updateAttributes('image', { textAlign: align }).run()
+}
+function resetImageSize() {
+  props.editor?.chain().focus().updateAttributes('image', { width: null }).run()
+}
+async function copyImageSrc() {
+  const src = (props.editor?.getAttributes('image').src as string) || ''
+  if (!src) return
+  try {
+    await navigator.clipboard.writeText(src)
+  } catch {
+    /* ignore */
+  }
+}
 
 function isActive(name: string): boolean {
   // 读取 tick 触发依赖，保证选区变化时模板重算

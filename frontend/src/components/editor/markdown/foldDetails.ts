@@ -73,7 +73,7 @@ export function foldAlignContent(nodes: JNode[]): { content: JNode[]; changed: b
       }
       if (closed && body.length) {
         for (const b of body) {
-          if (b.type === 'paragraph' || b.type === 'heading') {
+          if (b.type === 'paragraph' || b.type === 'heading' || b.type === 'image') {
             b.attrs = { ...(b.attrs || {}), textAlign: align }
           }
           out.push(b)
