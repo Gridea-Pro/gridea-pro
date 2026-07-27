@@ -849,6 +849,14 @@
       "objects": "Objects",
       "symbols": "Symbols",
       "flags": "Flags"
-    }
+    },
+    "typewriterTips": [
+      "Write something…",
+      "Type / to open the insert menu: tables, math, Mermaid…",
+      "Select text for AI polish, ⌘K to insert a link",
+      "Start a line with 1. or - plus space for lists",
+      "Double-click an image to preview, drag corners to resize",
+      "⌘S to save draft, keyboard icon (bottom right) for all shortcuts"
+    ]
   }
 }

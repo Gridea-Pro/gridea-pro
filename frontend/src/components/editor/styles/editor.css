@@ -91,9 +91,8 @@
   margin-top: 0.85em;
 }
 
-/* 占位符 */
-.gridea-tiptap .ProseMirror p.is-editor-empty:first-child::before,
-.gridea-tiptap .ProseMirror .is-empty::before {
+/* 占位符：只在「整篇为空」时显示第一行（.is-empty 会让每个空行都冒出提示，去掉） */
+.gridea-tiptap .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
   color: var(--editor-muted);
@@ -135,28 +134,96 @@
 }
 
 /* 列表 */
+/* 列表：Tailwind v4 preflight 会把 ul/ol 的 list-style 清成 none——
+   ol 此前漏配导致序号完全不渲染（看起来像"回车不递增"），必须逐级显式恢复。 */
 .gridea-tiptap .ProseMirror ul,
 .gridea-tiptap .ProseMirror ol {
-  padding-left: 1.5em;
+  padding-left: 1.6em;
+  margin: 0.3em 0;
 }
-.gridea-tiptap .ProseMirror ul { list-style: square; }
-.gridea-tiptap .ProseMirror li > p { margin: 0.2em 0; }
+.gridea-tiptap .ProseMirror ul { list-style: disc; }
+.gridea-tiptap .ProseMirror ul ul { list-style: circle; }
+.gridea-tiptap .ProseMirror ul ul ul { list-style: square; }
+.gridea-tiptap .ProseMirror ol { list-style: decimal; }
+.gridea-tiptap .ProseMirror ol ol { list-style: lower-alpha; }
+.gridea-tiptap .ProseMirror ol ol ol { list-style: lower-roman; }
+.gridea-tiptap .ProseMirror li { margin: 0.15em 0; }
+.gridea-tiptap .ProseMirror li > p { margin: 0; }
+/* 列表符号/序号用主题色 */
+.gridea-tiptap .ProseMirror li::marker {
+  color: var(--editor-accent);
+}
+.gridea-tiptap .ProseMirror ol > li::marker {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95em;
+  font-weight: 500;
+}
 
-/* 任务列表 */
+/* 任务列表：自绘 checkbox（原生样式各平台不一且无法贴主题） */
 .gridea-tiptap .ProseMirror ul[data-type='taskList'] {
   list-style: none;
-  padding-left: 0.2em;
+  padding-left: 0.1em;
 }
 .gridea-tiptap .ProseMirror ul[data-type='taskList'] li {
   display: flex;
   align-items: flex-start;
-  gap: 0.5em;
+  gap: 0.55em;
+  margin: 0.15em 0;
 }
 .gridea-tiptap .ProseMirror ul[data-type='taskList'] li > label {
-  margin-top: 0.35em;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding-top: 0.42em; /* 与首行文本基线对齐 */
+  user-select: none;
+}
+/* 内容区必须撑满整行：否则空任务项的可编辑区宽度为 0，点进去看不到光标（像不能输入） */
+.gridea-tiptap .ProseMirror ul[data-type='taskList'] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.gridea-tiptap .ProseMirror ul[data-type='taskList'] li > div > p {
+  margin: 0;
 }
 .gridea-tiptap .ProseMirror ul[data-type='taskList'] input[type='checkbox'] {
-  accent-color: var(--editor-accent);
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  /* 未勾选也带主题色（accent 与边框各半），不再是纯灰 */
+  border: 1.5px solid color-mix(in srgb, var(--editor-accent) 55%, var(--editor-border));
+  border-radius: 4px;
+  background: var(--editor-bg);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, border-color 0.12s;
+}
+.gridea-tiptap .ProseMirror ul[data-type='taskList'] input[type='checkbox']:hover {
+  border-color: var(--editor-accent);
+}
+.gridea-tiptap .ProseMirror ul[data-type='taskList'] input[type='checkbox']:checked {
+  background: var(--editor-accent);
+  border-color: var(--editor-accent);
+}
+.gridea-tiptap .ProseMirror ul[data-type='taskList'] input[type='checkbox']:checked::after {
+  content: '';
+  width: 9px;
+  height: 5px;
+  margin-top: -2px;
+  border: 2px solid var(--editor-accent-fg);
+  border-top: none;
+  border-right: none;
+  transform: rotate(-45deg);
+}
+/* 已勾选项文字淡化 + 删除线 */
+.gridea-tiptap .ProseMirror ul[data-type='taskList'] li[data-checked='true'] > div {
+  color: var(--editor-muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--editor-muted) 50%, transparent);
 }
 
 /* 行内代码 */

@@ -29,6 +29,10 @@
         />
           <DragHandle :editor="editor ?? null" />
           <TableMenu :editor="editor ?? null" />
+          <!-- 空文档打字机提示：循环展示使用说明（替代静态占位符），不拦截点击 -->
+          <div v-if="showTypewriter" class="typewriter-hint" aria-hidden="true">
+            {{ typedText }}<span class="tw-caret" />
+          </div>
           <EditorContent :editor="editor" class="rich-content" @keydown="onKeydown" @focus.capture="emit('focus')" />
         </div>
         <div v-show="mode !== 'rich'" ref="sourcePaneRef" class="source-pane" @keydown="onKeydown" @focusin="emit('focus')">
@@ -72,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, computed, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import { Extension } from '@tiptap/core'
@@ -116,7 +120,7 @@ const model = defineModel<string>('value', { required: true })
 const emit = defineEmits<{ keydown: [e: KeyboardEvent]; focus: [] }>()
 
 const mode = ref<EditorMode>('rich')
-const { t } = useI18n()
+const { t, tm } = useI18n()
 
 // 防止「外部回填 → setContent → onUpdate → 回写 model」的回环
 let applyingExternal = false
@@ -128,7 +132,8 @@ const editor = useEditor({
   extensions: [
     ...buildExtensions({
       content: model.value || '',
-      placeholder: props.placeholder,
+      // 静态占位符停用（传空格占位）：空态提示由打字机层（typewriter-hint）接管
+      placeholder: ' ',
       upload: async (file: File) => uploadBytes(file),
       // NodeView 与 AI 续写仅在富文本环境注入（测试台不传，节点退回 renderHTML、AI 续写惰性）
       nodeViews: {
@@ -391,6 +396,62 @@ function onHighlightSelect(color: string | null) {
   if (color) e.chain().focus().setHighlight({ color }).run()
   else e.chain().focus().unsetHighlight().run()
 }
+
+// ── 空文档打字机提示（循环使用说明）──────────────────────
+const typedText = ref('')
+const showTypewriter = computed(() => mode.value !== 'source' && !(model.value || '').trim())
+let twTimer: ReturnType<typeof setTimeout> | null = null
+let twTipIdx = 0
+
+function twTips(): string[] {
+  const tips = tm('editor.typewriterTips')
+  return Array.isArray(tips) ? (tips as string[]) : []
+}
+function twSchedule(fn: () => void, ms: number) {
+  twTimer = setTimeout(fn, ms)
+}
+function twType() {
+  const tips = twTips()
+  if (!tips.length || !showTypewriter.value) return
+  const tip = tips[twTipIdx % tips.length]
+  let i = 0
+  const step = () => {
+    if (!showTypewriter.value) return
+    typedText.value = tip.slice(0, ++i)
+    if (i < tip.length) twSchedule(step, 65)
+    else twSchedule(twErase, 2400)
+  }
+  step()
+}
+function twErase() {
+  const step = () => {
+    if (!showTypewriter.value) return
+    typedText.value = typedText.value.slice(0, -1)
+    if (typedText.value) twSchedule(step, 22)
+    else {
+      twTipIdx++
+      twSchedule(twType, 400)
+    }
+  }
+  step()
+}
+function twStop() {
+  if (twTimer) clearTimeout(twTimer)
+  twTimer = null
+  typedText.value = ''
+}
+watch(
+  showTypewriter,
+  (v) => {
+    twStop()
+    if (v) {
+      twTipIdx = 0
+      twType()
+    }
+  },
+  { immediate: true },
+)
+onBeforeUnmount(twStop)
 
 // ── 快捷键面板 ───────────────────────────────────────
 const shortcutsOpen = ref(false)
@@ -684,5 +745,41 @@ onBeforeUnmount(() => {
 /* 单栏正文随容器滚动（高度按内容）；双栏每栏填满各自高度 */
 .gridea-tiptap.mode-split .rich-content {
   height: 100%;
+}
+
+/* 空文档打字机提示：与正文首行同位（740 限宽居中、同字号行高），不拦截交互 */
+.typewriter-hint {
+  position: absolute;
+  top: 8px; /* = .rich-pane padding-top */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  max-width: 740px;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--editor-muted);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+.gridea-tiptap.mode-split .typewriter-hint {
+  left: 28px; /* 分栏内边距对齐 */
+  right: 28px;
+  margin: 0;
+  max-width: none;
+}
+.tw-caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.18em;
+  background: var(--editor-accent);
+  animation: tw-blink 1s steps(2, start) infinite;
+}
+@keyframes tw-blink {
+  50% {
+    opacity: 0;
+  }
 }
 </style>
