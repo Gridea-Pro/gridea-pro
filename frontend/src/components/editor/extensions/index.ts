@@ -13,9 +13,6 @@ import Link from '@tiptap/extension-link'
 import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
-import Highlight from '@tiptap/extension-highlight'
-import Subscript from '@tiptap/extension-subscript'
-import Superscript from '@tiptap/extension-superscript'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
@@ -26,6 +23,14 @@ import TaskItem from '@tiptap/extension-task-item'
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight'
 import { common, createLowlight } from 'lowlight'
 
+import { MarkdownEscape } from './MarkdownEscape'
+import { CustomSubscript, CustomSuperscript } from './Script'
+import { CustomHighlight } from './Highlight'
+import { CustomInlineMath, CustomBlockMath } from './Math'
+import { CustomEmoji } from './Emoji'
+import { FootnoteRef, FootnoteDef } from './Footnote'
+import { MoreBreak } from './MoreBreak'
+import { RawHtml } from './RawHtml'
 import type { BuildEditorOptions } from '../types'
 
 const lowlight = createLowlight(common)
@@ -46,12 +51,15 @@ export function buildExtensions(options: BuildEditorOptions): Extensions {
       HTMLAttributes: { class: 'editor-link' },
     }),
 
-    // 文本格式
-    Subscript,
-    Superscript,
+    // 反斜杠转义保真（必须，避免 \$ \* \| 等被静默丢弃）
+    MarkdownEscape,
+
+    // 文本格式（== / ^ / ~ 方言钩子）
+    CustomSubscript,
+    CustomSuperscript,
     TextStyle,
     Color,
-    Highlight.configure({ multicolor: true }),
+    CustomHighlight,
 
     // 对齐
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
@@ -71,6 +79,19 @@ export function buildExtensions(options: BuildEditorOptions): Extensions {
 
     // 代码块高亮
     CodeBlockLowlight.configure({ lowlight }),
+
+    // 行内/块级公式（$ / $$，规则对齐 markdown-it-katex）
+    CustomInlineMath,
+    CustomBlockMath,
+
+    // Emoji 短码 :name: 与脚注 [^id]
+    CustomEmoji,
+    FootnoteRef,
+    FootnoteDef,
+
+    // <!-- more --> 与原始 HTML 透传（MoreBreak 优先拦截 more 注释，其余交 RawHtml 兜底）
+    MoreBreak,
+    RawHtml,
 
     // 工具类
     CharacterCount.configure({ limit: null }),

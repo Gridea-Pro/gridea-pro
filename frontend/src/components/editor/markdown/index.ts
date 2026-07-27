@@ -4,11 +4,12 @@
  * - editor.commands.setContent(md, { contentType: 'markdown' }) 反序列化
  */
 import type { Editor } from '@tiptap/core'
+import { canonicalizeMarkdown } from './canonicalize'
 
-/** 导出 Markdown */
+/** 导出 Markdown（规范化为幂等形式：表格最小内边距等，保证 once-saved-then-stable） */
 export function getMarkdown(editor: Editor): string {
   try {
-    return editor.getMarkdown()
+    return canonicalizeMarkdown(editor.getMarkdown())
   } catch (e) {
     console.error('[editor] getMarkdown failed:', e)
     return ''
