@@ -26,8 +26,8 @@ type HTTPRetryPolicy struct {
 // defaultRetryableStatus 对幂等写（PUT / DELETE）和 GET 都是可重试的典型集合。
 // 408 / 429 / 5xx 意味着"服务端暂时不可用或要求稍后重试"。
 var defaultRetryableStatus = []int{
-	http.StatusRequestTimeout,     // 408
-	http.StatusTooManyRequests,    // 429
+	http.StatusRequestTimeout,  // 408
+	http.StatusTooManyRequests, // 429
 	http.StatusInternalServerError,
 	http.StatusBadGateway,
 	http.StatusServiceUnavailable,
@@ -126,10 +126,10 @@ func isRetryableStatus(code int, allow []int) bool {
 }
 
 // isRetryableErr 粗略判定"值得重试的网络错误"。
-// - net.Error.Timeout() / Temporary()
-// - connection reset / broken pipe / no such host / EOF 等字符串兜底
-// - HTTP/2 stream cancel（GitHub 在 secondary rate limit 下常用这条信号替代
-//   明确的 429）：错误文本里会出现 "stream error" / "CANCEL" / "INTERNAL_ERROR"
+//   - net.Error.Timeout() / Temporary()
+//   - connection reset / broken pipe / no such host / EOF 等字符串兜底
+//   - HTTP/2 stream cancel（GitHub 在 secondary rate limit 下常用这条信号替代
+//     明确的 429）：错误文本里会出现 "stream error" / "CANCEL" / "INTERNAL_ERROR"
 func isRetryableErr(err error) bool {
 	if err == nil {
 		return false

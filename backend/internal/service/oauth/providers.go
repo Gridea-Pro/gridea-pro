@@ -33,10 +33,10 @@ type Provider struct {
 	ClientID     string
 	ClientSecret string
 	Scopes       []string
-	// FixedPort 某些平台（如 Gitee）要求回调地址与注册时完全匹配，
+	// FixedPort 某些平台要求回调地址与注册时完全匹配，
 	// 不允许随机端口，此时使用固定端口
 	FixedPort int
-	// EmailURL 某些平台（如 Gitee）需要单独调用接口获取邮箱
+	// EmailURL 某些平台需要单独调用接口获取邮箱
 	EmailURL       string
 	EmailParser    func(body []byte) string
 	UserInfoParser func(body []byte) UserInfo
@@ -147,7 +147,6 @@ func (p *Provider) GetUserInfo(client *http.Client, token string) UserInfo {
 // 注册 OAuth App 地址：
 //   GitHub:  https://github.com/settings/applications/new
 //            Redirect URI: http://127.0.0.1/oauth/callback（Wails 使用 localhost 随机端口，无需固定端口）
-//   Gitee:   https://gitee.com/oauth/applications
 //
 // 凭证优先级：ldflags 编译时注入（CI/Release）> 环境变量（本地开发）> 空
 //
@@ -165,8 +164,6 @@ func (p *Provider) GetUserInfo(client *http.Client, token string) UserInfo {
 var (
 	githubClientID      = ""
 	githubClientSecret  = ""
-	giteeClientID       = ""
-	giteeClientSecret   = ""
 	netlifyClientID     = ""
 	netlifyClientSecret = ""
 	vercelClientID      = ""
@@ -193,8 +190,6 @@ func init() {
 	// 未被 ldflags 注入的变量，尝试从环境变量补齐（本地开发）
 	envFallback(&githubClientID, "GH_OAUTH_CLIENT_ID")
 	envFallback(&githubClientSecret, "GH_OAUTH_CLIENT_SECRET")
-	envFallback(&giteeClientID, "GITEE_CLIENT_ID")
-	envFallback(&giteeClientSecret, "GITEE_CLIENT_SECRET")
 	envFallback(&netlifyClientID, "NETLIFY_CLIENT_ID")
 	envFallback(&netlifyClientSecret, "NETLIFY_CLIENT_SECRET")
 	envFallback(&vercelClientID, "VERCEL_CLIENT_ID")
@@ -202,129 +197,84 @@ func init() {
 
 	Providers = map[string]*Provider{
 		"github": {
-		ID:           "github",
-		AuthURL:      "https://github.com/login/oauth/authorize",
-		TokenURL:     "https://github.com/login/oauth/access_token",
-		UserInfoURL:  "https://api.github.com/user",
-		ClientID:     githubClientID,
-		ClientSecret: githubClientSecret,
-		Scopes:       []string{"public_repo", "read:user", "user:email"},
-		UserInfoParser: func(body []byte) UserInfo {
-			var v struct {
-				Login     string `json:"login"`
-				AvatarURL string `json:"avatar_url"`
-				Email     string `json:"email"`
-			}
-			json.Unmarshal(body, &v)
-			return UserInfo{Username: v.Login, AvatarURL: v.AvatarURL, Email: v.Email}
-		},
-		Bootstrap: ensureGitHubRepo,
-	},
-	"gitee": {
-		ID:           "gitee",
-		AuthURL:      "https://gitee.com/oauth/authorize",
-		TokenURL:     "https://gitee.com/oauth/token",
-		UserInfoURL:  "https://gitee.com/api/v5/user",
-		EmailURL:     "https://gitee.com/api/v5/emails",
-		ClientID:     giteeClientID,
-		ClientSecret: giteeClientSecret,
-		Scopes:       []string{"projects", "user_info", "emails"},
-		FixedPort:    53682, // Gitee 要求回调地址完全匹配，使用固定端口
-		UserInfoParser: func(body []byte) UserInfo {
-			var v struct {
-				Login     string `json:"login"`
-				AvatarURL string `json:"avatar_url"`
-				Email     string `json:"email"`
-			}
-			json.Unmarshal(body, &v)
-			return UserInfo{Username: v.Login, AvatarURL: v.AvatarURL, Email: v.Email}
-		},
-		EmailParser: func(body []byte) string {
-			// Gitee /api/v5/emails 返回数组，优先返回 primary email
-			var emails []struct {
-				Email string   `json:"email"`
-				State string   `json:"state"`
-				Scope []string `json:"scope"`
-			}
-			if err := json.Unmarshal(body, &emails); err != nil {
-				return ""
-			}
-			// 优先 primary
-			for _, e := range emails {
-				for _, s := range e.Scope {
-					if s == "primary" {
-						return e.Email
-					}
+			ID:           "github",
+			AuthURL:      "https://github.com/login/oauth/authorize",
+			TokenURL:     "https://github.com/login/oauth/access_token",
+			UserInfoURL:  "https://api.github.com/user",
+			ClientID:     githubClientID,
+			ClientSecret: githubClientSecret,
+			Scopes:       []string{"public_repo", "read:user", "user:email"},
+			UserInfoParser: func(body []byte) UserInfo {
+				var v struct {
+					Login     string `json:"login"`
+					AvatarURL string `json:"avatar_url"`
+					Email     string `json:"email"`
 				}
-			}
-			// 退而求其次返回第一个
-			if len(emails) > 0 {
-				return emails[0].Email
-			}
-			return ""
+				json.Unmarshal(body, &v)
+				return UserInfo{Username: v.Login, AvatarURL: v.AvatarURL, Email: v.Email}
+			},
+			Bootstrap: ensureGitHubRepo,
 		},
-		Bootstrap: ensureGiteeRepo,
-	},
-	"netlify": {
-		ID:           "netlify",
-		AuthURL:      "https://app.netlify.com/authorize",
-		TokenURL:     "https://api.netlify.com/oauth/token",
-		UserInfoURL:  "https://api.netlify.com/api/v1/user",
-		ClientID:     netlifyClientID,
-		ClientSecret: netlifyClientSecret,
-		Scopes:       []string{},
-		// Netlify 要求回调地址完全匹配，使用固定端口
-		FixedPort: 53684,
-		Bootstrap: ensureNetlifySite,
-		UserInfoParser: func(body []byte) UserInfo {
-			var v struct {
-				Email     string `json:"email"`
-				FullName  string `json:"full_name"`
-				AvatarURL string `json:"avatar_url"`
-			}
-			json.Unmarshal(body, &v)
-			name := v.FullName
-			if name == "" {
-				name = v.Email
-			}
-			return UserInfo{Username: name, AvatarURL: v.AvatarURL, Email: v.Email}
+		"netlify": {
+			ID:           "netlify",
+			AuthURL:      "https://app.netlify.com/authorize",
+			TokenURL:     "https://api.netlify.com/oauth/token",
+			UserInfoURL:  "https://api.netlify.com/api/v1/user",
+			ClientID:     netlifyClientID,
+			ClientSecret: netlifyClientSecret,
+			Scopes:       []string{},
+			// Netlify 要求回调地址完全匹配，使用固定端口
+			FixedPort: 53684,
+			Bootstrap: ensureNetlifySite,
+			UserInfoParser: func(body []byte) UserInfo {
+				var v struct {
+					Email     string `json:"email"`
+					FullName  string `json:"full_name"`
+					AvatarURL string `json:"avatar_url"`
+				}
+				json.Unmarshal(body, &v)
+				name := v.FullName
+				if name == "" {
+					name = v.Email
+				}
+				return UserInfo{Username: name, AvatarURL: v.AvatarURL, Email: v.Email}
+			},
 		},
-	},
-	"vercel": {
-		ID:           "vercel",
-		AuthURL:      "https://vercel.com/integrations/" + vercelIntegrationSlug + "/new",
-		TokenURL:     "https://api.vercel.com/v2/oauth/access_token",
-		UserInfoURL:  "https://api.vercel.com/v2/user",
-		ClientID:     vercelClientID,
-		ClientSecret: vercelClientSecret,
-		// Vercel Integration 的 redirect URL 必须与在 Vercel 后台注册的完全一致（含端口）
-		FixedPort: 53683,
-		// Vercel Integration 的授权 URL 不使用标准 OAuth 参数，仅需 state
-		CustomBuildAuthURL: func(p *Provider, redirectURI, state string) string {
-			return p.AuthURL + "?state=" + state
+		"vercel": {
+			ID:           "vercel",
+			AuthURL:      "https://vercel.com/integrations/" + vercelIntegrationSlug + "/new",
+			TokenURL:     "https://api.vercel.com/v2/oauth/access_token",
+			UserInfoURL:  "https://api.vercel.com/v2/user",
+			ClientID:     vercelClientID,
+			ClientSecret: vercelClientSecret,
+			// Vercel Integration 的 redirect URL 必须与在 Vercel 后台注册的完全一致（含端口）
+			FixedPort: 53683,
+			// Vercel Integration 的授权 URL 不使用标准 OAuth 参数，仅需 state
+			CustomBuildAuthURL: func(p *Provider, redirectURI, state string) string {
+				return p.AuthURL + "?state=" + state
+			},
+			UserInfoParser: func(body []byte) UserInfo {
+				var wrapper struct {
+					User struct {
+						Username string `json:"username"`
+						Name     string `json:"name"`
+						Email    string `json:"email"`
+						Avatar   string `json:"avatar"`
+					} `json:"user"`
+				}
+				json.Unmarshal(body, &wrapper)
+				name := wrapper.User.Username
+				if name == "" {
+					name = wrapper.User.Name
+				}
+				// Vercel 官方头像 URL 格式：根据 username 获取
+				avatarURL := ""
+				if name != "" {
+					avatarURL = "https://vercel.com/api/www/avatar/" + name + "?s=160"
+				}
+				return UserInfo{Username: name, AvatarURL: avatarURL, Email: wrapper.User.Email}
+			},
 		},
-		UserInfoParser: func(body []byte) UserInfo {
-			var wrapper struct {
-				User struct {
-					Username string `json:"username"`
-					Name     string `json:"name"`
-					Email    string `json:"email"`
-					Avatar   string `json:"avatar"`
-				} `json:"user"`
-			}
-			json.Unmarshal(body, &wrapper)
-			name := wrapper.User.Username
-			if name == "" {
-				name = wrapper.User.Name
-			}
-			// Vercel 官方头像 URL 格式：根据 username 获取
-			avatarURL := ""
-			if name != "" {
-				avatarURL = "https://vercel.com/api/www/avatar/" + name + "?s=160"
-			}
-			return UserInfo{Username: name, AvatarURL: avatarURL, Email: wrapper.User.Email}
-		},
-	},
 	}
 }
 
@@ -345,5 +295,5 @@ func IsOAuthConfigured(providerID string) bool {
 
 // SupportedProviders 返回所有支持 OAuth 的平台 ID 列表
 func SupportedProviders() []string {
-	return []string{"github", "gitee", "netlify", "vercel"}
+	return []string{"github", "netlify", "vercel"}
 }

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"gridea-pro/backend/internal/template"

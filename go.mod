@@ -5,6 +5,7 @@ go 1.25.5
 require (
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3
 	github.com/bluele/gcache v0.0.2
+	github.com/chai2010/webp v1.4.0
 	github.com/dop251/goja v0.0.0-20260106131823-651366fbe6e3
 	github.com/esiqveland/notify v0.13.3
 	github.com/flosch/pongo2/v6 v6.0.0

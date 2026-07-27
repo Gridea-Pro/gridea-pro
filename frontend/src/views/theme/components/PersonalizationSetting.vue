@@ -155,6 +155,14 @@
         </div>
       </div>
 
+      <div class="grid grid-cols-[180px_1fr] items-center gap-4">
+        <label class="text-sm font-medium text-right text-muted-foreground">{{ $t('settings.basic.webpConvert') }}</label>
+        <div class="flex items-center gap-3">
+          <Switch :checked="!!form.webpConvertEnabled" @update:checked="(v: boolean) => form.webpConvertEnabled = v" size="sm" />
+          <span class="text-xs text-muted-foreground">{{ $t('settings.basic.webpConvertDesc') }}</span>
+        </div>
+      </div>
+
     </div>
 
     <footer-box>
@@ -195,6 +203,7 @@ import ga from '@/helpers/analytics'
 import { domain } from '@/wailsjs/go/models'
 import { EventsEmit, EventsOnce, BrowserOpenURL } from '@/wailsjs/runtime'
 import { SaveThemeConfigFromFrontend } from '@/wailsjs/go/facade/ThemeFacade'
+import { GetImageOptimizeSetting, SaveImageOptimizeSettingFromFrontend } from '@/wailsjs/go/facade/ImageOptimizeSettingFacade'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -213,6 +222,7 @@ const form = reactive({
   postPath: DEFAULT_POST_PATH,
   tagPath: DEFAULT_TAG_PATH,
   katexEnabled: true,
+  webpConvertEnabled: false,
 })
 
 const postPageSizeArray = computed({
@@ -271,6 +281,14 @@ const saveTheme = async () => {
   try {
     await SaveThemeConfigFromFrontend(themeConfig)
 
+    // 保存 WebP 转换设置
+    await SaveImageOptimizeSettingFromFrontend(
+      new domain.ImageOptimizeSetting({
+        enabled: form.webpConvertEnabled,
+        quality: 80,
+      })
+    )
+
     toast.success(t('settings.theme.configSaved'))
     ga('Theme', 'Theme - save', form.themeName)
 
@@ -282,7 +300,7 @@ const saveTheme = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   const config = siteStore.site.themeConfig
 
   form.themeName = config.themeName
@@ -297,6 +315,14 @@ onMounted(() => {
   form.postPath = config.postPath || DEFAULT_POST_PATH
   form.tagPath = config.tagPath || DEFAULT_TAG_PATH
   form.katexEnabled = typeof config.katexEnabled === 'boolean' ? config.katexEnabled : true
+
+  // 加载 WebP 转换设置
+  try {
+    const imageOptSetting = await GetImageOptimizeSetting()
+    form.webpConvertEnabled = imageOptSetting.enabled
+  } catch {
+    // 设置不存在时使用默认值
+  }
 })
 
 const openPage = (url: string) => {

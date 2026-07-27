@@ -80,8 +80,6 @@ jobs:
       VERSION: ${{ needs.prepare.outputs.version }}
       GH_OAUTH_CLIENT_ID: ${{ secrets.GH_OAUTH_CLIENT_ID }}
       GH_OAUTH_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
-      GITEE_CLIENT_ID: ${{ secrets.GITEE_CLIENT_ID }}
-      GITEE_CLIENT_SECRET: ${{ secrets.GITEE_CLIENT_SECRET }}
       NETLIFY_CLIENT_ID: ${{ secrets.NETLIFY_CLIENT_ID }}
       NETLIFY_CLIENT_SECRET: ${{ secrets.NETLIFY_CLIENT_SECRET }}
       VERCEL_CLIENT_ID: ${{ secrets.VERCEL_CLIENT_ID }}
@@ -123,8 +121,6 @@ jobs:
           LDFLAGS="-X main.Version=${VERSION#v}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientID=${GH_OAUTH_CLIENT_ID}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientSecret=${GH_OAUTH_CLIENT_SECRET}"
-          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientID=${GITEE_CLIENT_ID}"
-          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientSecret=${GITEE_CLIENT_SECRET}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientID=${NETLIFY_CLIENT_ID}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientSecret=${NETLIFY_CLIENT_SECRET}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.vercelClientID=${VERCEL_CLIENT_ID}"
@@ -222,8 +218,6 @@ jobs:
       VERSION: ${{ needs.prepare.outputs.version }}
       GH_OAUTH_CLIENT_ID: ${{ secrets.GH_OAUTH_CLIENT_ID }}
       GH_OAUTH_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
-      GITEE_CLIENT_ID: ${{ secrets.GITEE_CLIENT_ID }}
-      GITEE_CLIENT_SECRET: ${{ secrets.GITEE_CLIENT_SECRET }}
       NETLIFY_CLIENT_ID: ${{ secrets.NETLIFY_CLIENT_ID }}
       NETLIFY_CLIENT_SECRET: ${{ secrets.NETLIFY_CLIENT_SECRET }}
       VERCEL_CLIENT_ID: ${{ secrets.VERCEL_CLIENT_ID }}
@@ -270,8 +264,6 @@ jobs:
           LDFLAGS="-X main.Version=${VERSION#v}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientID=${GH_OAUTH_CLIENT_ID}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientSecret=${GH_OAUTH_CLIENT_SECRET}"
-          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientID=${GITEE_CLIENT_ID}"
-          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientSecret=${GITEE_CLIENT_SECRET}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientID=${NETLIFY_CLIENT_ID}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientSecret=${NETLIFY_CLIENT_SECRET}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.vercelClientID=${VERCEL_CLIENT_ID}"
@@ -385,8 +377,6 @@ jobs:
       VERSION: ${{ needs.prepare.outputs.version }}
       GH_OAUTH_CLIENT_ID: ${{ secrets.GH_OAUTH_CLIENT_ID }}
       GH_OAUTH_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
-      GITEE_CLIENT_ID: ${{ secrets.GITEE_CLIENT_ID }}
-      GITEE_CLIENT_SECRET: ${{ secrets.GITEE_CLIENT_SECRET }}
       NETLIFY_CLIENT_ID: ${{ secrets.NETLIFY_CLIENT_ID }}
       NETLIFY_CLIENT_SECRET: ${{ secrets.NETLIFY_CLIENT_SECRET }}
       VERCEL_CLIENT_ID: ${{ secrets.VERCEL_CLIENT_ID }}
@@ -439,8 +429,6 @@ jobs:
           LDFLAGS="-X main.Version=${VERSION#v}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientID=${GH_OAUTH_CLIENT_ID}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.githubClientSecret=${GH_OAUTH_CLIENT_SECRET}"
-          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientID=${GITEE_CLIENT_ID}"
-          LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.giteeClientSecret=${GITEE_CLIENT_SECRET}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientID=${NETLIFY_CLIENT_ID}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.netlifyClientSecret=${NETLIFY_CLIENT_SECRET}"
           LDFLAGS="${LDFLAGS} -X gridea-pro/backend/internal/service/oauth.vercelClientID=${VERCEL_CLIENT_ID}"

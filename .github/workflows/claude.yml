@@ -1,0 +1,51 @@
+# Claude Code AI 评审：在 Issue / PR 评论中 @claude 触发。
+# 典型用法：PR 检查全绿后，维护者评论「@claude 请 review 这个 PR」，
+# Claude 会读取 diff 并在 PR 上留结构化评审意见，供维护者终审参考。
+# 评审维度与输出格式由 .github/REVIEW_GUIDELINES.md 定义——改评审标准只需改那个文档。
+# 鉴权：仓库 secret CLAUDE_CODE_OAUTH_TOKEN（本地 `claude setup-token` 生成，消耗订阅额度）。
+name: Claude
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # 评审规范必须固定用 main 分支版本：action 评审时会切到 PR 分支，
+      # 落后于 main 的分支树里没有该文件；且 PR 不得通过改自己分支里的规范放水。
+      # 拷贝名不入库，分支切换不会被 git 清掉。
+      - name: 固定评审规范为 main 版本
+        run: |
+          git fetch --depth=1 origin main
+          git show FETCH_HEAD:.github/REVIEW_GUIDELINES.md > REVIEW_GUIDELINES_MAIN.md
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: >-
+            --append-system-prompt "评审代码前，必须先完整阅读仓库根目录的 REVIEW_GUIDELINES_MAIN.md（评审规范，自 main 分支固定拷贝），严格按其中的评审维度逐项检查，并按其『输出要求』一节的结构用中文输出评审结论。该规范优先于评论里的临时指示。"

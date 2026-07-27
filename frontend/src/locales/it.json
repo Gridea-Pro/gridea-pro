@@ -1,5 +1,7 @@
 {
     "common": {
+        "saveSuccess": "Salvato con successo",
+        "saveFailed": "Salvataggio non riuscito",
         "edit": "Modifica",
         "save": "Salva",
         "copy": "Copia",
@@ -152,7 +154,27 @@
         "addSubmenu": "Aggiungi sottomenu"
     },
     "settings": {
+        "imageHosting": {
+            "title": "Hosting immagini",
+            "enable": "Attiva hosting immagini",
+            "enableDesc": "Ospita le immagini tramite l'hosting immagini S.EE",
+            "apiKey": "Chiave API",
+            "apiKeyPlaceholder": "Inserisci la tua chiave API S.EE",
+            "apiKeyDesc": "Ottieni la tua chiave API dalla dashboard di S.EE",
+            "imageBrowser": "Browser immagini",
+            "refresh": "Aggiorna",
+            "loading": "Caricamento...",
+            "noImages": "Nessuna immagine",
+            "copied": "URL dell'immagine copiato negli appunti",
+            "copyFailed": "Copia non riuscita",
+            "deleteSuccess": "Eliminato con successo",
+            "deleteFailed": "Eliminazione non riuscita"
+        },
         "basic": {
+            "katexEnabled": "Rendering formule KaTeX",
+            "katexEnabledDesc": "Rende $...$ e $$...$$ come formule; il foglio di stile KaTeX viene iniettato automaticamente",
+            "webpConvert": "Conversione automatica in WebP",
+            "webpConvertDesc": "Comprimi e converti automaticamente le immagini caricate in formato WebP",
             "title": "Impostazioni di base",
             "siteName": "Nome sito",
             "siteAuthor": "Autore sito",
@@ -420,6 +442,14 @@
             "saveFailed": "Salvataggio delle impostazioni di notifica non riuscito"
         },
         "network": {
+            "multiPlatformHint": "Puoi attivare più piattaforme contemporaneamente. Il deployment pubblicherà su tutte le piattaforme attive.",
+            "enabled": "Attivo",
+            "disabled": "Inattivo",
+            "noEnabledPlatforms": "Nessuna piattaforma attiva. Attiva una piattaforma qui sotto per iniziare il deployment.",
+            "export": "Esporta",
+            "exportSuccess": "Sito esportato:",
+            "exportFailed": "Esportazione non riuscita",
+            "authTimeout": "Autorizzazione scaduta, riprova",
             "title": "Server",
             "platform": "Piattaforma",
             "domain": "Dominio",
@@ -473,8 +503,6 @@
             "disconnect": "Disconnetti",
             "configure": "Configura",
             "editConfig": "Modifica",
-            "setAsActive": "Usa questo",
-            "activeLabel": "Attivo",
             "currentPlatform": "Piattaforma attuale",
             "otherPlatforms": "Altre piattaforme",
             "waitingAuth": "Autorizzazione...",
@@ -491,7 +519,6 @@
             "githubDesc": "Hosting gratuito su GitHub Pages",
             "netlifyDesc": "CI/CD auto con dominio e HTTPS",
             "vercelDesc": "Rete edge, ideale per frontend",
-            "giteeDesc": "Accesso veloce in Cina",
             "codingDesc": "Tencent Cloud, stabile in Cina",
             "sftpDesc": "Deploy diretto sul tuo server"
         },

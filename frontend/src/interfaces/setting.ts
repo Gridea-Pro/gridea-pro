@@ -1,10 +1,11 @@
 /** 部署平台类型 */
-export type PlatformType = 'github' | 'coding' | 'sftp' | 'gitee' | 'netlify' | 'vercel'
+export type PlatformType = 'github' | 'coding' | 'sftp' | 'netlify' | 'vercel'
 
 /** 系统设置 — 与后端 domain.Setting 一一对应 */
 export interface ISetting {
   platform: PlatformType
   platformConfigs: Record<string, Record<string, any>>
+  enabledPlatforms?: string[]
   proxyEnabled?: boolean
   proxyURL?: string
 }

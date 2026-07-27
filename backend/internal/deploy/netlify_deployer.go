@@ -135,7 +135,7 @@ func (p *NetlifyProvider) Deploy(ctx context.Context, outputDir string, setting 
 // netlifyDeployStatus 是 /api/v1/deploys/{id} 的状态响应，字段按需取。
 type netlifyDeployStatus struct {
 	ID           string `json:"id"`
-	State        string `json:"state"`         // uploading / processing / ready / error
+	State        string `json:"state"` // uploading / processing / ready / error
 	DeployURL    string `json:"deploy_url"`
 	ErrorMessage string `json:"error_message"`
 	Title        string `json:"title"`

@@ -43,9 +43,9 @@ func TestRenderSimpleIndex_Pagination(t *testing.T) {
 
 	data := &template.TemplateData{
 		ThemeConfig: template.ThemeConfigView{
-			SiteName:         "Test",
-			PostPageSize:     10,
-			ThemeName:        "test",
+			SiteName:     "Test",
+			PostPageSize: 10,
+			ThemeName:    "test",
 		},
 		Posts: posts,
 	}

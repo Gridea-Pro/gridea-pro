@@ -23,27 +23,27 @@ type Theme struct {
 
 // ThemeConfig 主题配置
 type ThemeConfig struct {
-	ThemeName        string                 `json:"themeName"`
-	PostPageSize     int                    `json:"postPageSize"`
-	ArchivesPageSize int                    `json:"archivesPageSize"`
-	SiteName         string                 `json:"siteName"`
-	SiteAuthor       string                 `json:"siteAuthor"`
-	SiteEmail        string                 `json:"siteEmail"`
-	SiteDescription  string                 `json:"siteDescription"`
-	FooterInfo       string                 `json:"footerInfo"`
-	Domain           string                 `json:"domain"`
-	PostUrlFormat    string                 `json:"postUrlFormat"`
-	TagUrlFormat     string                 `json:"tagUrlFormat"`
-	DateFormat       string                 `json:"dateFormat"`
-	Language         string                 `json:"language"`
-	FeedEnabled      bool                   `json:"feedEnabled"`
-	FeedFullText     bool                   `json:"feedFullText"`
-	FeedCount        int                    `json:"feedCount"`
-	PostPath         string                 `json:"postPath"`
-	TagPath          string                 `json:"tagPath"`
-	TagsPath         string                 `json:"tagsPath"`
-	LinkPath         string                 `json:"linkPath"`
-	MemosPath        string                 `json:"memosPath"`
+	ThemeName        string `json:"themeName"`
+	PostPageSize     int    `json:"postPageSize"`
+	ArchivesPageSize int    `json:"archivesPageSize"`
+	SiteName         string `json:"siteName"`
+	SiteAuthor       string `json:"siteAuthor"`
+	SiteEmail        string `json:"siteEmail"`
+	SiteDescription  string `json:"siteDescription"`
+	FooterInfo       string `json:"footerInfo"`
+	Domain           string `json:"domain"`
+	PostUrlFormat    string `json:"postUrlFormat"`
+	TagUrlFormat     string `json:"tagUrlFormat"`
+	DateFormat       string `json:"dateFormat"`
+	Language         string `json:"language"`
+	FeedEnabled      bool   `json:"feedEnabled"`
+	FeedFullText     bool   `json:"feedFullText"`
+	FeedCount        int    `json:"feedCount"`
+	PostPath         string `json:"postPath"`
+	TagPath          string `json:"tagPath"`
+	TagsPath         string `json:"tagsPath"`
+	LinkPath         string `json:"linkPath"`
+	MemosPath        string `json:"memosPath"`
 	// KatexEnabled 控制是否在站点渲染产物里自动注入 KaTeX 公式样式。
 	// 关闭后即使文章里有 `$...$` 公式，主题不会被注入 katex.min.css，
 	// 公式样式由主题自己负责（或不显示）。默认开。

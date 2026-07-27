@@ -14,7 +14,9 @@
     "saved": "已保存",
     "search": "搜索",
     "clear": "清除",
-    "markdownSupported": "支持 Markdown 语法"
+    "markdownSupported": "支持 Markdown 语法",
+    "saveSuccess": "保存成功",
+    "saveFailed": "保存失败"
   },
   "nav": {
     "preview": "预 览",
@@ -196,6 +198,8 @@
       "feedEnabledDesc": "关闭后将不会生成 feed.xml",
       "katexEnabled": "KaTeX 公式渲染",
       "katexEnabledDesc": "文章中 $...$ 与 $$...$$ 会被渲染成公式，并自动注入 KaTeX 样式",
+      "webpConvert": "自动转为 WebP",
+      "webpConvertDesc": "上传图片时自动压缩并转换为 WebP 格式，减小文件体积",
       "rssArticles": "RSS/Feed 文章数量",
       "favicon": "网页图标",
       "avatar": "头像配置",
@@ -400,6 +404,22 @@
       "saveSuccess": "CDN 配置已保存",
       "saveFailed": "CDN 配置保存失败"
     },
+    "imageHosting": {
+      "title": "图床",
+      "enable": "启用图床",
+      "enableDesc": "通过 S.EE 图床托管图片资源",
+      "apiKey": "API Key",
+      "apiKeyPlaceholder": "输入您的 S.EE API Key",
+      "apiKeyDesc": "在 S.EE 控制台获取 API Key",
+      "imageBrowser": "图片浏览器",
+      "refresh": "刷新",
+      "loading": "加载中...",
+      "noImages": "暂无图片",
+      "copied": "图片 URL 已复制到剪贴板",
+      "copyFailed": "复制失败",
+      "deleteSuccess": "删除成功",
+      "deleteFailed": "删除失败"
+    },
     "ai": {
       "title": "AI 配置",
       "modeBuiltIn": "内置模型",
@@ -503,10 +523,15 @@
       "disconnect": "断开连接",
       "configure": "配置",
       "editConfig": "编辑配置",
-      "setAsActive": "设为当前",
-      "activeLabel": "当前使用",
       "currentPlatform": "当前平台",
       "otherPlatforms": "其他平台",
+      "multiPlatformHint": "可同时启用多个平台，部署时会发布到所有已启用的平台。",
+      "enabled": "已启用",
+      "disabled": "未启用",
+      "noEnabledPlatforms": "暂无已启用的平台，请在下方启用。",
+      "export": "导出",
+      "exportSuccess": "站点已导出：",
+      "exportFailed": "导出失败",
       "waitingAuth": "等待授权...",
       "authTimeout": "授权超时，请重试",
       "authSuccess": "授权成功",
@@ -522,7 +547,6 @@
       "githubDesc": "部署到 GitHub Pages，免费托管静态博客",
       "netlifyDesc": "自动 CI/CD，支持自定义域名与 HTTPS",
       "vercelDesc": "边缘网络加速，前端部署首选",
-      "giteeDesc": "国内访问速度更快，无需代理",
       "codingDesc": "腾讯旗下，国内稳定访问",
       "sftpDesc": "直接部署到你自己的服务器"
     },

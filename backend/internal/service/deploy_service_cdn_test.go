@@ -25,9 +25,9 @@ func TestCdnFailureAbortReason(t *testing.T) {
 		// 大量失败：中止
 		{"half_fail", 20, 10, true},
 		// 灾难性失败率分支（>= 50%）覆盖小站全裂场景，绕过 cdnFailureAbsoluteCap：
-		{"small_site_all_fail", 4, 4, true},   // 4/4 = 100%，确实是配置问题
-		{"small_site_majority", 3, 2, true},   // 2/3 ≈ 66.7%，仍判定为灾难
-		{"exactly_50_percent", 10, 5, true},   // 边界：5/10 = 50% 触发灾难分支
+		{"small_site_all_fail", 4, 4, true},       // 4/4 = 100%，确实是配置问题
+		{"small_site_majority", 3, 2, true},       // 2/3 ≈ 66.7%，仍判定为灾难
+		{"exactly_50_percent", 10, 5, true},       // 边界：5/10 = 50% 触发灾难分支
 		{"just_below_catastrophic", 10, 4, false}, // 4/10 = 40%，且绝对 < 5 → 放行
 	}
 	for _, tt := range tests {

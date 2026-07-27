@@ -124,7 +124,7 @@ Hugo, Hexo, and Jekyll are great tools — but they're built for developers. You
 
 ### 🚀 Deployment
 
-- One-click deploy to 6 platforms: GitHub Pages, Vercel, Netlify, Gitee, Coding, SFTP/FTP
+- One-click deploy to 5 platforms: GitHub Pages, Vercel, Netlify, Coding, SFTP/FTP
 - Pure Go Git engine built in — **no system Git required**, more reliable syncing
 - CDN media upload: automatically sync images and assets to a GitHub repository on deploy, with customizable path templates
 - Custom domain (CNAME) support
@@ -178,16 +178,19 @@ Gridea Pro implements the [Model Context Protocol (MCP)](https://modelcontextpro
 {
   "mcpServers": {
     "gridea-pro": {
-      "command": "/path/to/gridea-pro",
-      "args": ["--mcp"],
+      "command": "C:\\Program Files\\Gridea Pro\\gridea-pro-mcp.exe",
       "env": {
-        "GRIDEA_SITE_DIR": "/path/to/your/site",
+        "SOURCE_DIR": "C:\\Users\\<you>\\Documents\\Gridea Pro",
         "DEPLOY_ENABLED": "false"
       }
     }
   }
 }
 ```
+
+> The `command` points to a **standalone `gridea-pro-mcp.exe` binary** (shipped alongside the GUI client `Gridea Pro.exe`; they are two separate programs), not a `--mcp` mode of the GUI. `SOURCE_DIR` is the Gridea Pro data directory (default `~/Documents/Gridea Pro`).
+
+> ⚠️ **Response order**: MCP responses may arrive out of order. The stdio transport from [mark3labs/mcp-go](https://github.com/mark3labs/mcp-go) v0.43.2 processes handlers concurrently in goroutines. **Match responses by JSON-RPC `id`**, not by arrival order. See [#118](https://github.com/Gridea-Pro/gridea-pro/issues/118).
 
 > Set `DEPLOY_ENABLED=true` to allow AI to trigger deployments. Disabled by default — requires manual confirmation.
 

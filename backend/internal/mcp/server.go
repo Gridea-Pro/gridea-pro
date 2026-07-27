@@ -75,14 +75,14 @@ func IsDeployEnabled() bool {
 
 func initServices(appDir string) *Services {
 	// Repositories
-	postRepo := repository.NewPostRepository(appDir)
+	postRepo := repository.NewPostRepository(appDir, nil)
 	categoryRepo := repository.NewCategoryRepository(appDir)
 	tagRepo := repository.NewTagRepository(appDir)
 	menuRepo := repository.NewMenuRepository(appDir)
 	linkRepo := repository.NewLinkRepository(appDir)
 	themeRepo := repository.NewThemeRepository(appDir)
 	settingRepo := repository.NewSettingRepository(appDir)
-	mediaRepo := repository.NewMediaRepository(appDir)
+	mediaRepo := repository.NewMediaRepository(appDir, nil)
 	memoRepo := repository.NewMemoRepository(appDir)
 	commentRepo := repository.NewCommentRepository(appDir)
 	seoSettingRepo := repository.NewSeoSettingRepository(appDir)

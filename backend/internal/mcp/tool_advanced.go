@@ -31,7 +31,7 @@ func renderSiteHandler(s *engine.Engine) server.ToolHandlerFunc {
 // Deploy Site
 func deploySiteTool() mcp.Tool {
 	return mcp.NewTool("deploy_site",
-		mcp.WithDescription("Deploy the static site to the configured platform (GitHub, Gitee, Vercel, etc.). The site will be rendered before deployment. Requires DEPLOY_ENABLED=true."),
+		mcp.WithDescription("Deploy the static site to the configured platform (GitHub, Vercel, etc.). The site will be rendered before deployment. Requires DEPLOY_ENABLED=true."),
 		mcp.WithBoolean("confirm", mcp.Description("Set to true to confirm deployment"), mcp.Required()),
 	)
 }
@@ -67,7 +67,7 @@ func deploySiteHandler(settingService *service.SettingService, renderer *engine.
 		// 3. Select deploy provider
 		var provider deploy.Provider
 		switch setting.Platform {
-		case "github", "gitee", "coding":
+		case "github", "coding":
 			provider = deploy.NewGitProvider()
 		case "vercel":
 			proxyURL := ""

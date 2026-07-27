@@ -1,5 +1,7 @@
 {
     "common": {
+        "saveSuccess": "Salvo com sucesso",
+        "saveFailed": "Falha ao salvar",
         "edit": "Editar",
         "save": "Salvar",
         "copy": "Copiar",
@@ -152,7 +154,27 @@
         "addSubmenu": "Adicionar submenu"
     },
     "settings": {
+        "imageHosting": {
+            "title": "Hospedagem de imagens",
+            "enable": "Ativar hospedagem de imagens",
+            "enableDesc": "Hospede imagens via hospedagem de imagens S.EE",
+            "apiKey": "Chave de API",
+            "apiKeyPlaceholder": "Insira sua chave de API do S.EE",
+            "apiKeyDesc": "Obtenha sua chave de API no painel do S.EE",
+            "imageBrowser": "Navegador de imagens",
+            "refresh": "Atualizar",
+            "loading": "Carregando...",
+            "noImages": "Nenhuma imagem",
+            "copied": "URL da imagem copiada para a área de transferência",
+            "copyFailed": "Falha ao copiar",
+            "deleteSuccess": "Excluído com sucesso",
+            "deleteFailed": "Falha ao excluir"
+        },
         "basic": {
+            "katexEnabled": "Renderização de fórmulas KaTeX",
+            "katexEnabledDesc": "Renderiza $...$ e $$...$$ como fórmulas; a folha de estilos do KaTeX é injetada automaticamente",
+            "webpConvert": "Converter automaticamente para WebP",
+            "webpConvertDesc": "Comprimir e converter automaticamente as imagens enviadas para o formato WebP",
             "title": "Configurações básicas",
             "siteName": "Nome do Site",
             "siteAuthor": "Autor do Site",
@@ -420,6 +442,14 @@
             "saveFailed": "Falha ao salvar configurações de notificação"
         },
         "network": {
+            "multiPlatformHint": "Você pode ativar várias plataformas ao mesmo tempo. A implantação publicará em todas as plataformas ativadas.",
+            "enabled": "Ativado",
+            "disabled": "Desativado",
+            "noEnabledPlatforms": "Nenhuma plataforma ativada. Ative uma plataforma abaixo para começar a implantar.",
+            "export": "Exportar",
+            "exportSuccess": "Site exportado:",
+            "exportFailed": "Falha na exportação",
+            "authTimeout": "Tempo de autorização esgotado, tente novamente",
             "title": "Servidor",
             "platform": "Plataforma",
             "domain": "Domínio",
@@ -473,8 +503,6 @@
             "disconnect": "Desconectar",
             "configure": "Configurar",
             "editConfig": "Editar",
-            "setAsActive": "Usar este",
-            "activeLabel": "Ativo",
             "currentPlatform": "Plataforma atual",
             "otherPlatforms": "Outras plataformas",
             "waitingAuth": "Autorizando...",
@@ -491,7 +519,6 @@
             "githubDesc": "Hospedagem grátis no GitHub Pages",
             "netlifyDesc": "CI/CD auto com domínio e HTTPS",
             "vercelDesc": "Rede edge, ideal para frontend",
-            "giteeDesc": "Acesso rápido na China",
             "codingDesc": "Tencent Cloud, estável na China",
             "sftpDesc": "Deploy direto no seu servidor"
         },

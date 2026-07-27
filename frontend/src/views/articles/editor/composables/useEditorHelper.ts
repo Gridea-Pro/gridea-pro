@@ -18,6 +18,7 @@ import { toast } from '@/helpers/toast'
 import { BrowserOpenURL } from '@/wailsjs/runtime'
 import { UploadImagesFromFrontend } from '@/wailsjs/go/facade/PostFacade'
 import { OpenImageDialog } from '@/wailsjs/go/app/App'
+import { UploadImage, GetSetting } from '@/wailsjs/go/facade/ImageHostingFacade'
 import { domain } from '@/wailsjs/go/models'
 
 /** TiptapEditor 暴露给父级的命令式 API（见 components/editor/index.vue defineExpose） */

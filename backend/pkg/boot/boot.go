@@ -252,6 +252,12 @@ func Run(assets embed.FS, version string) {
 				})
 			}
 		},
+		// StartHidden 下窗口需显式显示。前端 safeWindowShow 受 Wails 运行时注入时序影响，
+		// 挂载时机早于运行时就绪时会跳过显示，导致主窗口永久隐藏（#102）。
+		// OnDomReady 在运行时注入完成后才触发，在此兜底显示一次，消除该竞态。
+		OnDomReady: func(ctx context.Context) {
+			wailsRuntime.WindowShow(ctx)
+		},
 		OnShutdown: application.Shutdown,
 		Menu:       appMenu,
 		Bind: []interface{}{
@@ -274,6 +280,8 @@ func Run(assets embed.FS, version string) {
 			services.PwaSetting,
 			services.AI,
 			services.OAuth,
+			services.ImageHosting,
+			services.ImageOptimizeSetting,
 			services.Update,
 		},
 		Windows: &windows.Options{

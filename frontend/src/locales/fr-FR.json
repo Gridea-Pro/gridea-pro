@@ -1,5 +1,7 @@
 {
     "common": {
+        "saveSuccess": "Enregistré avec succès",
+        "saveFailed": "Échec de l'enregistrement",
         "edit": "Modifier",
         "save": "Enregistrer",
         "copy": "Copier",
@@ -152,7 +154,27 @@
         "addSubmenu": "Ajouter un sous-menu"
     },
     "settings": {
+        "imageHosting": {
+            "title": "Hébergement d'images",
+            "enable": "Activer l'hébergement d'images",
+            "enableDesc": "Héberger les images via l'hébergement d'images S.EE",
+            "apiKey": "Clé API",
+            "apiKeyPlaceholder": "Saisissez votre clé API S.EE",
+            "apiKeyDesc": "Obtenez votre clé API depuis le tableau de bord S.EE",
+            "imageBrowser": "Navigateur d'images",
+            "refresh": "Actualiser",
+            "loading": "Chargement...",
+            "noImages": "Aucune image",
+            "copied": "URL de l'image copiée dans le presse-papiers",
+            "copyFailed": "Échec de la copie",
+            "deleteSuccess": "Supprimé avec succès",
+            "deleteFailed": "Échec de la suppression"
+        },
         "basic": {
+            "katexEnabled": "Rendu des formules KaTeX",
+            "katexEnabledDesc": "Affiche $...$ et $$...$$ sous forme de formules ; la feuille de style KaTeX est injectée automatiquement",
+            "webpConvert": "Conversion automatique en WebP",
+            "webpConvertDesc": "Compresser et convertir automatiquement les images téléchargées au format WebP",
             "title": "Paramètres de base",
             "siteName": "Nom du site",
             "siteAuthor": "Auteur du site",
@@ -420,6 +442,14 @@
             "saveFailed": "Échec de l'enregistrement des paramètres de notification"
         },
         "network": {
+            "multiPlatformHint": "Vous pouvez activer plusieurs plateformes à la fois. Le déploiement publiera sur toutes les plateformes activées.",
+            "enabled": "Activé",
+            "disabled": "Désactivé",
+            "noEnabledPlatforms": "Aucune plateforme activée. Activez une plateforme ci-dessous pour commencer à déployer.",
+            "export": "Exporter",
+            "exportSuccess": "Site exporté :",
+            "exportFailed": "Échec de l'exportation",
+            "authTimeout": "Délai d'autorisation dépassé, veuillez réessayer",
             "title": "Serveur",
             "platform": "Plateforme",
             "domain": "Domaine",
@@ -473,8 +503,6 @@
             "disconnect": "Déconnecter",
             "configure": "Configurer",
             "editConfig": "Modifier",
-            "setAsActive": "Utiliser",
-            "activeLabel": "Actif",
             "currentPlatform": "Plateforme actuelle",
             "otherPlatforms": "Autres plateformes",
             "waitingAuth": "Autorisation...",
@@ -491,7 +519,6 @@
             "githubDesc": "Hébergement gratuit sur GitHub Pages",
             "netlifyDesc": "CI/CD auto avec domaine et HTTPS",
             "vercelDesc": "Réseau edge, idéal pour le frontend",
-            "giteeDesc": "Accès rapide en Chine",
             "codingDesc": "Tencent Cloud, stable en Chine",
             "sftpDesc": "Déployez sur votre propre serveur"
         },

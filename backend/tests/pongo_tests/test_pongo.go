@@ -3,8 +3,8 @@
 package main
 
 import (
-"fmt"
-"github.com/flosch/pongo2/v6"
+	"fmt"
+	"github.com/flosch/pongo2/v6"
 )
 
 func main() {
@@ -15,12 +15,12 @@ func main() {
 		fmt.Println("Error:", err)
 		return
 	}
-	
+
 	ctx := pongo2.Context{
-		"loop": []int{1,2,3,4,5,6,7,8,9,10},
+		"loop":  []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 		"count": "8", // 测试字符串
 	}
-	
+
 	res, err := tpl.Execute(ctx)
 	if err != nil {
 		fmt.Println("Exec Error:", err)

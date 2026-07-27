@@ -136,7 +136,7 @@ Hugo、Hexo、Jekyll 都很优秀，但它们面向开发者，且上手门槛�
 
 ### 🚀 部署
 
-- 一键部署，支持 6 大平台：GitHub Pages、Vercel、Netlify、Gitee、Coding、SFTP/FTP
+- 一键部署，支持 5 大平台：GitHub Pages、Vercel、Netlify、Coding、SFTP/FTP
 - 内置纯 Go 实现的 Git 引擎，**不依赖系统 Git**，同步更稳定
 - CDN 媒体文件自动上传：部署时将图片等资源同步到 GitHub 仓库，支持自定义保存路径
 - 自定义域名（CNAME）支持
@@ -190,10 +190,9 @@ Gridea Pro 实现了 [MCP（Model Context Protocol）](https://modelcontextproto
 {
   "mcpServers": {
     "gridea-pro": {
-      "command": "/path/to/gridea-pro",
-      "args": ["--mcp"],
+      "command": "C:\\Program Files\\Gridea Pro\\gridea-pro-mcp.exe",
       "env": {
-        "GRIDEA_SITE_DIR": "/path/to/your/site",
+        "SOURCE_DIR": "C:\\Users\\<you>\\Documents\\Gridea Pro",
         "DEPLOY_ENABLED": "false"
       }
     }
@@ -201,7 +200,11 @@ Gridea Pro 实现了 [MCP（Model Context Protocol）](https://modelcontextproto
 }
 ```
 
-> `DEPLOY_ENABLED=true` 时，AI 可直接触发部署；默认关闭，需手动确认。
+> `command` 指向的是**独立的 `gridea-pro-mcp.exe` 二进制**（与 GUI 客户端 `Gridea Pro.exe` 是两个程序，安装包会一起提供），不是 GUI 客户端的 `--mcp` 模式。`SOURCE_DIR` 是 Gridea Pro 数据目录（默认 `~/Documents/Gridea Pro`）。
+
+> ⚠️ **响应顺序**：MCP 响应可能乱序到达。底层基于 [mark3labs/mcp-go](https://github.com/mark3labs/mcp-go) v0.43.2 的 stdio transport，handler 默认在 goroutine 中并发处理。请**按 JSON-RPC `id` 匹配响应**，不要按接收顺序处理。详见 [#118](https://github.com/Gridea-Pro/gridea-pro/issues/118)。
+
+> `DEPLOY_ENABLED=true` 时，AI 可直接触发部署；默认关闭。
 
 **内置 AI 模型**：无需配置 API Key 即可使用内置免费模型（每日限额 20 次）；也支持接入 13 种自定义模型服务商：OpenAI、Anthropic、DeepSeek、Gemini、Kimi、Qwen、GLM 等。
 

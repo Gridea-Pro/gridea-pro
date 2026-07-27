@@ -5,8 +5,9 @@
 //	-X gridea-pro/backend/internal/version.Version=${VERSION#v}
 //
 // ⚠ 必须保持 var 形式 + 字符串字面量初始化。改成 const 或函数调用初始化
-//   会让 Go 链接器的 -X 注入静默失效（常量被内联，函数调用覆盖注入值），
-//   导致发版后应用内仍显示旧版本号、自更新反复弹窗。
+//
+//	会让 Go 链接器的 -X 注入静默失效（常量被内联，函数调用覆盖注入值），
+//	导致发版后应用内仍显示旧版本号、自更新反复弹窗。
 package version
 
 // Product 是产品名称，用于 <meta name="generator"> 等场景。

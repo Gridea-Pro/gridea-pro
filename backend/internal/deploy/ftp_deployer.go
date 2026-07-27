@@ -26,9 +26,9 @@ func NewFtpProvider() *FtpProvider {
 
 // FTP 模式常量：对应 setting.ftpMode 字段。
 const (
-	ftpModePlain         = "ftp"            // 明文（不安全），仅为兼容老配置保留
-	ftpModeExplicitTLS   = "ftps-explicit"  // 推荐：先建立 TCP，再 AUTH TLS 升级
-	ftpModeImplicitTLS   = "ftps-implicit"  // 首包就是 TLS（通常 990 端口）
+	ftpModePlain         = "ftp"           // 明文（不安全），仅为兼容老配置保留
+	ftpModeExplicitTLS   = "ftps-explicit" // 推荐：先建立 TCP，再 AUTH TLS 升级
+	ftpModeImplicitTLS   = "ftps-implicit" // 首包就是 TLS（通常 990 端口）
 	plainFTPInsecureWarn = "⚠️ 警告：当前使用明文 FTP。用户名、密码和所有上传内容将以明文形式在网络上传输，\n" +
 		"   任何可以嗅探链路的中间节点（公共 WiFi / 运营商 / 被攻陷的路由器）都能直接获取。\n" +
 		"   强烈建议切换到 SFTP 或 FTPS（在平台设置里选择 \"ftps-explicit\"）。"

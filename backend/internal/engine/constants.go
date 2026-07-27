@@ -15,8 +15,8 @@ const (
 	FileMainCSS       = "main.css"
 	FileMainLess      = "main.less"
 	FileIndexHTML     = "index.html"
-	FileStyleOverride  = "style-override.js"
-	FileMainBundleCSS  = "main.min.css"
+	FileStyleOverride = "style-override.js"
+	FileMainBundleCSS = "main.min.css"
 
 	// Defaults
 	DefaultTheme        = "simple"

@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 )
 
 // Helper functions for JSON DB
@@ -85,6 +87,10 @@ func WriteFileAtomic(filename string, data []byte, perm os.FileMode) error {
 }
 
 func CopyFile(src, dst string) error {
+	if sameFilePath(src, dst) {
+		return nil
+	}
+
 	sourceFile, err := os.Open(src)
 	if err != nil {
 		return err
@@ -99,6 +105,68 @@ func CopyFile(src, dst string) error {
 
 	_, err = io.Copy(destFile, sourceFile)
 	return err
+}
+
+// sameFilePath 判断 src 和 dst 是否指向同一个文件。
+// 分两层防御：先做路径规范化比较（处理 \ vs /、大小写等差异），
+// 若仍无法判定则通过 os.Stat + os.SameFile 对比 inode。
+// 用于 CopyFile 入口守卫，避免同一文件被 os.Create 截断为零字节。
+func sameFilePath(src, dst string) bool {
+	if sameCleanPath(src, dst) {
+		return true
+	}
+
+	srcInfo, err := os.Stat(src)
+	if err != nil {
+		return false
+	}
+	dstInfo, err := os.Stat(dst)
+	if err != nil {
+		return false
+	}
+	return os.SameFile(srcInfo, dstInfo)
+}
+
+// sameCleanPath 将两个路径规范化为绝对路径后比较。
+// Windows 下用 EqualFold 处理大小写不敏感。
+func sameCleanPath(src, dst string) bool {
+	src = cleanAbsPath(src)
+	dst = cleanAbsPath(dst)
+	if runtime.GOOS == "windows" {
+		return strings.EqualFold(src, dst)
+	}
+	return src == dst
+}
+
+// cleanAbsPath 先 Clean 再 Abs，用于消除路径中的 ../、多余分隔符等。
+// Abs 失败时安全退化为 Clean 后的结果。
+//
+// 注意：filepath.Abs 对相对路径会基于 os.Getwd()（Wails 进程 CWD）解析，
+// 而非用户站点目录。调用方必须传入绝对路径；本仓库调用方（FeatureImage.Path）
+// 均来自文件选择器，天然为绝对路径。
+func cleanAbsPath(path string) string {
+	cleaned := filepath.Clean(path)
+	abs, err := filepath.Abs(cleaned)
+	if err != nil {
+		return cleaned
+	}
+	return abs
+}
+
+// pathInsideDir 判断 path 是否严格位于 dir 目录内部（排除 dir 自身及父目录）。
+// 用于 CopyFile 后将已复制到 postImageDir 内的源文件安全删除：
+// 仅当源文件已在目标目录内时才删除，防御路径穿越。
+func pathInsideDir(path, dir string) bool {
+	pathAbs := cleanAbsPath(path)
+	dirAbs := cleanAbsPath(dir)
+	rel, err := filepath.Rel(dirAbs, pathAbs)
+	if err != nil {
+		return false
+	}
+	// 排除 dir 自身（"."）、父目录（".."）、绝对路径（跨盘符/卷），
+	// 以及以 "..\" 或 "../" 开头的相对路径（在 dir 外但 Rel 未判定为 ".."）。
+	return rel != "." && rel != ".." && !filepath.IsAbs(rel) &&
+		!strings.HasPrefix(rel, ".."+string(os.PathSeparator))
 }
 
 // FileMutex 管理对应文件的读写锁

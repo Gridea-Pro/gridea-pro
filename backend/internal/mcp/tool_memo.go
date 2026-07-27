@@ -164,4 +164,3 @@ func getMemoStatsHandler(s *service.MemoService) server.ToolHandlerFunc {
 		return mcp.NewToolResultText(jsonify(stats)), nil
 	}
 }
-

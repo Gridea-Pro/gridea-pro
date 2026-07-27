@@ -1,5 +1,7 @@
 {
     "common": {
+        "saveSuccess": "儲存成功",
+        "saveFailed": "儲存失敗",
         "edit": "編輯",
         "save": "儲存",
         "copy": "複製",
@@ -152,7 +154,27 @@
         "addSubmenu": "新增子選單"
     },
     "settings": {
+        "imageHosting": {
+            "title": "圖床",
+            "enable": "啟用圖床",
+            "enableDesc": "透過 S.EE 圖床託管圖片資源",
+            "apiKey": "API Key",
+            "apiKeyPlaceholder": "輸入您的 S.EE API Key",
+            "apiKeyDesc": "在 S.EE 控制台取得 API Key",
+            "imageBrowser": "圖片瀏覽器",
+            "refresh": "重新整理",
+            "loading": "載入中...",
+            "noImages": "暫無圖片",
+            "copied": "圖片 URL 已複製到剪貼簿",
+            "copyFailed": "複製失敗",
+            "deleteSuccess": "刪除成功",
+            "deleteFailed": "刪除失敗"
+        },
         "basic": {
+            "katexEnabled": "KaTeX 公式渲染",
+            "katexEnabledDesc": "文章中 $...$ 與 $$...$$ 會被渲染成公式，並自動注入 KaTeX 樣式",
+            "webpConvert": "自動轉為 WebP",
+            "webpConvertDesc": "上傳圖片時自動壓縮並轉換為 WebP 格式，縮小檔案大小",
             "title": "基礎設定",
             "siteName": "網站名稱",
             "siteAuthor": "網站作者",
@@ -420,6 +442,14 @@
             "saveFailed": "通知設定儲存失敗"
         },
         "network": {
+            "multiPlatformHint": "可同時啟用多個平台，部署時會發布到所有已啟用的平台。",
+            "enabled": "已啟用",
+            "disabled": "未啟用",
+            "noEnabledPlatforms": "暫無已啟用的平台，請在下方啟用。",
+            "export": "匯出",
+            "exportSuccess": "網站已匯出：",
+            "exportFailed": "匯出失敗",
+            "authTimeout": "授權逾時，請重試",
             "title": "設定",
             "platform": "平台",
             "domain": "網域",
@@ -473,8 +503,6 @@
             "disconnect": "中斷連接",
             "configure": "設定",
             "editConfig": "編輯設定",
-            "setAsActive": "設為目前",
-            "activeLabel": "目前使用",
             "currentPlatform": "目前平台",
             "otherPlatforms": "其他平台",
             "waitingAuth": "等待授權...",
@@ -491,7 +519,6 @@
             "githubDesc": "部署到 GitHub Pages，免費託管靜態部落格",
             "netlifyDesc": "自動 CI/CD，支援自訂網域與 HTTPS",
             "vercelDesc": "邊緣網路加速，前端部署首選",
-            "giteeDesc": "中國境內存取速度更快，無需代理",
             "codingDesc": "騰訊旗下，中國境內穩定存取",
             "sftpDesc": "直接部署到你自己的伺服器"
         },

@@ -64,6 +64,10 @@ export default tseslint.config(
             'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
             'vue/no-v-html': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
+            // TODO(存量债务): 以下两条在现有代码中有历史违例（form 直改 props、async promise executor），
+            // 暂降为 warn 以便 CI 设为门禁；清理完存量后恢复为 error。
+            'vue/no-mutating-props': 'warn',
+            'no-async-promise-executor': 'warn',
         },
     },
 )

@@ -81,7 +81,7 @@
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem v-for="(option, index2) in item.options" :key="String(option.value)"
+                      <SelectItem v-for="option in item.options" :key="String(option.value)"
                         :value="String(option.value)">
                         {{ option.label }}
                       </SelectItem>
@@ -98,7 +98,7 @@
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem v-for="(option, index2) in item.options" :key="String(option.value)"
+                        <SelectItem v-for="option in item.options" :key="String(option.value)"
                           :value="String(option.value)">
                           {{ option.label }}
                         </SelectItem>

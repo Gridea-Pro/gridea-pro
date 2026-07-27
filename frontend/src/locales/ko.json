@@ -1,5 +1,7 @@
 {
     "common": {
+        "saveSuccess": "저장되었습니다",
+        "saveFailed": "저장에 실패했습니다",
         "edit": "편집",
         "save": "저장",
         "copy": "복사",
@@ -152,7 +154,27 @@
         "addSubmenu": "서브메뉴 추가"
     },
     "settings": {
+        "imageHosting": {
+            "title": "이미지 호스팅",
+            "enable": "이미지 호스팅 활성화",
+            "enableDesc": "S.EE 이미지 호스팅으로 이미지를 호스팅합니다",
+            "apiKey": "API 키",
+            "apiKeyPlaceholder": "S.EE API 키를 입력하세요",
+            "apiKeyDesc": "S.EE 대시보드에서 API 키를 발급받으세요",
+            "imageBrowser": "이미지 브라우저",
+            "refresh": "새로고침",
+            "loading": "불러오는 중...",
+            "noImages": "이미지가 없습니다",
+            "copied": "이미지 URL을 클립보드에 복사했습니다",
+            "copyFailed": "복사에 실패했습니다",
+            "deleteSuccess": "삭제되었습니다",
+            "deleteFailed": "삭제에 실패했습니다"
+        },
         "basic": {
+            "katexEnabled": "KaTeX 수식 렌더링",
+            "katexEnabledDesc": "글의 $...$ 및 $$...$$ 를 수식으로 렌더링하고 KaTeX 스타일시트를 자동으로 삽입합니다",
+            "webpConvert": "자동 WebP 변환",
+            "webpConvertDesc": "업로드한 이미지를 자동으로 압축하고 WebP 형식으로 변환합니다",
             "title": "기본 설정",
             "siteName": "사이트 이름",
             "siteAuthor": "사이트 작성자",
@@ -420,6 +442,14 @@
             "saveFailed": "알림 설정 저장에 실패했습니다"
         },
         "network": {
+            "multiPlatformHint": "여러 플랫폼을 동시에 활성화할 수 있습니다. 배포 시 활성화된 모든 플랫폼에 게시됩니다.",
+            "enabled": "사용",
+            "disabled": "사용 안 함",
+            "noEnabledPlatforms": "활성화된 플랫폼이 없습니다. 아래에서 플랫폼을 활성화하여 배포를 시작하세요.",
+            "export": "내보내기",
+            "exportSuccess": "사이트를 내보냈습니다:",
+            "exportFailed": "내보내기에 실패했습니다",
+            "authTimeout": "인증 시간이 초과되었습니다. 다시 시도하세요",
             "title": "설정",
             "platform": "플랫폼",
             "domain": "도메인",
@@ -473,8 +503,6 @@
             "disconnect": "연결 해제",
             "configure": "설정",
             "editConfig": "편집",
-            "setAsActive": "사용",
-            "activeLabel": "사용 중",
             "currentPlatform": "현재 플랫폼",
             "otherPlatforms": "기타 플랫폼",
             "waitingAuth": "인증 중...",
@@ -491,7 +519,6 @@
             "githubDesc": "GitHub Pages 무료 호스팅",
             "netlifyDesc": "자동 CI/CD, 커스텀 도메인 지원",
             "vercelDesc": "엣지 네트워크, 프론트엔드 최적",
-            "giteeDesc": "중국 내 빠른 접속",
             "codingDesc": "Tencent Cloud, 중국 내 안정적",
             "sftpDesc": "자체 서버에 직접 배포"
         },

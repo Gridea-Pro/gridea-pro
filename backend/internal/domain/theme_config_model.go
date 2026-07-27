@@ -3,12 +3,12 @@ package domain
 // ThemeConfigSchema 主题配置定义（来自主题 config.json 文件）
 // 描述主题支持哪些自定义配置项及其类型
 type ThemeConfigSchema struct {
-	Name         string              `json:"name"`
-	Version      string              `json:"version"`
-	Engine       string              `json:"engine"` // 模板引擎：ejs 或 go
-	Author       string              `json:"author"`
-	Repository   string              `json:"repository,omitempty"`
-	CustomConfig []ThemeConfigItem   `json:"customConfig"`
+	Name         string            `json:"name"`
+	Version      string            `json:"version"`
+	Engine       string            `json:"engine"` // 模板引擎：ejs 或 go
+	Author       string            `json:"author"`
+	Repository   string            `json:"repository,omitempty"`
+	CustomConfig []ThemeConfigItem `json:"customConfig"`
 }
 
 // ThemeConfigItem 主题配置项

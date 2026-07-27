@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/png"
 	_ "image/jpeg" // 支持 JPEG 格式解码
+	"image/png"
 	"math"
 	"os"
 	"path/filepath"
@@ -15,9 +15,9 @@ import (
 
 // pwaIconSet 包含生成的所有 PWA 图标路径
 type pwaIconSet struct {
-	Icon180    string // 180x180 圆角图标（iOS apple-touch-icon）
-	Icon192    string // 192x192 圆角图标
-	Icon512    string // 512x512 圆角图标
+	Icon180     string // 180x180 圆角图标（iOS apple-touch-icon）
+	Icon192     string // 192x192 圆角图标
+	Icon512     string // 512x512 圆角图标
 	Maskable192 string // 192x192 maskable 图标（Android 自适应图标）
 	Maskable512 string // 512x512 maskable 图标
 }

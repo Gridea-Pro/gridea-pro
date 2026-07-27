@@ -1,5 +1,7 @@
 {
     "common": {
+        "saveSuccess": "保存しました",
+        "saveFailed": "保存に失敗しました",
         "edit": "編集",
         "save": "保存",
         "copy": "コピー",
@@ -152,7 +154,27 @@
         "addSubmenu": "サブメニューを追加"
     },
     "settings": {
+        "imageHosting": {
+            "title": "画像ホスティング",
+            "enable": "画像ホスティングを有効化",
+            "enableDesc": "S.EE 画像ホスティングで画像を管理します",
+            "apiKey": "API キー",
+            "apiKeyPlaceholder": "S.EE の API キーを入力してください",
+            "apiKeyDesc": "S.EE のダッシュボードで API キーを取得します",
+            "imageBrowser": "画像ブラウザ",
+            "refresh": "更新",
+            "loading": "読み込み中...",
+            "noImages": "画像がありません",
+            "copied": "画像 URL をクリップボードにコピーしました",
+            "copyFailed": "コピーに失敗しました",
+            "deleteSuccess": "削除しました",
+            "deleteFailed": "削除に失敗しました"
+        },
         "basic": {
+            "katexEnabled": "KaTeX 数式レンダリング",
+            "katexEnabledDesc": "記事内の $...$ と $$...$$ を数式としてレンダリングし、KaTeX のスタイルを自動的に読み込みます",
+            "webpConvert": "自動WebP変換",
+            "webpConvertDesc": "アップロードした画像を自動的に圧縮しWebP形式に変換します",
             "title": "基本設定",
             "siteName": "サイト名",
             "siteAuthor": "サイト管理者",
@@ -420,6 +442,14 @@
             "saveFailed": "通知設定の保存に失敗しました"
         },
         "network": {
+            "multiPlatformHint": "複数のプラットフォームを同時に有効化できます。デプロイ時に有効なすべてのプラットフォームへ公開されます。",
+            "enabled": "有効",
+            "disabled": "無効",
+            "noEnabledPlatforms": "有効なプラットフォームがありません。下からプラットフォームを有効化してデプロイを開始してください。",
+            "export": "エクスポート",
+            "exportSuccess": "サイトをエクスポートしました：",
+            "exportFailed": "エクスポートに失敗しました",
+            "authTimeout": "認証がタイムアウトしました。再試行してください",
             "title": "設定",
             "platform": "プラットフォーム",
             "domain": "ドメイン",
@@ -473,8 +503,6 @@
             "disconnect": "切断",
             "configure": "設定",
             "editConfig": "編集",
-            "setAsActive": "使用する",
-            "activeLabel": "使用中",
             "currentPlatform": "現在のプラットフォーム",
             "otherPlatforms": "その他",
             "waitingAuth": "認証中...",
@@ -491,7 +519,6 @@
             "githubDesc": "GitHub Pagesで無料ホスティング",
             "netlifyDesc": "自動CI/CD、カスタムドメイン対応",
             "vercelDesc": "エッジネットワーク、フロントエンド向け",
-            "giteeDesc": "中国国内で高速アクセス",
             "codingDesc": "Tencent Cloud、中国国内で安定",
             "sftpDesc": "自分のサーバーに直接デプロイ"
         },

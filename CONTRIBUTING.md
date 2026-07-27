@@ -210,4 +210,19 @@ my-theme/
 
 ---
 
+## 提交前自查（CI 会强制检查）
+
+PR 提交后会自动运行检查，**任一不通过都无法合并**，请提交前在本地自查：
+
+- `gofmt -w` 已格式化（CI 拒绝未格式化的 Go 代码）
+- `go vet ./...`、`go test ./backend/...` 通过
+- 前端 `npm run lint` 无 error
+- 新增/修改的 UI 文案已补全 **全部 12 个语言**（`frontend/src/locales/`），
+  可运行 `python3 scripts/check_i18n.py frontend/src/locales` 自检；en.json 不要遗留中文
+- 本地 `wails dev` 跑通并自测过改动
+
+检查全部通过后，PR 进入维护者 review，批准后方可合并。
+
+---
+
 感谢你帮助 Gridea Pro 变得更好！🎉

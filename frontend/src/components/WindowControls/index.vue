@@ -51,12 +51,16 @@ onMounted(async () => {
     showControls.value = false
   }
 
-  EventsOn('wails:window-maximised', () => {
-    isMaximized.value = true
-  })
-  EventsOn('wails:window-restored', () => {
-    isMaximized.value = false
-  })
+  try {
+    EventsOn('wails:window-maximised', () => {
+      isMaximized.value = true
+    })
+    EventsOn('wails:window-restored', () => {
+      isMaximized.value = false
+    })
+  } catch {
+    // Wails runtime not available
+  }
 })
 
 const minimize = () => WindowMinimise()

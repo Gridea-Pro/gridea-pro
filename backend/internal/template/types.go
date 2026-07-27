@@ -145,10 +145,10 @@ type TagView struct {
 
 // MemoView 闪念视图
 type MemoView struct {
-	ID         string        `json:"id"`
-	Content    template.HTML `json:"content"` // HTML 内容
-	Tags       []string      `json:"tags"`
-	CreatedAt  string        `json:"createdAt"`
+	ID        string        `json:"id"`
+	Content   template.HTML `json:"content"` // HTML 内容
+	Tags      []string      `json:"tags"`
+	CreatedAt string        `json:"createdAt"`
 	// CreatedAtISO 固定 YYYY-MM-DD 格式，供热力图/归档等需要稳定日期 key 的场景使用
 	// 不随用户配置的 DateFormat 变化
 	CreatedAtISO string `json:"createdAtISO"`

@@ -9,24 +9,24 @@ import (
 )
 
 type themeRepository struct {
-	mu           sync.RWMutex
-	appDir       string
-	configCache  *domain.ThemeConfig
-	configLoaded bool
+	mu            sync.RWMutex
+	appDir        string
+	configCache   *domain.ThemeConfig
+	configLoaded  bool
 	configModTime int64
 }
 
 func NewThemeRepository(appDir string) domain.ThemeRepository {
 	return &themeRepository{
-		appDir:       appDir,
-		configCache:  nil,
-		configLoaded: false,
+		appDir:        appDir,
+		configCache:   nil,
+		configLoaded:  false,
 		configModTime: 0,
 	}
 }
 
 func (r *themeRepository) GetAll(ctx context.Context) ([]domain.Theme, error) {
-// ... existing GetAll code ...
+	// ... existing GetAll code ...
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 

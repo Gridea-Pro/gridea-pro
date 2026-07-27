@@ -1,0 +1,85 @@
+# PR 自动检查：三个 job 全绿才允许合并（配合 main 分支保护规则）。
+# 任一检查不过 → PR 红 ❌、合并按钮禁用；修复后 push 自动重跑。
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: pr-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: gofmt check
+        run: |
+          UNFMT=$(gofmt -l ./backend ./main.go)
+          if [ -n "$UNFMT" ]; then
+            echo "::error::以下文件未经 gofmt 格式化，请本地运行 gofmt -w 后重新提交："
+            echo "$UNFMT"
+            exit 1
+          fi
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev build-essential pkg-config
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      # wails build 一次性覆盖：wailsjs 绑定生成 + 前端构建 + Go 编译
+      # （注意：本仓库 frontend/src/wailsjs 为构建时生成、不入库，裸 npm build / go build 均无法独立通过）
+      - name: wails build (linux)
+        run: wails build -platform linux/amd64 -tags webkit2_41
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test ./backend/...
+
+  frontend-lint:
+    name: frontend-lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # 本项目存在 peer-deps 冲突，统一使用 --force（与 wails.json 的 frontend:install 一致）
+      - name: Install dependencies
+        run: npm install --force --no-audit --no-fund
+
+      - name: ESLint（error 阻断，warning 不阻断）
+        run: npm run lint
+
+  i18n-check:
+    name: i18n-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: i18n 完整性（12 语言 key 对齐 zh-CN；en.json 不得残留中文）
+        run: python3 scripts/check_i18n.py frontend/src/locales

@@ -210,4 +210,19 @@ For early-stage ideas, start a thread in [Discussions](https://github.com/Gridea
 
 ---
 
+## Pre-submission Checklist (enforced by CI)
+
+Automated checks run on every PR — **the PR cannot be merged unless all of them pass**. Please verify locally before submitting:
+
+- Go code formatted with `gofmt -w` (CI rejects unformatted code)
+- `go vet ./...` and `go test ./backend/...` pass
+- Frontend `npm run lint` reports no errors
+- Any added/changed UI strings are translated into **all 12 locales** (`frontend/src/locales/`);
+  run `python3 scripts/check_i18n.py frontend/src/locales` to verify; no Chinese left in en.json
+- Changes tested locally via `wails dev`
+
+Once all checks are green, the PR awaits maintainer review and approval before merging.
+
+---
+
 Thank you for helping make Gridea Pro better! 🎉

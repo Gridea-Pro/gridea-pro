@@ -14,7 +14,9 @@
     "saved": "Saved",
     "search": "Search",
     "clear": "Clear",
-    "markdownSupported": "Markdown syntax supported"
+    "markdownSupported": "Markdown syntax supported",
+    "saveSuccess": "Saved successfully",
+    "saveFailed": "Failed to save"
   },
   "nav": {
     "preview": "Preview",
@@ -208,7 +210,9 @@
       "archivesPathPrefix": "Archives Path Prefix",
       "archivesPathPrefixDesc": "Set the URL prefix for archive pages",
       "archivesPathPrefixDefault": "archive",
-      "saveError": "Save failed"
+      "saveError": "Save failed",
+      "webpConvert": "Auto Convert to WebP",
+      "webpConvertDesc": "Automatically compress and convert uploaded images to WebP format"
     },
     "sites": {
       "title": "Sites",
@@ -524,11 +528,34 @@
       "vercelDesc": "Edge network, ideal for frontend",
       "giteeDesc": "Fast access in China, no proxy needed",
       "codingDesc": "Tencent Cloud, stable in China",
-      "sftpDesc": "Deploy directly to your own server"
+      "sftpDesc": "Deploy directly to your own server",
+      "multiPlatformHint": "Enable one or more platforms. Deployment will publish to all enabled platforms.",
+      "enabled": "On",
+      "disabled": "Off",
+      "noEnabledPlatforms": "No platforms enabled. Enable a platform below to start deploying.",
+      "export": "Export",
+      "exportSuccess": "Site exported:",
+      "exportFailed": "Export failed"
     },
     "system": {
       "displayLanguage": "Display Language",
       "version": "Version"
+    },
+    "imageHosting": {
+      "title": "Image Hosting",
+      "enable": "Enable Image Hosting",
+      "enableDesc": "Host images via S.EE image hosting",
+      "apiKey": "API Key",
+      "apiKeyPlaceholder": "Enter your S.EE API Key",
+      "apiKeyDesc": "Get your API Key from S.EE dashboard",
+      "imageBrowser": "Image Browser",
+      "refresh": "Refresh",
+      "loading": "Loading...",
+      "noImages": "No images",
+      "copied": "Image URL copied to clipboard",
+      "copyFailed": "Failed to copy",
+      "deleteSuccess": "Deleted successfully",
+      "deleteFailed": "Failed to delete"
     }
   },
   "comment": {
