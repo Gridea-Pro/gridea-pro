@@ -43,6 +43,17 @@
     <div class="tb-sep" />
 
     <div class="tb-group">
+      <ToolbarButton :title="t('editor.shortcuts.alignLeft')" :active="active({ textAlign: 'left' })"
+        @click="run((c) => c.setTextAlign('left'))"><AlignLeft /></ToolbarButton>
+      <ToolbarButton :title="t('editor.shortcuts.alignCenter')" :active="active({ textAlign: 'center' })"
+        @click="run((c) => c.setTextAlign('center'))"><AlignCenter /></ToolbarButton>
+      <ToolbarButton :title="t('editor.shortcuts.alignRight')" :active="active({ textAlign: 'right' })"
+        @click="run((c) => c.setTextAlign('right'))"><AlignRight /></ToolbarButton>
+    </div>
+
+    <div class="tb-sep" />
+
+    <div class="tb-group">
       <ToolbarButton :title="t('editor.link')" :active="active('link')" @click="emit('link')"><LinkIcon /></ToolbarButton>
       <ToolbarButton :title="t('editor.image')" @click="emit('image')"><ImageIcon /></ToolbarButton>
       <ToolbarButton :title="t('editor.table')" @click="run((c) => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }))"><TableIcon /></ToolbarButton>
@@ -75,6 +86,7 @@ import {
   IconStrikethrough as Strikethrough, IconCode as Code, IconSourceCode as Code2,
   IconSubscript as SubscriptIcon, IconSuperscript as SuperscriptIcon,
   IconList as List, IconListNumbers as ListOrdered, IconListCheck as ListChecks, IconBlockquote as Quote, IconMinus as Minus,
+  IconAlignLeft as AlignLeft, IconAlignCenter as AlignCenter, IconAlignRight as AlignRight,
   IconLink as LinkIcon, IconPhoto as ImageIcon, IconTable as TableIcon,
   IconSparkles as Sparkles, IconEye as Eye, IconColumns as Columns2, IconFileCode as FileCode2,
 } from '@tabler/icons-vue'

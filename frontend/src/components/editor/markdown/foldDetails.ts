@@ -40,6 +40,55 @@ function isClose(html: string): boolean {
  * 不在此折叠，会退回 raw-html 形态，仍可发布、仍无损）。
  * @returns { content, changed } changed 为 false 时调用方应跳过回灌，避免多余 setContent。
  */
+// 对齐包裹：<div style="text-align: center|right|justify"> … </div>
+const ALIGN_OPEN_RE = /^<div\s+style="text-align:\s*(center|right|justify);?"\s*>$/i
+const DIV_CLOSE_RE = /^<\/div>\s*$/i
+
+/**
+ * 折叠对齐三段式：rawHtml(<div text-align>) + 块 + rawHtml(</div>)
+ * → 给内部 paragraph/heading 设 textAlign 属性并去掉包裹。
+ */
+export function foldAlignContent(nodes: JNode[]): { content: JNode[]; changed: boolean } {
+  const out: JNode[] = []
+  let changed = false
+  let i = 0
+  while (i < nodes.length) {
+    const n = nodes[i]
+    const m = n?.type === 'rawHtml' ? ALIGN_OPEN_RE.exec(String(n.attrs?.html ?? '').trim()) : null
+    if (m) {
+      const align = m[1].toLowerCase()
+      const body: JNode[] = []
+      let j = i + 1
+      let closed = false
+      while (j < nodes.length) {
+        const x = nodes[j]
+        const html = x?.type === 'rawHtml' ? String(x.attrs?.html ?? '').trim() : ''
+        if (html && DIV_CLOSE_RE.test(html)) {
+          closed = true
+          break
+        }
+        if (html && (ALIGN_OPEN_RE.test(html) || /^<details\b/i.test(html))) break // 不跨嵌套
+        body.push(x)
+        j++
+      }
+      if (closed && body.length) {
+        for (const b of body) {
+          if (b.type === 'paragraph' || b.type === 'heading') {
+            b.attrs = { ...(b.attrs || {}), textAlign: align }
+          }
+          out.push(b)
+        }
+        changed = true
+        i = j + 1
+        continue
+      }
+    }
+    out.push(n)
+    i++
+  }
+  return { content: out, changed }
+}
+
 export function foldDetailsContent(nodes: JNode[]): { content: JNode[]; changed: boolean } {
   const out: JNode[] = []
   let changed = false

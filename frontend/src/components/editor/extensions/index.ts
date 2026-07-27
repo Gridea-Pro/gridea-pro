@@ -19,6 +19,7 @@ import { TableHeader } from '@tiptap/extension-table-header'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 
+import { AlignedParagraph, AlignedHeading } from './Align'
 import { MarkdownEscape } from './MarkdownEscape'
 import { CustomSubscript, CustomSuperscript } from './Script'
 import { CustomTextStyle, GradientColor, FontSize } from './RichTextStyle'
@@ -40,8 +41,13 @@ export function buildExtensions(options: BuildEditorOptions): Extensions {
       // 用自定义/增强版替换
       link: false,
       codeBlock: false,
+      // 段落/标题用带对齐序列化的版本（见 Align.ts）
+      paragraph: false,
+      heading: false,
       dropcursor: { color: 'var(--editor-accent)', width: 2 },
     }),
+    AlignedParagraph,
+    AlignedHeading,
 
     // 链接（自定义配置）
     Link.configure({

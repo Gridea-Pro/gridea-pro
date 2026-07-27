@@ -35,7 +35,7 @@ for (const k of [
 const { MarkdownManager } = await import('@tiptap/markdown')
 const { buildExtensions } = await import('../src/components/editor/extensions/index.ts')
 const { canonicalizeMarkdown } = await import('../src/components/editor/markdown/canonicalize.ts')
-const { foldDetailsContent } = await import('../src/components/editor/markdown/foldDetails.ts')
+const { foldDetailsContent, foldAlignContent } = await import('../src/components/editor/markdown/foldDetails.ts')
 
 const manager = new (MarkdownManager as unknown as {
   new (o: { extensions: unknown[] }): { parse(md: string): unknown; serialize(json: unknown): string }
@@ -127,6 +127,9 @@ const SAMPLES: Array<{ name: string; md: string; expect?: string }> = [
   { name: 'mark-color', md: '高亮 <mark style="background-color: #ffff00">黄底</mark> 文本' },
   { name: 'gradient-span', md: '渐变 <span style="background-image: linear-gradient(132deg, rgb(36, 73, 254) 0%, rgb(202, 75, 167) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent">文字</span> 后' },
   { name: 'gradient-mark', md: '渐变高亮 <mark style="background-image: linear-gradient(132deg, rgb(255, 65, 108) 0%, rgb(255, 75, 43) 100%);">文字</mark> 后' },
+  // 对齐包裹（manager 直通路径走 raw-html 三段式）
+  { name: 'align-center', md: '<div style="text-align: center">\n\n居中 **段落** 内容\n\n</div>' },
+  { name: 'align-right-heading', md: '<div style="text-align: right">\n\n## 右对齐标题\n\n</div>' },
   // details 在 manager 直通路径（无折叠）下的 raw-html 三段式往返
   { name: 'details-raw', md: '<details>\n<summary>T</summary>\n\nbody\n\n</details>' },
   // 转义保真：转义字符不得丢失（反斜杠会规范化掉，字面字符保留）
@@ -316,6 +319,67 @@ function testDetails() {
   }
 }
 testDetails()
+
+// ── 对齐折叠/序列化幂等测试（编辑器 I/O 路径）──────────
+function testAlign() {
+  const cases = [
+    { name: 'align-fold-center', md: '<div style="text-align: center">\n\n居中段落 **加粗**\n\n</div>', align: 'center', type: 'paragraph' },
+    { name: 'align-fold-heading', md: '<div style="text-align: right">\n\n## 右对齐标题\n\n</div>', align: 'right', type: 'heading' },
+  ]
+  for (const c of cases) {
+    try {
+      const doc1 = manager.parse(c.md) as any
+      const { content, changed } = foldAlignContent(doc1.content || [])
+      if (!changed) {
+        fails.push({ name: c.name, kind: 'DETAILS', detail: '  未折叠出对齐属性（开/闭 div 匹配失败）' })
+        continue
+      }
+      const block = content.find((n: any) => n.type === c.type)
+      if (!block || block.attrs?.textAlign !== c.align) {
+        fails.push({ name: c.name, kind: 'DETAILS', detail: `  折叠后 ${c.type}.textAlign=${block?.attrs?.textAlign}，期望 ${c.align}` })
+        continue
+      }
+      const out1 = canonicalizeMarkdown(manager.serialize({ type: 'doc', content }))
+      const doc2 = manager.parse(out1) as any
+      const fold2 = foldAlignContent(doc2.content || [])
+      const out2 = canonicalizeMarkdown(manager.serialize({ type: 'doc', content: fold2.content }))
+      if (out1 !== out2) {
+        fails.push({ name: c.name, kind: 'DETAILS', detail: firstDiff(out1, out2) })
+        continue
+      }
+      const miss = missingWords(c.md, out1)
+      if (miss.length) {
+        fails.push({ name: c.name, kind: 'DETAILS', detail: `  missing: ${miss.slice(0, 8).join(' · ')}` })
+        continue
+      }
+      if (!/text-align:\s*(center|right)/.test(out1)) {
+        fails.push({ name: c.name, kind: 'DETAILS', detail: '  序列化结果未保留 text-align 包裹' })
+      }
+    } catch (e) {
+      fails.push({ name: c.name, kind: 'DETAILS', detail: `  ${(e as Error).message}` })
+    }
+  }
+}
+testAlign()
+
+// ── 编辑器交互产物的序列化健壮性（markdown 解析不会产生这些形态，必须单独构造）──
+// 空段落曾触发 renderChildren(node) 无 content 时的无限递归（栈溢出 → getMarkdown 返回空）
+try {
+  const out = manager.serialize({
+    type: 'doc',
+    content: [
+      { type: 'paragraph' },
+      { type: 'image', attrs: { src: '/post-images/x.png', alt: null, title: null } },
+      { type: 'paragraph' },
+      { type: 'heading', attrs: { level: 2 } },
+    ],
+  })
+  if (typeof out !== 'string') {
+    fails.push({ name: 'empty-block-serialize', kind: 'DETAILS', detail: '  序列化返回非字符串' })
+  }
+} catch (e) {
+  fails.push({ name: 'empty-block-serialize', kind: 'DETAILS', detail: `  ${(e as Error).message}` })
+}
 
 // 硬门槛：无 THREW/UNSTABLE/CONTENT-LOSS/ENTITY-ENCODED/DIALECT/DETAILS。1-pass/exact 仅信息性。
 const GATING = new Set(['THREW', 'UNSTABLE', 'CONTENT-LOSS', 'ENTITY-ENCODED', 'DIALECT', 'DETAILS'])
