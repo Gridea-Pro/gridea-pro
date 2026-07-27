@@ -12,12 +12,8 @@
     <div class="tb-sep" />
 
     <div class="tb-group">
-      <ToolbarButton :title="t('editor.h1')" :active="active('heading', { level: 1 })"
-        @click="run((c) => c.toggleHeading({ level: 1 }))"><Heading1 /></ToolbarButton>
-      <ToolbarButton :title="t('editor.h2')" :active="active('heading', { level: 2 })"
-        @click="run((c) => c.toggleHeading({ level: 2 }))"><Heading2 /></ToolbarButton>
-      <ToolbarButton :title="t('editor.h3')" :active="active('heading', { level: 3 })"
-        @click="run((c) => c.toggleHeading({ level: 3 }))"><Heading3 /></ToolbarButton>
+      <HeadingSelect :editor="editor" />
+      <FontSizeSelect :editor="editor" />
     </div>
 
     <div class="tb-sep" />
@@ -27,7 +23,8 @@
       <ToolbarButton :title="t('editor.italic')" :active="active('italic')" @click="run((c) => c.toggleItalic())"><Italic /></ToolbarButton>
       <ToolbarButton :title="t('editor.strike')" :active="active('strike')" @click="run((c) => c.toggleStrike())"><Strikethrough /></ToolbarButton>
       <ToolbarButton :title="t('editor.code')" :active="active('code')" @click="run((c) => c.toggleCode())"><Code /></ToolbarButton>
-      <ToolbarButton :title="t('editor.highlight')" :active="active('highlight')" @click="run((c) => c.toggleHighlight())"><Highlighter /></ToolbarButton>
+      <ColorPicker type="text" :model-value="currentColor" @select="emit('color', $event)" />
+      <ColorPicker type="highlight" :model-value="currentHighlight" @select="emit('highlight', $event)" />
       <ToolbarButton :title="t('editor.sub')" :active="active('subscript')" @click="run((c) => c.toggleSubscript())"><SubscriptIcon /></ToolbarButton>
       <ToolbarButton :title="t('editor.sup')" :active="active('superscript')" @click="run((c) => c.toggleSuperscript())"><SuperscriptIcon /></ToolbarButton>
     </div>
@@ -49,7 +46,6 @@
       <ToolbarButton :title="t('editor.link')" :active="active('link')" @click="emit('link')"><LinkIcon /></ToolbarButton>
       <ToolbarButton :title="t('editor.image')" @click="emit('image')"><ImageIcon /></ToolbarButton>
       <ToolbarButton :title="t('editor.table')" @click="run((c) => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }))"><TableIcon /></ToolbarButton>
-      <ColorPicker :model-value="currentColor" @select="emit('color', $event)" />
       <EmojiPicker @select="emit('emoji', $event)" />
       <ToolbarButton :title="t('editor.aiPolish')" @click="emit('polish')"><Sparkles /></ToolbarButton>
     </div>
@@ -72,10 +68,11 @@ import type { EditorMode } from '../types'
 import ToolbarButton from './ToolbarButton.vue'
 import ColorPicker from './ColorPicker.vue'
 import EmojiPicker from './EmojiPicker.vue'
+import HeadingSelect from './HeadingSelect.vue'
+import FontSizeSelect from './FontSizeSelect.vue'
 import {
   IconArrowBackUp as Undo2, IconArrowForwardUp as Redo2, IconBold as Bold, IconItalic as Italic,
   IconStrikethrough as Strikethrough, IconCode as Code, IconSourceCode as Code2,
-  IconH1 as Heading1, IconH2 as Heading2, IconH3 as Heading3, IconHighlight as Highlighter,
   IconSubscript as SubscriptIcon, IconSuperscript as SuperscriptIcon,
   IconList as List, IconListNumbers as ListOrdered, IconListCheck as ListChecks, IconBlockquote as Quote, IconMinus as Minus,
   IconLink as LinkIcon, IconPhoto as ImageIcon, IconTable as TableIcon,
@@ -87,7 +84,8 @@ const emit = defineEmits<{
   link: []
   image: []
   polish: []
-  color: [hex: string]
+  color: [color: string | null]
+  highlight: [color: string | null]
   emoji: [emoji: string]
   'update:mode': [mode: EditorMode]
 }>()
@@ -117,6 +115,11 @@ onBeforeUnmount(() => {
 const currentColor = computed(() => {
   void tick.value
   return (props.editor?.getAttributes('textStyle').color as string) || ''
+})
+
+const currentHighlight = computed(() => {
+  void tick.value
+  return (props.editor?.getAttributes('highlight').color as string) || ''
 })
 
 function run(fn: (c: ChainedCommands) => ChainedCommands) {

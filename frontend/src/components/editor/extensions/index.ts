@@ -11,8 +11,6 @@ import { Image } from '@tiptap/extension-image'
 import { CharacterCount } from '@tiptap/extension-character-count'
 import Link from '@tiptap/extension-link'
 import TextAlign from '@tiptap/extension-text-align'
-import { TextStyle } from '@tiptap/extension-text-style'
-import { Color } from '@tiptap/extension-color'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
@@ -23,6 +21,7 @@ import TaskItem from '@tiptap/extension-task-item'
 
 import { MarkdownEscape } from './MarkdownEscape'
 import { CustomSubscript, CustomSuperscript } from './Script'
+import { CustomTextStyle, GradientColor, FontSize } from './RichTextStyle'
 import { CustomHighlight } from './Highlight'
 import { createInlineMath, createBlockMath } from './Math'
 import { CustomEmoji } from './Emoji'
@@ -57,8 +56,10 @@ export function buildExtensions(options: BuildEditorOptions): Extensions {
     // 文本格式（== / ^ / ~ 方言钩子）
     CustomSubscript,
     CustomSuperscript,
-    TextStyle,
-    Color,
+    // textStyle 带 Markdown 序列化（颜色/字号 → 内联 span）；GradientColor 替代官方 Color
+    CustomTextStyle,
+    GradientColor,
+    FontSize,
     CustomHighlight,
 
     // 对齐

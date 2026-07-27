@@ -661,11 +661,7 @@
     "orderedList": "有序列表",
     "taskList": "任务列表",
     "blockquote": "引用",
-    "codeBlock": {
-      "plain": "纯文本",
-      "copy": "复制",
-      "copied": "已复制"
-    },
+    "codeBlock": "代码块",
     "hr": "分割线",
     "alignLeft": "左对齐",
     "alignCenter": "居中对齐",
@@ -713,7 +709,15 @@
     "color": {
       "title": "文字颜色",
       "presets": "预设颜色",
-      "clear": "清除颜色"
+      "clear": "清除颜色",
+      "textTitle": "文字颜色",
+      "highlightTitle": "荧光笔",
+      "default": "默认",
+      "noColor": "无颜色",
+      "palette": "艺术色卡",
+      "gradient": "渐变色",
+      "recent": "最近使用",
+      "custom": "其他颜色"
     },
     "emoji": {
       "title": "插入表情"
@@ -769,6 +773,38 @@
     },
     "details": {
       "summary": "摘要标题"
+    },
+    "heading": {
+      "title": "标题",
+      "paragraph": "正文",
+      "level": "标题{n}"
+    },
+    "fontSize": {
+      "title": "字号",
+      "default": "默认"
+    },
+    "shortcuts": {
+      "title": "快捷键",
+      "basic": "基础编辑",
+      "textStyle": "文本样式",
+      "paragraph": "段落样式",
+      "align": "段落对齐",
+      "lists": "列表与引用",
+      "insert": "插入",
+      "undo": "撤销",
+      "redo": "重做",
+      "save": "保存",
+      "slash": "斜杠菜单",
+      "underline": "下划线",
+      "alignLeft": "左对齐",
+      "alignCenter": "居中对齐",
+      "alignRight": "右对齐",
+      "aiAccept": "接受 AI 续写"
+    },
+    "codeBlockView": {
+      "plain": "纯文本",
+      "copy": "复制",
+      "copied": "已复制"
     }
   }
 }

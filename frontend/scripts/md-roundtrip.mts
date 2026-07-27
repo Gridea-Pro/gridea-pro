@@ -120,6 +120,13 @@ const SAMPLES: Array<{ name: string; md: string; expect?: string }> = [
   { name: 'table-pipe', md: '| a | `x \\| y` | b |\n| --- | --- | --- |\n| 1 | 2 | 3 |' },
   { name: 'soft-break', md: 'line one\nline two' },
   { name: 'raw-html', md: '<div class="x">raw block</div>' },
+  // 颜色/字号/带色高亮：内联 HTML 往返（textStyle/highlight 序列化层）
+  { name: 'color-span', md: '带 <span style="color: #f5222d">红色</span> 文本' },
+  { name: 'fontsize-span', md: '字号 <span style="font-size: 20px">大字</span> 文本' },
+  { name: 'color-fontsize-span', md: '组合 <span style="color: #1890ff; font-size: 18px">蓝大</span> 文本' },
+  { name: 'mark-color', md: '高亮 <mark style="background-color: #ffff00">黄底</mark> 文本' },
+  { name: 'gradient-span', md: '渐变 <span style="background-image: linear-gradient(132deg, rgb(36, 73, 254) 0%, rgb(202, 75, 167) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent">文字</span> 后' },
+  { name: 'gradient-mark', md: '渐变高亮 <mark style="background-image: linear-gradient(132deg, rgb(255, 65, 108) 0%, rgb(255, 75, 43) 100%);">文字</mark> 后' },
   // details 在 manager 直通路径（无折叠）下的 raw-html 三段式往返
   { name: 'details-raw', md: '<details>\n<summary>T</summary>\n\nbody\n\n</details>' },
   // 转义保真：转义字符不得丢失（反斜杠会规范化掉，字面字符保留）

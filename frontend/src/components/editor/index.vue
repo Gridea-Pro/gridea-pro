@@ -6,6 +6,7 @@
       @link="openLink"
       @image="imageOpen = true"
       @color="onColorSelect"
+      @highlight="onHighlightSelect"
       @emoji="onEmojiSelect"
       @polish="polishSelection"
       @update:mode="setMode"
@@ -40,6 +41,17 @@
       @save="onMathSave"
       @cancel="onMathCancel"
     />
+
+    <!-- 右下角快捷键入口 + 面板 -->
+    <button
+      type="button"
+      class="shortcuts-fab"
+      :title="t('editor.shortcuts.title')"
+      @click="shortcutsOpen = true"
+    >
+      <IconKeyboard class="h-[18px] w-[18px]" />
+    </button>
+    <ShortcutsPanel :open="shortcutsOpen" @close="shortcutsOpen = false" />
   </div>
 </template>
 
@@ -47,6 +59,8 @@
 import { ref, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
+import { Extension } from '@tiptap/core'
+import { IconKeyboard } from '@tabler/icons-vue'
 import './styles/theme.css'
 import './styles/editor.css'
 import { buildExtensions } from './extensions'
@@ -60,6 +74,7 @@ import TableMenu from './ui/TableMenu.vue'
 import LinkDialog from './ui/LinkDialog.vue'
 import ImageDialog from './ui/ImageDialog.vue'
 import MermaidView from './ui/MermaidView.vue'
+import ShortcutsPanel from './ui/ShortcutsPanel.vue'
 import CodeBlockView from './ui/CodeBlockView.vue'
 import FootnoteRefView from './ui/FootnoteRefView.vue'
 import FootnoteDefView from './ui/FootnoteDefView.vue'
@@ -115,6 +130,18 @@ const editor = useEditor({
     }),
     // UI 耦合扩展在此加入（不进 buildExtensions，避免污染纯 Markdown 测试台）
     SlashCommand,
+    // ⌘K 打开链接弹窗（闭包直达 openLink，无需 DOM 事件中转）
+    Extension.create({
+      name: 'linkShortcut',
+      addKeyboardShortcuts() {
+        return {
+          'Mod-k': () => {
+            openLink()
+            return true
+          },
+        }
+      },
+    }),
   ],
   editorProps: {
     attributes: { class: 'markdown-body focus:outline-none' },
@@ -308,12 +335,21 @@ function onLinkRemove() {
 function onImageInsertUrl(src: string) {
   if (src) insertImageByPath(src)
 }
-function onColorSelect(hex: string) {
+function onColorSelect(color: string | null) {
   const e = editor.value
   if (!e) return
-  if (hex) e.chain().focus().setColor(hex).run()
+  if (color) e.chain().focus().setColor(color).run()
   else e.chain().focus().unsetColor().run()
 }
+function onHighlightSelect(color: string | null) {
+  const e = editor.value
+  if (!e) return
+  if (color) e.chain().focus().setHighlight({ color }).run()
+  else e.chain().focus().unsetHighlight().run()
+}
+
+// ── 快捷键面板 ───────────────────────────────────────
+const shortcutsOpen = ref(false)
 function onEmojiSelect(emoji: string) {
   editor.value?.chain().focus().insertContent(emoji).run()
 }
@@ -462,10 +498,32 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .gridea-tiptap {
+  position: relative; /* 供右下角快捷键入口/表格菜单等绝对定位 */
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
+}
+.shortcuts-fab {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--editor-border);
+  background: var(--editor-bg);
+  color: var(--editor-muted);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: color 0.12s;
+}
+.shortcuts-fab:hover {
+  color: var(--editor-fg);
 }
 
 /* 工具栏下方的内容容器 */
@@ -517,6 +575,7 @@ onBeforeUnmount(() => {
 }
 
 .rich-pane {
+  position: relative; /* 表格菜单等按钮相对内容区定位 */
   flex: 1;
   min-width: 0;
   padding: 8px 0 80px;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, computed, watch } from 'vue'
+import { onBeforeUnmount, ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Editor } from '@tiptap/vue-3'
 import {
@@ -57,6 +57,37 @@ const inTable = computed(() => {
   return !!e && e.isActive('table')
 })
 
+// 菜单锚定到光标所在表格的右上角（相对 .rich-pane 绝对定位；原来固定飘在编辑器右上角，
+// 远离表格基本不可发现）。rich-pane 在双栏模式自滚动，需叠加 scrollTop。
+const menuStyle = ref<Record<string, string>>({ top: '8px', right: '8px' })
+
+function locate() {
+  const e = props.editor
+  if (!e || !e.isActive('table')) return
+  try {
+    const { from } = e.state.selection
+    const dom = e.view.domAtPos(from).node
+    const el = (dom instanceof HTMLElement ? dom : (dom as Node).parentElement) as HTMLElement | null
+    const tableEl = el?.closest('table')
+    const pane = el?.closest('.rich-pane') as HTMLElement | null
+    if (!tableEl || !pane) return
+    const tr = tableEl.getBoundingClientRect()
+    const pr = pane.getBoundingClientRect()
+    menuStyle.value = {
+      top: `${Math.max(0, tr.top - pr.top + pane.scrollTop + 4)}px`,
+      // 夹在分栏可视宽度内，窄分栏/宽表格时不溢出
+      left: `${Math.max(0, Math.min(tr.right - pr.left - 32, pane.clientWidth - 40))}px`,
+      right: 'auto',
+    }
+  } catch {
+    /* domAtPos 在过渡态可能抛错，忽略本次定位 */
+  }
+}
+
+watch(tick, () => {
+  void nextTick(locate)
+})
+
 type ChainKey =
   | 'addRowBefore'
   | 'addRowAfter'
@@ -93,7 +124,7 @@ function can(name: ChainKey): boolean {
 </script>
 
 <template>
-  <div v-if="inTable" class="table-menu">
+  <div v-if="inTable" class="table-menu" :style="menuStyle">
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
         <button
@@ -169,8 +200,6 @@ function can(name: ChainKey): boolean {
 <style scoped>
 .table-menu {
   position: absolute;
-  top: 8px;
-  right: 8px;
   z-index: 6;
 }
 </style>

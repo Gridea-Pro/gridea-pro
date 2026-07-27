@@ -7,18 +7,18 @@
         :disabled="!editor?.isEditable"
         @change="onLangChange"
       >
-        <option value="">{{ t('editor.codeBlock.plain') }}</option>
+        <option value="">{{ t('editor.codeBlockView.plain') }}</option>
         <option v-for="l in languages" :key="l" :value="l">{{ l }}</option>
       </select>
       <button
         type="button"
         class="code-copy-btn"
-        :title="t('editor.codeBlock.copy')"
+        :title="t('editor.codeBlockView.copy')"
         @click="copy"
       >
         <Check v-if="copied" class="size-3.5" />
         <Copy v-else class="size-3.5" />
-        <span>{{ copied ? t('editor.codeBlock.copied') : t('editor.codeBlock.copy') }}</span>
+        <span>{{ copied ? t('editor.codeBlockView.copied') : t('editor.codeBlockView.copy') }}</span>
       </button>
     </div>
     <pre><NodeViewContent as="code" :class="language ? `language-${language}` : ''" /></pre>

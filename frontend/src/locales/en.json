@@ -661,11 +661,7 @@
     "orderedList": "Ordered list",
     "taskList": "Task list",
     "blockquote": "Blockquote",
-    "codeBlock": {
-      "plain": "Plain text",
-      "copy": "Copy",
-      "copied": "Copied"
-    },
+    "codeBlock": "Code block",
     "hr": "Divider",
     "alignLeft": "Align left",
     "alignCenter": "Align center",
@@ -713,7 +709,15 @@
     "color": {
       "title": "Text color",
       "presets": "Presets",
-      "clear": "Clear color"
+      "clear": "Clear color",
+      "textTitle": "Text color",
+      "highlightTitle": "Highlight",
+      "default": "Default",
+      "noColor": "No color",
+      "palette": "Palette",
+      "gradient": "Gradients",
+      "recent": "Recently used",
+      "custom": "More colors"
     },
     "emoji": {
       "title": "Insert emoji"
@@ -769,6 +773,38 @@
     },
     "details": {
       "summary": "Summary title"
+    },
+    "heading": {
+      "title": "Heading",
+      "paragraph": "Paragraph",
+      "level": "Heading {n}"
+    },
+    "fontSize": {
+      "title": "Font size",
+      "default": "Default"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "basic": "Basics",
+      "textStyle": "Text style",
+      "paragraph": "Paragraph",
+      "align": "Alignment",
+      "lists": "Lists & quote",
+      "insert": "Insert",
+      "undo": "Undo",
+      "redo": "Redo",
+      "save": "Save",
+      "slash": "Slash menu",
+      "underline": "Underline",
+      "alignLeft": "Align left",
+      "alignCenter": "Align center",
+      "alignRight": "Align right",
+      "aiAccept": "Accept AI suggestion"
+    },
+    "codeBlockView": {
+      "plain": "Plain text",
+      "copy": "Copy",
+      "copied": "Copied"
     }
   }
 }

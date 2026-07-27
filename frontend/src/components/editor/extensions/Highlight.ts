@@ -4,10 +4,45 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Highlight from '@tiptap/extension-highlight'
+import { normalizeCssColor } from './RichTextStyle'
 
 export const CustomHighlight = Highlight.extend({
+  // 覆盖官方 color 属性：官方 parseHTML 只认 data-color/backgroundColor，
+  // 这里补 backgroundImage（渐变荧光笔）。注意 mark 自身属性优先于全局属性，
+  // 故必须在此覆盖而不能用 addGlobalAttributes。
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      color: {
+        default: null,
+        parseHTML: (el: HTMLElement) => {
+          const bg = el.style.backgroundImage
+          if (bg && bg.includes('gradient')) return bg
+          return el.getAttribute('data-color') || el.style.backgroundColor || null
+        },
+        renderHTML: (attrs: Record<string, any>) => {
+          if (!attrs.color) return {}
+          if (String(attrs.color).includes('gradient')) {
+            return { style: `background-image: ${attrs.color};` }
+          }
+          return { 'data-color': attrs.color, style: `background-color: ${attrs.color}` }
+        },
+      },
+    }
+  },
+
   markdownTokenName: 'mark',
-  renderMarkdown: (node: any, helpers: any) => `==${helpers.renderChildren(node)}==`,
+  // 无色高亮保持 == 方言；带颜色（含渐变）序列化为内联 <mark style>（goldmark unsafe 可发布，
+  // 解析方向经 parseHTML + GradientHighlight 全局属性无损还原）
+  renderMarkdown: (node: any, helpers: any) => {
+    const inner = helpers.renderChildren(node)
+    const color = node.attrs?.color
+    if (!color) return `==${inner}==`
+    if (typeof color === 'string' && color.includes('gradient')) {
+      return `<mark style="background-image: ${color};">${inner}</mark>`
+    }
+    return `<mark style="background-color: ${normalizeCssColor(color)}">${inner}</mark>`
+  },
   parseMarkdown: (token: any, helpers: any) => {
     const content = helpers.parseInline(token.tokens || [])
     if (!content.length && token.text) content.push(helpers.createTextNode(token.text))
