@@ -172,7 +172,6 @@ onUnmounted(() => {
 }
 
 .text-glow {
-  text-shadow: 0 0 15px rgba(99, 102, 241, 0);
   transition: all 0.2s ease;
 }
 

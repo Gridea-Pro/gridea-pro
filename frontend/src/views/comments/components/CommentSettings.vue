@@ -9,14 +9,14 @@
         <!-- Form Content -->
         <div class="space-y-6">
           <div class="flex items-center justify-between">
-            <label class="text-sm font-medium text-[var(--text-primary)]">{{ t('settings.comment.enable') }}</label>
+            <label class="text-sm font-medium text-foreground">{{ t('settings.comment.enable') }}</label>
             <Switch
 size="sm" class="focus-visible:ring-0 focus-visible:ring-offset-0" :checked="formState.enable"
               @update:checked="val => formState.enable = val" />
           </div>
 
           <div>
-            <Label class="text-sm font-medium text-[var(--text-primary)] mb-2 block">{{ t('settings.comment.platform')
+            <Label class="text-sm font-medium text-foreground mb-2 block">{{ t('settings.comment.platform')
             }}</Label>
             <Select v-model="formState.platform">
               <SelectTrigger>
@@ -32,7 +32,7 @@ size="sm" class="focus-visible:ring-0 focus-visible:ring-offset-0" :checked="for
             </div>
           </div>
 
-          <div v-if="formState.enable" class="space-y-4 pt-4 border-t border-[var(--color-border)]">
+          <div v-if="formState.enable" class="space-y-4 pt-4 border-t border-border">
             <template v-if="['Valine', 'Waline'].includes(formState.platform)">
               <!-- Shared config interface for Valine/Waline -->
               <ValineWalineConfig

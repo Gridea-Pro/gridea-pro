@@ -4,6 +4,50 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gridea Pro</title>
+    <script>
+      /**
+       * 主题防闪（FOUC）：在首帧渲染前把明暗与主题属性挂到 <html>。
+       * 必须内联同步执行——Pinia store 要等到 app mount 之后才跑 applyTheme()，
+       * 那时深色/非默认主题的用户已经看到一帧浅色默认界面了。
+       *
+       * 迁移映射与 src/stores/theme.ts 的 LEGACY_THEME_MAP 保持一致，改一处需同步另一处。
+       * 此处只读不写，持久化交给 store。
+       */
+      (function () {
+        try {
+          var LEGACY = {
+            default: ['pure', 'green'],
+            blue: ['pure', 'blue'],
+            warm: ['paper', 'sunset'],
+            sakura: ['pure', 'sakura'],
+            twilight: ['pure', 'purple'],
+            glass: ['glass', 'cyan'],
+          };
+          var SURFACES = ['pure', 'paper', 'glass'];
+          var ACCENTS = ['green', 'rose', 'sakura', 'sunset', 'amber', 'cyan', 'blue', 'purple'];
+          var html = document.documentElement;
+
+          var mode = localStorage.getItem('app_theme_mode') || 'system';
+          var isDark = mode === 'system'
+            ? window.matchMedia('(prefers-color-scheme: dark)').matches
+            : mode === 'dark';
+          if (isDark) html.classList.add('dark');
+
+          var surface = localStorage.getItem('app_theme_surface');
+          var accent = localStorage.getItem('app_theme_accent');
+          if (!(surface && accent && SURFACES.indexOf(surface) >= 0 && ACCENTS.indexOf(accent) >= 0)) {
+            var pair = LEGACY[localStorage.getItem('app_theme_color')] || ['pure', 'green'];
+            surface = pair[0];
+            accent = pair[1];
+          }
+          html.setAttribute('data-surface', surface);
+          html.setAttribute('data-accent', accent);
+        } catch (e) {
+          document.documentElement.setAttribute('data-surface', 'pure');
+          document.documentElement.setAttribute('data-accent', 'green');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="global-error-display" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; color:red; z-index:999999; padding:20px; overflow:auto; white-space:pre-wrap; font-family:monospace;"></div>

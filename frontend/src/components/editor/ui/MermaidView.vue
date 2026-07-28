@@ -54,6 +54,7 @@ import { useI18n } from 'vue-i18n'
 import { NodeViewWrapper, nodeViewProps } from '@tiptap/vue-3'
 import mermaid from 'mermaid'
 import { useThemeStore } from '@/stores/theme'
+import { readTokenHex } from '@/helpers/themeColor'
 import { IconAlertTriangle as AlertTriangle, IconPencil as Pencil, IconSitemap as Workflow } from '@tabler/icons-vue'
 
 const props = defineProps(nodeViewProps)
@@ -75,10 +76,33 @@ let mermaidInited = false
 function initMermaid() {
   // securityLevel:'strict' — mermaid 用 DOMPurify 净化输出且禁用 htmlLabels，
   // 阻断 <script>/onerror/data: 等注入；务必在任何 parse/render 之前完成初始化。
+  //
+  // theme:'base' + themeVariables 是让 mermaid 吃应用配色的唯一途径：内置的
+  // default/dark 主题是固定色板，只认明暗、不认强调色与外观。
+  const bg = readTokenHex('background')
+  const accent = readTokenHex('primary', bg)
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'strict',
-    theme: themeStore.isDark ? 'dark' : 'default',
+    theme: 'base',
+    themeVariables: {
+      darkMode: themeStore.isDark,
+      background: bg,
+      primaryColor: readTokenHex('accent', bg),
+      primaryTextColor: readTokenHex('foreground', bg),
+      primaryBorderColor: accent,
+      secondaryColor: readTokenHex('secondary', bg),
+      tertiaryColor: readTokenHex('muted', bg),
+      lineColor: readTokenHex('muted-foreground', bg),
+      textColor: readTokenHex('foreground', bg),
+      mainBkg: readTokenHex('accent', bg),
+      nodeBorder: accent,
+      clusterBkg: readTokenHex('muted', bg),
+      clusterBorder: readTokenHex('border', bg),
+      titleColor: readTokenHex('foreground', bg),
+      edgeLabelBackground: readTokenHex('card', bg),
+      fontFamily: getComputedStyle(document.documentElement).getPropertyValue('--font-sans') || 'inherit',
+    },
   })
   mermaidInited = true
 }
@@ -128,7 +152,11 @@ function saveEdit() {
 }
 
 watch(code, () => render())
-watch(() => themeStore.isDark, () => { mermaidInited = false; render() })
+// 外观与强调色同样进入 themeVariables，三者任一变化都要重新初始化并重绘
+watch(() => [themeStore.isDark, themeStore.surface, themeStore.accent], () => {
+  mermaidInited = false
+  requestAnimationFrame(() => render())
+})
 onMounted(() => {
   // 提前初始化，确保 securityLevel 在首次渲染前已生效（消除惰性时序隐患）
   if (!mermaidInited) initMermaid()

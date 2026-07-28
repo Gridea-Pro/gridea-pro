@@ -19,6 +19,7 @@
     "clean:build": "rm -rf dist build wailsjs",
     "clean:deps": "rm -rf node_modules",
     "type-check": "vue-tsc --noEmit",
+    "check:contrast": "tsx scripts/check-contrast.mts",
     "lint": "eslint src --ext .vue,.ts,.js",
     "lint:fix": "eslint src --ext .vue,.ts,.js --fix",
     "format": "prettier --write \"src/**/*.{vue,ts,js,json,css,less}\"",

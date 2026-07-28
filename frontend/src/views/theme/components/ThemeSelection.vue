@@ -91,7 +91,7 @@
 
               <div
                 class="mt-auto pt-6 text-[11px] text-muted-foreground/80 font-normal tracking-widest flex items-center justify-center gap-1">
-                <CheckBadgeIcon class="w-4 h-4 text-green-500 flex-shrink-0" />
+                <CheckBadgeIcon class="w-4 h-4 text-success flex-shrink-0" />
                 Powered by <span class="hover:text-primary cursor-pointer transition-colors"
                   @click="BrowserOpenURL('https://gridea.pro')">Gridea Pro</span>
               </div>

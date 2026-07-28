@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Label class="mb-2 block">Environment ID <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">Environment ID <span class="text-destructive">*</span></Label>
     <Input v-model="config.envId" />
   </div>
 </template>

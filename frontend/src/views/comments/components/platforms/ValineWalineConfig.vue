@@ -1,10 +1,10 @@
 <template>
   <div>
-    <Label class="mb-2 block">{{ t('settings.comment.appId') }} <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">{{ t('settings.comment.appId') }} <span class="text-destructive">*</span></Label>
     <Input v-model="config.appId" />
   </div>
   <div class="mt-4">
-    <Label class="mb-2 block">{{ t('settings.comment.appKey') }} <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">{{ t('settings.comment.appKey') }} <span class="text-destructive">*</span></Label>
     <Input v-model="config.appKey" type="password" />
   </div>
   <div class="mt-4">
@@ -16,7 +16,7 @@
   </div>
 
   <div class="mt-4">
-    <Label class="mb-2 block">{{ t('settings.comment.serverUrls') }} <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">{{ t('settings.comment.serverUrls') }} <span class="text-destructive">*</span></Label>
     <Input v-model="config.serverURLs" />
   </div>
 </template>

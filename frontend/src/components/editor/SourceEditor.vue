@@ -8,8 +8,32 @@ import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirro
 import { EditorState } from '@codemirror/state'
 import { defaultKeymap, history, historyKeymap, undoDepth, redoDepth } from '@codemirror/commands'
 import { markdown } from '@codemirror/lang-markdown'
-import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
+import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
+import { tags } from '@lezer/highlight'
 import { createSourceCommands } from './sourceCommands'
+
+/**
+ * 语法高亮走 CSS 变量而非固定色值。
+ * CodeMirror 自带的 defaultHighlightStyle 是浅色专用色板，深色模式下不切换，
+ * 也不会跟随强调色；用 --code-* 后三个维度全部自动联动。
+ */
+const gridEaHighlight = HighlightStyle.define([
+  { tag: [tags.comment, tags.lineComment, tags.blockComment], color: 'var(--code-comment)', fontStyle: 'italic' },
+  { tag: [tags.keyword, tags.modifier, tags.operatorKeyword, tags.controlKeyword], color: 'var(--code-keyword)', fontWeight: '600' },
+  { tag: [tags.string, tags.special(tags.string), tags.character], color: 'var(--code-string)' },
+  { tag: [tags.number, tags.bool, tags.null, tags.integer, tags.float], color: 'var(--code-number)' },
+  { tag: [tags.function(tags.variableName), tags.definition(tags.variableName), tags.className, tags.typeName], color: 'var(--code-func)' },
+  { tag: [tags.meta, tags.processingInstruction, tags.punctuation], color: 'var(--code-punct)' },
+  { tag: tags.heading, color: 'var(--primary-text)', fontWeight: '700' },
+  { tag: [tags.link, tags.url], color: 'var(--primary-text)', textDecoration: 'underline' },
+  { tag: tags.quote, color: 'var(--muted-foreground)' },
+  { tag: tags.list, color: 'var(--primary-text)' },
+  { tag: tags.monospace, color: 'var(--code-string)' },
+  { tag: tags.emphasis, fontStyle: 'italic' },
+  { tag: tags.strong, fontWeight: '700' },
+  { tag: tags.strikethrough, textDecoration: 'line-through' },
+  { tag: tags.invalid, color: 'var(--destructive)' },
+])
 
 const model = defineModel<string>('value', { required: true })
 
@@ -41,7 +65,7 @@ onMounted(() => {
         ]),
         keymap.of([...defaultKeymap, ...historyKeymap]),
         markdown(),
-        syntaxHighlighting(defaultHighlightStyle),
+        syntaxHighlighting(gridEaHighlight),
         EditorView.lineWrapping,
         EditorView.theme({
           '&': { backgroundColor: 'transparent', color: 'var(--editor-fg)', height: '100%' },

@@ -20,6 +20,7 @@ import { ref, shallowRef, onMounted, watch, onUnmounted, computed } from 'vue'
 import * as monaco from 'monaco-editor'
 import * as MonacoMarkdown from 'monaco-markdown'
 import { useThemeStore } from '@/stores/theme'
+import { readTokenHex, readTokenRaw, withAlpha } from '@/helpers/themeColor'
 
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 
@@ -29,57 +30,77 @@ self.MonacoEnvironment = {
   },
 }
 
-// 重新定义自定义亮色主题，不再依赖外部废弃文件，保留原来精心设计的橙灰配色和选中高亮
-monaco.editor.defineTheme('GrideaLight', {
-  base: 'vs',
-  inherit: true,
-  rules: [
-    { foreground: '999999', token: 'comment' },
-    { foreground: 'e88501', token: 'string' },
-    { foreground: '999999', token: 'string.link' },
-    { foreground: '999999', token: 'variable.source' },
-    { foreground: '4C51BF', token: 'variable' },
-    { foreground: '2B6CB0', token: 'markup.list' },
-    { foreground: '2B6CB0', token: 'markup.underline.link' },
-    { foreground: '46a609', token: 'constant.numeric' },
-    { foreground: '39946a', token: 'constant.language' },
-    { foreground: 'b7791f', token: 'keyword' },
-    { fontStyle: 'bold', token: 'markup.heading' },
-    { fontStyle: 'bold', token: 'markup.bold' },
-    { fontStyle: 'italic', token: 'markup.italic' },
-    { foreground: '999999', token: 'punctuation.definition.constant.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.bold.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.italic.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.heading.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.heading.begin.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.heading.end.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.heading.setext.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.list_item.markdown' },
-    { foreground: '999999', token: 'markup.list.numbered.bullet.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.bold.begin.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.bold.end.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.italic.begin.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.italic.end.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.variable.begin.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.variable.end.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.link.begin.markdown' },
-    { foreground: '999999', token: 'punctuation.definition.link.end.markdown' },
-  ],
-  colors: {
-    'editor.foreground': '#333333',
-    'editor.background': '#FFFFFF',
-    'editor.selectionBackground': '#FFEBB7',
-    'editor.inactiveSelectionBackground': '#FFEBB7',
-    'editor.selectionHighlightBackground': '#FFEBB7',
-    'editor.wordHighlightBackground': '#FFEBB7',
-    'editor.wordHighlightStrongBackground': '#FFEBB7',
-    'editor.findMatchHighlightBackground': '#FFEBB7',
-    'editor.lineHighlightBackground': '#ff9e74ff',
-    'editorCursor.foreground': '#000000',
-    'editorWhitespace.foreground': '#BFBFBF',
-    'textLink.foreground': '#666',
-  }
-})
+const MONACO_THEME_ID = 'gridea'
+
+/**
+ * 从语义 token 现算 Monaco 主题。
+ *
+ * Monaco 只接受色值字面量，无法消费 CSS 变量，因此每次主题变化都要重新
+ * defineTheme——否则编辑区会停在旧配色上，与外壳出现色差断层。
+ * 标点/结构符号统一走 --code-comment，正文靠 --foreground 突出。
+ */
+const applyMonacoTheme = () => {
+  const bg = readTokenHex('background')
+  const fg = readTokenHex('foreground', bg)
+  const muted = readTokenRaw('code-comment', bg)
+  const accent = readTokenHex('primary-text', bg)
+
+  const punctuation = [
+    'string.link', 'variable.source',
+    'punctuation.definition.constant.markdown',
+    'punctuation.definition.bold.markdown',
+    'punctuation.definition.italic.markdown',
+    'punctuation.definition.heading.markdown',
+    'punctuation.definition.heading.begin.markdown',
+    'punctuation.definition.heading.end.markdown',
+    'punctuation.definition.heading.setext.markdown',
+    'punctuation.definition.list_item.markdown',
+    'markup.list.numbered.bullet.markdown',
+    'punctuation.definition.bold.begin.markdown',
+    'punctuation.definition.bold.end.markdown',
+    'punctuation.definition.italic.begin.markdown',
+    'punctuation.definition.italic.end.markdown',
+    'punctuation.definition.variable.begin.markdown',
+    'punctuation.definition.variable.end.markdown',
+    'punctuation.definition.link.begin.markdown',
+    'punctuation.definition.link.end.markdown',
+  ].map((token) => ({ foreground: muted, token }))
+
+  monaco.editor.defineTheme(MONACO_THEME_ID, {
+    base: themeStore.isDark ? 'vs-dark' : 'vs',
+    inherit: true,
+    rules: [
+      { foreground: muted, token: 'comment' },
+      { foreground: readTokenRaw('code-string', bg), token: 'string' },
+      { foreground: readTokenRaw('code-func', bg), token: 'variable' },
+      { foreground: readTokenRaw('primary-text', bg), token: 'markup.list' },
+      { foreground: readTokenRaw('primary-text', bg), token: 'markup.underline.link' },
+      { foreground: readTokenRaw('code-number', bg), token: 'constant.numeric' },
+      { foreground: readTokenRaw('code-string', bg), token: 'constant.language' },
+      { foreground: readTokenRaw('code-keyword', bg), token: 'keyword' },
+      { fontStyle: 'bold', token: 'markup.heading' },
+      { fontStyle: 'bold', token: 'markup.bold' },
+      { fontStyle: 'italic', token: 'markup.italic' },
+      ...punctuation,
+    ],
+    colors: {
+      'editor.foreground': fg,
+      'editor.background': bg,
+      'editor.selectionBackground': withAlpha(accent, 0.24),
+      'editor.inactiveSelectionBackground': withAlpha(accent, 0.14),
+      'editor.selectionHighlightBackground': withAlpha(accent, 0.16),
+      'editor.wordHighlightBackground': withAlpha(accent, 0.14),
+      'editor.wordHighlightStrongBackground': withAlpha(accent, 0.2),
+      'editor.findMatchHighlightBackground': withAlpha(accent, 0.28),
+      'editor.lineHighlightBackground': withAlpha(accent, 0.06),
+      'editorCursor.foreground': accent,
+      'editorWhitespace.foreground': withAlpha(readTokenHex('muted-foreground', bg), 0.4),
+      'editorLineNumber.foreground': readTokenHex('muted-foreground', bg),
+      'textLink.foreground': accent,
+    },
+  })
+  monaco.editor.setTheme(MONACO_THEME_ID)
+}
 
 // ─── Props / Model ────────────────────────────────────────────
 
@@ -128,11 +149,12 @@ const initEditor = () => {
   }
 
   console.log('[Monaco] Initializing with value length:', modelValue.value?.length || 0)
+  applyMonacoTheme()
   const editorInstance = monaco.editor.create(elRef.value, {
     language: 'markdown', // 恢复标准 markdown 语言模式，兼容 monaco-markdown 插件高亮
     value: modelValue.value || '',
     fontSize: 16,
-    theme: themeStore.isDark ? 'vs-dark' : 'GrideaLight',
+    theme: MONACO_THEME_ID,
     lineNumbers: 'off',
     minimap: { enabled: false },
     wordWrap: 'on',
@@ -264,10 +286,12 @@ watch(modelValue, (newValue) => {
   isSettingValue.value = false
 })
 
+// 外观与强调色同样影响编辑区配色，不能只跟随明暗
 watch(
-  () => themeStore.isDark,
-  (isDark) => {
-    monaco.editor.setTheme(isDark ? 'vs-dark' : 'GrideaLight')
+  () => [themeStore.isDark, themeStore.surface, themeStore.accent],
+  () => {
+    // 等 CSS 变量在 <html> 上落定后再取值
+    requestAnimationFrame(applyMonacoTheme)
   },
 )
 
@@ -303,7 +327,7 @@ defineExpose({
   position: absolute;
   top: 24px; // 匹配编辑器 padding-top
   left: 5px; // 留一点边距
-  color: #b2b2b2;
+  color: var(--muted-foreground);
   font-size: 16px;
   line-height: 28px;
   pointer-events: none;
@@ -321,11 +345,11 @@ defineExpose({
 }
 
 :deep(.action-menu-item) {
-  color: #718096 !important;
+  color: var(--secondary-foreground) !important;
 
   &:hover {
-    color: #744210 !important;
-    background: #fffff0 !important;
+    color: var(--primary-text) !important;
+    background: var(--accent) !important;
   }
 }
 
@@ -334,7 +358,7 @@ defineExpose({
 }
 
 :deep(.monaco-menu .monaco-action-bar.vertical .action-label.separator) {
-  border-bottom-color: #e2e8f0 !important;
+  border-bottom-color: var(--border) !important;
 }
 
 :deep(.monaco-editor-container) {
@@ -344,12 +368,12 @@ defineExpose({
 :deep(.monaco-editor) {
   .scrollbar {
     .slider {
-      background: #eee;
+      background: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
     }
   }
 
   .scroll-decoration {
-    box-shadow: #efefef 0 2px 2px -2px inset;
+    box-shadow: color-mix(in srgb, var(--foreground) 8%, transparent) 0 2px 2px -2px inset;
   }
 }
 
@@ -368,14 +392,14 @@ defineExpose({
   margin-left: 2px !important;
 }
 
-/* 覆盖亮色模式下的原生选中和 Monaco DOM 选中颜色为此前设定的橙黄色 */
-:deep(.monaco-editor.vs) {
+/* 原生选中与 Monaco DOM 选中统一走主题选区色 */
+:deep(.monaco-editor) {
   .view-lines ::selection {
-    background-color: #FFEBB7 !important;
+    background-color: var(--editor-selection) !important;
   }
 
   .selected-text {
-    background-color: #FFEBB7 !important;
+    background-color: var(--editor-selection) !important;
   }
 }
 </style>

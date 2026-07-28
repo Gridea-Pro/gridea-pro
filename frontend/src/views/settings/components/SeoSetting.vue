@@ -62,7 +62,7 @@
                     <i class="ri-upload-2-line text-2xl mb-1"></i>
                   </div>
                   <div v-if="form[field.name]"
-                    class="delete-btn hidden absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
+                    class="delete-btn hidden absolute top-1 right-1 bg-destructive hover:bg-destructive/90 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
                     :title="t('settings.theme.removeImage')" @click.stop="form[field.name] = ''">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
                       <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />

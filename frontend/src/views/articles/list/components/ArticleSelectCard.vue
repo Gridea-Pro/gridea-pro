@@ -31,7 +31,7 @@ const handleClick = (post: any) => {
   font-weight: bold;
   cursor: pointer;
   &:hover {
-    background: #fafafa;
+    background: var(--muted);
   }
 }
 </style>

@@ -30,13 +30,13 @@
                 <div class="flex items-center gap-2.5">
                   <span class="text-base font-bold text-foreground">{{ p.name }}</span>
                   <span v-if="statuses[p.id]?.connected && statuses[p.id]?.connectedVia === 'oauth'"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-[11px] font-medium">
-                    <span class="size-1.5 rounded-full bg-green-500 inline-block"></span>
+                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success/10 text-success text-[11px] font-medium">
+                    <span class="size-1.5 rounded-full bg-success inline-block"></span>
                     {{ t('settings.network.connected') }}
                   </span>
                   <span v-else-if="statuses[p.id]?.connected && statuses[p.id]?.connectedVia === 'manual'"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-medium">
-                    <span class="size-1.5 rounded-full bg-amber-500 inline-block"></span>
+                    class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-warning/10 text-warning text-[11px] font-medium">
+                    <span class="size-1.5 rounded-full bg-warning inline-block"></span>
                     {{ t('settings.network.configured') }}
                   </span>
                   <span v-else
@@ -155,13 +155,13 @@
                 <div class="flex items-center gap-2">
                   <span class="text-sm font-semibold text-foreground leading-tight">{{ p.name }}</span>
                   <span v-if="statuses[p.id]?.connected && statuses[p.id]?.connectedVia === 'oauth'"
-                    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-medium">
-                    <span class="size-1.5 rounded-full bg-green-500 inline-block"></span>
+                    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-success/10 text-success text-[10px] font-medium">
+                    <span class="size-1.5 rounded-full bg-success inline-block"></span>
                     {{ t('settings.network.connected') }}
                   </span>
                   <span v-else-if="statuses[p.id]?.connected && statuses[p.id]?.connectedVia === 'manual'"
-                    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-medium">
-                    <span class="size-1.5 rounded-full bg-amber-500 inline-block"></span>
+                    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-warning/10 text-warning text-[10px] font-medium">
+                    <span class="size-1.5 rounded-full bg-warning inline-block"></span>
                     {{ t('settings.network.configured') }}
                   </span>
                   <span v-else
@@ -254,17 +254,17 @@
 
           <!-- 已连接用户信息 -->
           <div v-if="statuses[drawerPlatform]?.connected && statuses[drawerPlatform]?.username"
-            class="flex items-center gap-3 px-4 py-3 bg-green-500/5 border border-green-500/15 rounded-lg">
+            class="flex items-center gap-3 px-4 py-3 bg-success/5 border border-success/15 rounded-lg">
             <img v-if="statuses[drawerPlatform]?.avatarUrl" :src="statuses[drawerPlatform].avatarUrl"
               class="size-9 rounded-full flex-shrink-0" alt="" />
             <div
-              class="size-9 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0 text-green-600"
+              class="size-9 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0 text-success"
               v-else>
               <UserIcon class="size-4.5" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="text-sm font-semibold text-foreground">{{ statuses[drawerPlatform].username }}</div>
-              <div class="text-[11px] text-green-600 dark:text-green-400">
+              <div class="text-[11px] text-success">
                 {{ statuses[drawerPlatform].connectedVia === 'oauth' ? 'OAuth · ' + t('settings.network.connected') :
                   t('settings.network.configured') }}
               </div>
@@ -410,7 +410,7 @@
                 </SelectContent>
               </Select>
               <template v-if="drawerForm.ftpMode === 'ftp'" #hint>
-                <span class="text-red-500">⚠️ 明文 FTP 会泄漏密码和站点内容，仅供内网测试</span>
+                <span class="text-destructive">⚠️ 明文 FTP 会泄漏密码和站点内容，仅供内网测试</span>
               </template>
             </FormField>
             <FormField v-if="drawerForm.transferProtocol === 'ftp' && (drawerForm.ftpMode === 'ftps-explicit' || drawerForm.ftpMode === 'ftps-implicit')"

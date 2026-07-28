@@ -128,7 +128,7 @@
                       </div>
                       <!-- 悬浮删除/重置按钮 -->
                       <div v-if="form[item.name]"
-                        class="delete-btn hidden absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
+                        class="delete-btn hidden absolute top-1 right-1 bg-destructive hover:bg-destructive/90 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
                         :title="t('settings.theme.removeImage')" @click.stop="resetFormItem(item.name)">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
                           class="w-3.5 h-3.5">
@@ -152,7 +152,7 @@
                     class="p-4 border border-input rounded-lg bg-card relative group">
                     <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="icon" variant="ghost"
-                        class="h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                        class="h-6 w-6 text-info hover:text-info hover:bg-info/10"
                         @click="addConfigItem(item.name, Number(configItemIndex), item.arrayItems)">
                         <i class="ri-add-line"></i>
                       </Button>
@@ -200,7 +200,7 @@
                         <Input v-model="configItem[field.name]" :placeholder="t('settings.theme.imageUrlPlaceholder')" class="max-w-sm" />
                         <div class="flex items-center gap-2">
                           <div
-                            class="relative w-full h-32 border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer hover:border-gray-400 dark:hover:border-zinc-500 transition-colors"
+                            class="relative w-full h-32 border-2 border-dashed border-border rounded-lg overflow-hidden flex items-center justify-center cursor-pointer hover:border-muted-foreground/40 transition-colors"
                             @mouseenter="($event.currentTarget as HTMLElement).querySelector('.delete-btn')?.classList.remove('hidden')"
                             @mouseleave="($event.currentTarget as HTMLElement).querySelector('.delete-btn')?.classList.add('hidden')"
                             @click="handleImageUpload(item.name, field.name, Number(configItemIndex))">
@@ -210,7 +210,7 @@
 
                             <!-- 悬浮删除/重置按钮 -->
                             <div v-if="configItem[field.name]"
-                              class="delete-btn hidden absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
+                              class="delete-btn hidden absolute top-2 right-2 bg-destructive hover:bg-destructive/90 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
                               :title="t('settings.theme.removeImage')" @click.stop="resetFormItem(item.name, field.name, Number(configItemIndex))">
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
                                 class="w-3.5 h-3.5">

@@ -32,7 +32,7 @@
                                 <TagIcon class="meta-icon" />
                                 {{ form.tags.join(', ') }}
                             </span>
-                            <span class="meta-item meta-status" :class="form.published ? 'text-emerald-500' : 'text-amber-500'">
+                            <span class="meta-item meta-status" :class="form.published ? 'text-success' : 'text-warning'">
                                 {{ form.published ? $t('article.published') : $t('article.draft') }}
                             </span>
                             <span class="meta-item">

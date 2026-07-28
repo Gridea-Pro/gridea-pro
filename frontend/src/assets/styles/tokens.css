@@ -1,0 +1,221 @@
+/**
+ * Gridea Pro 颜色 Token 体系
+ *
+ * 三层架构：种子层 → 语义层（OKLCH 派生）→ 消费层（组件只用语义 token）
+ * 三个维度：.dark 管明暗 · [data-surface] 管外观 · [data-accent] 管强调色
+ *
+ * 契约：外观与强调色只允许声明「种子」，不得直接定义语义 token
+ *      （glass 的半透明表面是唯一例外）。完整性由结构保证，不靠人工逐套配色。
+ *
+ * 规范真相源：docs/design/1 · Gridea Pro UI 设计规范 v1.html
+ */
+
+/* ══════════════════════════════════════════════════════════════
+   种子层 · 外观（surface）
+   只声明中性色染色浓度与明度档位；色相由强调色决定，故底色永远与主色和谐
+   ══════════════════════════════════════════════════════════════ */
+:root[data-surface='pure'] {
+  --neutral-c: 0.006;
+  --l-bg: 100%;
+  --l-secondary: 94.5%;
+  --l-border: 91%;
+  --l-sidebar: 98.2%;
+}
+
+:root[data-surface='paper'] {
+  --neutral-c: 0.024;
+}
+
+:root[data-surface='glass'] {
+  --neutral-c: 0.014;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   种子层 · 强调色（accent）· 四时山水八色
+   --seed-accent-text 仅在「accent 过亮、直接作文字不可读」时声明加深变体
+
+   选择器不限定 :root —— 设置页的色卡给自身挂 data-accent 即可取到真实种子色，
+   避免色卡预览值与实际主题色各写一份而失同步。
+
+   缺省值必须写在各强调色之前：`:root` 与 `[data-accent='x']` 特异性同为
+   (0,1,0)，同分时后写的胜出，写在后面会把单独钦定的值覆盖掉。
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  --seed-on-accent: #ffffff;
+  --seed-on-accent-dark: #0F1114;
+}
+
+[data-accent] {
+  /* 深色模式强调色缺省由浅色值提亮派生；个别色单独钦定后覆盖 */
+  --seed-accent-dark: oklch(from var(--seed-accent) calc(l + 0.15) calc(c * 0.95) h);
+}
+
+/* 春山翠 */
+[data-accent='green']  { --seed-accent: oklch(0.57 0.10 163); }
+/* 霜叶红 */
+[data-accent='rose']   { --seed-accent: oklch(0.56 0.13 22); }
+/* 晚樱粉 */
+[data-accent='sakura'] { --seed-accent: oklch(0.65 0.11 355); --seed-accent-text: oklch(0.56 0.11 355); }
+/* 日落暖 —— 沿用产品既有陶土橙 */
+[data-accent='sunset'] { --seed-accent: #D47B4A; --seed-accent-text: oklch(0.56 0.13 45); --seed-accent-dark: #D47B4A; }
+/* 麦浪金 */
+[data-accent='amber']  { --seed-accent: oklch(0.71 0.10 85); --seed-on-accent: #231a06; --seed-accent-text: oklch(0.55 0.11 70); }
+/* 雨过青 */
+[data-accent='cyan']   { --seed-accent: oklch(0.58 0.09 215); }
+/* 秋水蓝 */
+[data-accent='blue']   { --seed-accent: oklch(0.56 0.11 250); }
+/* 暮山紫 —— 沿用产品既有紫 */
+[data-accent='purple'] { --seed-accent: #8b39ff; --seed-accent-dark: #9254DE; }
+
+/* ══════════════════════════════════════════════════════════════
+   语义层 · 浅色
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  /* 中性种子 = 强调色色相 × 外观染色浓度 */
+  --neutral-c: 0.006;
+  --seed-neutral: oklch(from var(--seed-accent) 0.5 var(--neutral-c) h);
+
+  /* 明度档位缺省（外观可整体上移/下移） */
+  --l-bg: 96.6%;
+  --l-secondary: 92.5%;
+  --l-border: 89.5%;
+  --l-sidebar: 95%;
+
+  --background:           oklch(from var(--seed-neutral) var(--l-bg) c h);
+  --foreground:           oklch(from var(--seed-neutral) 23% calc(c * 0.55) h);
+  --card:                 oklch(from var(--seed-neutral) 99.5% calc(c * 0.2) h);
+  --card-foreground:      var(--foreground);
+  --popover:              oklch(from var(--seed-neutral) 98.5% calc(c * 0.6) h);
+  --popover-foreground:   var(--foreground);
+  --primary:              var(--seed-accent);
+  --primary-foreground:   var(--seed-on-accent);
+  /* 强调色作文字时用此变量：过亮的 accent 自动换加深变体 */
+  --primary-text:         var(--seed-accent-text, var(--seed-accent));
+  --secondary:            oklch(from var(--seed-neutral) var(--l-secondary) c h);
+  --secondary-foreground: oklch(from var(--seed-neutral) 30% calc(c * 0.5) h);
+  --muted:                oklch(from var(--seed-neutral) var(--l-secondary) c h);
+  --muted-foreground:     oklch(from var(--seed-neutral) 49% calc(c * 0.7) h);
+  /* 强调洗色：选中态与 soft 按钮的底色 */
+  --accent:               oklch(from var(--seed-accent) 94.5% calc(c * 0.45) h);
+  --accent-foreground:    var(--primary-text);
+  --border:               oklch(from var(--seed-neutral) var(--l-border) c h);
+  --input:                var(--border);
+  --ring:                 var(--primary-text);
+  --sidebar:              oklch(from var(--seed-neutral) var(--l-sidebar) c h);
+
+  --success:              #2f9e5e;
+  --success-foreground:   #ffffff;
+  --warning:              #bb7c0d;
+  --warning-foreground:   #ffffff;
+  --info:                 #2f74d8;
+  --info-foreground:      #ffffff;
+  --destructive:          #dd4b3a;
+  --destructive-foreground: #ffffff;
+
+  /* 编辑器派生 */
+  --editor-selection: color-mix(in oklch, var(--primary) 24%, transparent);
+  --editor-code-bg:   color-mix(in srgb, var(--muted) 70%, transparent);
+  --code-comment:     var(--muted-foreground);
+  --code-keyword:     color-mix(in oklch, var(--primary) 75%, var(--foreground));
+  --code-string:      var(--success);
+  --code-number:      var(--warning);
+  --code-func:        var(--info);
+  --code-punct:       var(--secondary-foreground);
+
+  /* 元素规格 */
+  --radius-s: 8px;
+  --radius-m: 10px;
+  --radius-l: 12px;
+  --radius-xl: 16px;
+  /* 三段式投影：顶部内高光 + 接触影 + 环境影 */
+  --shadow-1: inset 0 1px 0 rgb(255 255 255 / .65), 0 1px 2px rgb(28 26 40 / .06), 0 6px 18px -10px rgb(28 26 40 / .16);
+  --shadow-2: inset 0 1px 0 rgb(255 255 255 / .75), 0 2px 5px rgb(28 26 40 / .05), 0 28px 58px -30px rgb(28 26 40 / .28);
+  --dur-1: 120ms;
+  --dur-2: 160ms;
+  --dur-3: 240ms;
+  --ease-standard: cubic-bezier(.2, .7, .3, 1);
+
+  color-scheme: light;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   语义层 · 深色（独立定义，不做自动反转）
+   ══════════════════════════════════════════════════════════════ */
+:root.dark {
+  --background:           oklch(from var(--seed-neutral) 18.5% calc(c * 0.7) h);
+  --foreground:           oklch(from var(--seed-neutral) 92% calc(c * 0.4) h);
+  --card:                 oklch(from var(--seed-neutral) 22.5% calc(c * 0.7) h);
+  --popover:              oklch(from var(--seed-neutral) 22% calc(c * 0.7) h);
+  --primary:              var(--seed-accent-dark);
+  --primary-foreground:   var(--seed-on-accent-dark);
+  --primary-text:         var(--seed-accent-dark);
+  --secondary:            oklch(from var(--seed-neutral) 27% calc(c * 0.7) h);
+  --secondary-foreground: oklch(from var(--seed-neutral) 89% calc(c * 0.4) h);
+  --muted:                oklch(from var(--seed-neutral) 27% calc(c * 0.7) h);
+  --muted-foreground:     oklch(from var(--seed-neutral) 66% calc(c * 0.5) h);
+  --accent:               oklch(from var(--seed-accent-dark) 26% calc(c * 0.4) h);
+  --border:               oklch(from var(--seed-neutral) 30% calc(c * 0.7) h);
+  --input:                oklch(from var(--seed-neutral) 30% calc(c * 0.7) h);
+  --ring:                 var(--seed-accent-dark);
+  --sidebar:              oklch(from var(--seed-neutral) 21% calc(c * 0.7) h);
+
+  --success:              #48cf86;
+  --success-foreground:   #0d2b1b;
+  --warning:              #e8b552;
+  --warning-foreground:   #2b1f08;
+  --info:                 #6aa8f0;
+  --info-foreground:      #0c1d33;
+  --destructive:          #f0715e;
+  --destructive-foreground: #330f09;
+
+  --shadow-1: inset 0 1px 0 rgb(255 255 255 / .045), 0 1px 2px rgb(0 0 0 / .35), 0 8px 22px -14px rgb(0 0 0 / .66);
+  --shadow-2: inset 0 1px 0 rgb(255 255 255 / .06), 0 2px 6px rgb(0 0 0 / .34), 0 26px 56px -28px rgb(0 0 0 / .78);
+
+  color-scheme: dark;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Glass 外观 · 半透明表面 + 模糊 + 氛围光
+   唯一允许覆盖语义 token 的外观，且只限表面类
+   ══════════════════════════════════════════════════════════════ */
+:root[data-surface='glass'] {
+  --card:    color-mix(in srgb, oklch(from var(--seed-neutral) 99.3% calc(c * 0.35) h) 52%, transparent);
+  --popover: color-mix(in srgb, oklch(from var(--seed-neutral) 98.5% calc(c * 0.6) h) 72%, transparent);
+  --sidebar: color-mix(in srgb, oklch(from var(--seed-neutral) 95% c h) 45%, transparent);
+  --glass-blur: 20px;
+}
+
+:root.dark[data-surface='glass'] {
+  --card:    color-mix(in srgb, oklch(from var(--seed-neutral) 27% calc(c * 0.7) h) 58%, transparent);
+  --popover: color-mix(in srgb, oklch(from var(--seed-neutral) 26% calc(c * 0.7) h) 78%, transparent);
+  --sidebar: color-mix(in srgb, oklch(from var(--seed-neutral) 24% calc(c * 0.7) h) 55%, transparent);
+}
+
+:root[data-surface='glass'] body {
+  background-image:
+    radial-gradient(60rem 38rem at 10% -6%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 60%),
+    radial-gradient(50rem 32rem at 100% 24%, color-mix(in srgb, var(--primary) 11%, transparent), transparent 55%),
+    radial-gradient(44rem 36rem at 36% 110%, color-mix(in srgb, oklch(0.7 0.1 320) 10%, transparent), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   兼容别名 · 存量代码消费的旧变量名，统一指向语义层
+   随消费侧整改逐步移除，勿在新代码中使用
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  --bg-body:      var(--background);
+  --bg-card:      var(--card);
+  --bg-sidebar:   var(--sidebar);
+  --bg-modal:     var(--popover);
+  --bg-popover:   var(--popover);
+  --bg-input:     var(--card);
+  --border-input: var(--input);
+  --bg-table-hover: color-mix(in srgb, var(--foreground) 4%, transparent);
+  --text-primary:   var(--foreground);
+  --text-secondary: var(--muted-foreground);
+  --bg-notification:   var(--popover);
+  --text-notification: var(--popover-foreground);
+  --bg-tooltip:        var(--foreground);
+  --text-tooltip:      var(--background);
+}

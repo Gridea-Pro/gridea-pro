@@ -1,14 +1,14 @@
 <template>
   <div>
-    <Label class="mb-2 block">Shortname <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">Shortname <span class="text-destructive">*</span></Label>
     <Input v-model="config.shortname" />
   </div>
   <div class="mt-4">
-    <Label class="mb-2 block">API <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">API <span class="text-destructive">*</span></Label>
     <Input v-model="config.api" placeholder="https://disqus.skk.moe/disqus" />
   </div>
   <div class="mt-4">
-    <Label class="mb-2 block">API Key <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">API Key <span class="text-destructive">*</span></Label>
     <Input v-model="config.apiKey" />
   </div>
 </template>

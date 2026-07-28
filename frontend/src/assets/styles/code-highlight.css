@@ -1,0 +1,132 @@
+/**
+ * 代码语法高亮配色。
+ *
+ * 项目同时跑着两套高亮器——Tiptap 编辑器内的 lowlight（输出 .hljs-* 类）与
+ * 文章预览用的 Prism（输出 .token.* 类）——但此前从未引入过任何高亮主题样式，
+ * 代码块实际渲染为单色。此文件用 tokens.css 的 --code-* 给两套统一上色，
+ * 因此换任何强调色 / 外观 / 明暗，代码配色都自动跟随。
+ */
+
+/* ── lowlight / highlight.js ─────────────────────────────── */
+.hljs-comment,
+.hljs-quote {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-doctag,
+.hljs-type,
+.hljs-name,
+.hljs-strong {
+  color: var(--code-keyword);
+  font-weight: 600;
+}
+
+.hljs-string,
+.hljs-title,
+.hljs-attribute,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: var(--code-string);
+}
+
+.hljs-number,
+.hljs-meta,
+.hljs-regexp,
+.hljs-link {
+  color: var(--code-number);
+}
+
+.hljs-function .hljs-title,
+.hljs-title.function_,
+.hljs-built_in,
+.hljs-class .hljs-title,
+.hljs-title.class_,
+.hljs-variable,
+.hljs-params,
+.hljs-attr {
+  color: var(--code-func);
+}
+
+.hljs-deletion {
+  color: var(--destructive);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-punctuation,
+.hljs-operator {
+  color: var(--code-punct);
+}
+
+/* ── Prism ───────────────────────────────────────────────── */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: var(--code-punct);
+}
+
+.token.keyword,
+.token.atrule,
+.token.selector,
+.token.important,
+.token.tag {
+  color: var(--code-keyword);
+  font-weight: 600;
+}
+
+.token.string,
+.token.char,
+.token.attr-value,
+.token.inserted,
+.token.builtin {
+  color: var(--code-string);
+}
+
+.token.number,
+.token.boolean,
+.token.constant,
+.token.symbol,
+.token.regex {
+  color: var(--code-number);
+}
+
+.token.function,
+.token.class-name,
+.token.variable,
+.token.attr-name,
+.token.property,
+.token.operator,
+.token.entity,
+.token.url {
+  color: var(--code-func);
+}
+
+.token.deleted {
+  color: var(--destructive);
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.bold {
+  font-weight: 700;
+}

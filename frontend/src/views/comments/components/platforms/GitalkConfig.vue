@@ -1,22 +1,22 @@
 <template>
   <div>
-    <Label class="mb-2 block">Client ID <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">Client ID <span class="text-destructive">*</span></Label>
     <Input v-model="config.clientId" />
   </div>
   <div class="mt-4">
-    <Label class="mb-2 block">Client Secret <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">Client Secret <span class="text-destructive">*</span></Label>
     <Input v-model="config.clientSecret" type="password" />
   </div>
   <div class="mt-4">
-    <Label class="mb-2 block">Repository <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">Repository <span class="text-destructive">*</span></Label>
     <Input v-model="config.repo" />
   </div>
   <div class="mt-4">
-    <Label class="mb-2 block">Owner <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">Owner <span class="text-destructive">*</span></Label>
     <Input v-model="config.owner" />
   </div>
   <div class="mt-4">
-    <Label class="mb-2 block">Admin <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">Admin <span class="text-destructive">*</span></Label>
     <Input v-model="config.admin" placeholder="多位管理员用逗号分隔" />
   </div>
 </template>

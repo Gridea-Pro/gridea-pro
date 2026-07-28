@@ -1,10 +1,10 @@
 <template>
   <div>
-    <Label class="mb-2 block">App ID <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">App ID <span class="text-destructive">*</span></Label>
     <Input v-model="config.appId" />
   </div>
   <div class="mt-4">
-    <Label class="mb-2 block">Host <span class="text-red-500">*</span></Label>
+    <Label class="mb-2 block">Host <span class="text-destructive">*</span></Label>
     <Input v-model="config.host" placeholder="https://cusdis.com" />
   </div>
 </template>
