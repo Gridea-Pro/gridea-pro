@@ -1,60 +1,153 @@
-/**
- * 文章列表核心逻辑 Composable
- *
- * 职责：搜索过滤、排序（置顶优先 + 日期降序）、分页计算、页码省略号算法。
- * 从 Articles.vue 中精确迁移，零回归。
- */
-
 import { ref, computed, watch } from 'vue'
 import { useSiteStore } from '@/stores/site'
 import { PAGINATION } from '@/constants/editor'
 import dayjs from 'dayjs'
 import type { IPost } from '@/interfaces/post'
 
+export type TimeFilter = 'all' | 'today' | 'month'
+
 export function useArticleList() {
     const siteStore = useSiteStore()
 
-    // ── 搜索 ──────────────────────────────────────────────
-
     const keyword = ref<string>('')
-
-    // ── 分页 ──────────────────────────────────────────────
+    const selectedTag = ref<string | null>(null)
+    const selectedCategory = ref<string | null>(null)
+    const selectedDate = ref<string | null>(null)
+    const timeFilter = ref<TimeFilter>('all')
 
     const currentPage = ref<number>(1)
     const PAGE_SIZE = PAGINATION.DEFAULT_PAGE_SIZE
 
-    // 搜索关键词变化时重置到第一页
-    watch(keyword, () => {
+    const resetFilters = () => {
         currentPage.value = 1
+    }
+
+    watch(keyword, resetFilters)
+    watch(selectedTag, resetFilters)
+    watch(selectedCategory, resetFilters)
+    watch(selectedDate, resetFilters)
+    watch(timeFilter, resetFilters)
+
+    const setTimeFilter = (filter: TimeFilter) => {
+        timeFilter.value = filter
+        if (filter !== 'all') {
+            selectedTag.value = null
+            selectedCategory.value = null
+            selectedDate.value = null
+        }
+    }
+
+    const setSelectedTag = (tag: string | null) => {
+        selectedTag.value = tag
+        if (tag) {
+            timeFilter.value = 'all'
+            selectedDate.value = null
+            selectedCategory.value = null
+        }
+    }
+
+    const setSelectedCategory = (category: string | null) => {
+        selectedCategory.value = category
+        if (category) {
+            timeFilter.value = 'all'
+            selectedDate.value = null
+            selectedTag.value = null
+        }
+    }
+
+    const setSelectedDate = (date: string | null) => {
+        selectedDate.value = date
+        if (date) {
+            timeFilter.value = 'all'
+            selectedTag.value = null
+            selectedCategory.value = null
+        }
+    }
+
+    const heatmapData = computed(() => {
+        const map: Record<string, number> = {}
+        siteStore.posts.forEach((post: IPost) => {
+            const dateStr = dayjs(post.createdAt).format('YYYY-MM-DD')
+            map[dateStr] = (map[dateStr] || 0) + 1
+        })
+        return map
     })
 
-    // ── 排序 + 过滤后的完整列表 ────────────────────────────
+    const tagStats = computed(() => {
+        const map: Record<string, number> = {}
+        siteStore.posts.forEach((post: IPost) => {
+            (post.tags || []).forEach((tag: string) => {
+                map[tag] = (map[tag] || 0) + 1
+            })
+        })
+        return Object.entries(map)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+    })
+
+    const categoryStats = computed(() => {
+        const map: Record<string, number> = {}
+        siteStore.posts.forEach((post: IPost) => {
+            (post.categories || []).forEach((cat: string) => {
+                map[cat] = (map[cat] || 0) + 1
+            })
+        })
+        return Object.entries(map)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+    })
+
+    const totalPosts = computed(() => siteStore.posts.length)
+    const todayPosts = computed(() => {
+        const startOfDay = dayjs().startOf('day').valueOf()
+        return siteStore.posts.filter((p: IPost) => dayjs(p.createdAt).valueOf() >= startOfDay).length
+    })
+    const monthPosts = computed(() => {
+        const startOfMonth = dayjs().startOf('month').valueOf()
+        return siteStore.posts.filter((p: IPost) => dayjs(p.createdAt).valueOf() >= startOfMonth).length
+    })
 
     const postList = computed<IPost[]>(() => {
         const search = keyword.value.toLowerCase().trim()
-        let posts: IPost[]
+        let posts = [...siteStore.posts]
 
-        if (!search) {
-            posts = [...siteStore.posts]
-        } else {
-            posts = siteStore.posts.filter((post: IPost) =>
+        if (search) {
+            posts = posts.filter((post: IPost) =>
                 post.title.toLowerCase().includes(search),
             )
         }
 
+        if (selectedDate.value) {
+            posts = posts.filter((post: IPost) =>
+                dayjs(post.createdAt).format('YYYY-MM-DD') === selectedDate.value
+            )
+        } else if (timeFilter.value === 'today') {
+            const startOfDay = dayjs().startOf('day').valueOf()
+            posts = posts.filter((p: IPost) => dayjs(p.createdAt).valueOf() >= startOfDay)
+        } else if (timeFilter.value === 'month') {
+            const startOfMonth = dayjs().startOf('month').valueOf()
+            posts = posts.filter((p: IPost) => dayjs(p.createdAt).valueOf() >= startOfMonth)
+        }
+
+        if (selectedTag.value) {
+            posts = posts.filter((post: IPost) =>
+                (post.tags || []).includes(selectedTag.value!)
+            )
+        }
+
+        if (selectedCategory.value) {
+            posts = posts.filter((post: IPost) =>
+                (post.categories || []).includes(selectedCategory.value!)
+            )
+        }
+
         return posts.sort((a, b) => {
-            // 置顶优先
             const aTop = a.isTop ? 1 : 0
             const bTop = b.isTop ? 1 : 0
-            if (aTop !== bTop) {
-                return bTop - aTop
-            }
-            // 日期降序
+            if (aTop !== bTop) return bTop - aTop
             return dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
         })
     })
-
-    // ── 分页计算 ──────────────────────────────────────────
 
     const totalPages = computed(() => Math.ceil(postList.value.length / PAGE_SIZE))
 
@@ -64,12 +157,6 @@ export function useArticleList() {
         return postList.value.slice(start, end)
     })
 
-    /**
-     * 页码省略号算法
-     * - 始终显示首尾页
-     * - 当前页 ± delta 范围内的页码全部显示
-     * - 超出范围用 -1 (ellipsis) 代替
-     */
     const visiblePages = computed<number[]>(() => {
         const total = totalPages.value
         const current = currentPage.value
@@ -80,9 +167,7 @@ export function useArticleList() {
 
         range.push(1)
         for (let i = current - delta; i <= current + delta; i++) {
-            if (i < total && i > 1) {
-                range.push(i)
-            }
+            if (i < total && i > 1) range.push(i)
         }
         range.push(total)
 
@@ -91,7 +176,7 @@ export function useArticleList() {
                 if (i - l === 2) {
                     rangeWithDots.push(l + 1)
                 } else if (i - l !== 1) {
-                    rangeWithDots.push(-1) // ellipsis sentinel
+                    rangeWithDots.push(-1)
                 }
             }
             rangeWithDots.push(i)
@@ -100,24 +185,33 @@ export function useArticleList() {
         return rangeWithDots
     })
 
-    // ── 分页操作 ──────────────────────────────────────────
-
     const handlePageChanged = (page: number) => {
         currentPage.value = page
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     return {
-        // 搜索
         keyword,
-        // 分页
+        selectedTag,
+        selectedCategory,
+        selectedDate,
+        timeFilter,
+        setTimeFilter,
+        setSelectedTag,
+        setSelectedCategory,
+        setSelectedDate,
+        heatmapData,
+        tagStats,
+        categoryStats,
+        totalPosts,
+        todayPosts,
+        monthPosts,
         currentPage,
         PAGE_SIZE,
         totalPages,
         currentPostList,
         visiblePages,
         handlePageChanged,
-        // 完整排序列表（供删除等操作使用）
         postList,
     }
 }
