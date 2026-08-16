@@ -140,10 +140,12 @@
                   </div>
                 </div>
 
-                <!-- Markdown -->
-                <div v-if="item.type === 'markdown'" class="border border-input rounded-lg overflow-hidden shadow-sm">
-                  <monaco-markdown-editor ref="monacoMarkdownEditor"
-                    v-model:value="form[item.name]"></monaco-markdown-editor>
+                <!-- Markdown：复用编辑器的 CodeMirror 源码栏（此前是 Monaco，
+                     为一个零主题使用的字段类型扛了 154 MB 依赖，已移除）。
+                     SourceEditor 高度为 100%，需由外层给定高度。 -->
+                <div v-if="item.type === 'markdown'"
+                  class="border border-input rounded-lg overflow-hidden shadow-sm h-80">
+                  <SourceEditor v-model:value="form[item.name]" />
                 </div>
 
                 <!-- Array -->
@@ -265,7 +267,7 @@ import { useRouter } from 'vue-router'
 import { useSiteStore } from '@/stores/site'
 import { toast } from '@/helpers/toast'
 import urlJoin from 'url-join'
-import MonacoMarkdownEditor from '@/components/MonacoMarkdownEditor/index.vue'
+import SourceEditor from '@/components/editor/SourceEditor.vue'
 import FooterBox from '@/components/FooterBox/index.vue'
 import ColorCard from '@/components/ColorCard/index.vue'
 import ArticleSelectCard from '@/views/articles/list/components/ArticleSelectCard.vue'

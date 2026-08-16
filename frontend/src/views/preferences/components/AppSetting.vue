@@ -117,15 +117,6 @@
       <div class="text-xs text-muted-foreground mt-2">{{ t('preferences.proseFontFamilyHint') }}</div>
     </div>
 
-    <div>
-      <div class="text-sm font-medium text-muted-foreground mb-4">{{ t('preferences.editorFontFamily') }}</div>
-      <Input
-        v-model="editorFontFamily"
-        :placeholder="t('preferences.editorFontFamilyPlaceholder')"
-        class="max-w-md font-mono text-sm"
-      />
-      <div class="text-xs text-muted-foreground mt-2">{{ t('preferences.editorFontFamilyHint') }}</div>
-    </div>
   </div>
 </template>
 
@@ -149,7 +140,6 @@ import {
   DocumentTextIcon,
   SparklesIcon,
 } from '@heroicons/vue/24/outline'
-import { Input } from '@/components/ui/input'
 import { PROSE_FONTS, PROSE_SIZES, isFontAvailable } from '@/helpers/typography'
 
 const { t } = useI18n()
@@ -168,11 +158,6 @@ const surface = computed({
 const accent = computed({
   get: () => themeStore.accent,
   set: (val: ThemeAccent) => themeStore.setAccent(val),
-})
-
-const editorFontFamily = computed({
-  get: () => themeStore.editorFontFamily,
-  set: (val: string) => themeStore.setEditorFontFamily(val),
 })
 
 const proseFontSize = computed({

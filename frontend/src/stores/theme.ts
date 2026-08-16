@@ -63,10 +63,6 @@ export const ACCENT_REGISTRY: ReadonlyArray<{ value: ThemeAccent; labelKey: stri
 const SURFACES = SURFACE_REGISTRY.map((s) => s.value)
 const ACCENTS = ACCENT_REGISTRY.map((a) => a.value)
 
-/** 代码编辑器（主题自定义 CSS 框）的等宽字体，与正文字体无关 */
-export const EDITOR_FONT_FAMILY_DEFAULT =
-  'ui-monospace, Menlo, Monaco, "Cascadia Code", "Segoe UI Mono", Consolas, "Courier New", monospace'
-
 /** 读取正文字号，非法值一律回落到默认，避免脏数据把正文撑成天文数字 */
 function readProseSize(): number {
   const raw = Number(localStorage.getItem(STORAGE_KEYS.proseSize))
@@ -103,9 +99,6 @@ export const useThemeStore = defineStore('theme', () => {
   const surface = ref<ThemeSurface>(initialSurface)
   const accent = ref<ThemeAccent>(initialAccent)
   const systemIsDark = ref(window.matchMedia('(prefers-color-scheme: dark)').matches)
-  const editorFontFamily = ref<string>(
-    localStorage.getItem('app_editor_font_family') || EDITOR_FONT_FAMILY_DEFAULT
-  )
   const proseFontSize = ref<number>(readProseSize())
   const proseFontId = ref<string>(readProseFont())
 
@@ -134,11 +127,6 @@ export const useThemeStore = defineStore('theme', () => {
     accent.value = newAccent
     localStorage.setItem(STORAGE_KEYS.accent, newAccent)
     applyTheme()
-  }
-
-  function setEditorFontFamily(value: string) {
-    editorFontFamily.value = value
-    localStorage.setItem('app_editor_font_family', value)
   }
 
   /** 应用排版偏好。字号一变，行距 / 段距 / 标题字阶全部按比例联动。 */
@@ -179,14 +167,12 @@ export const useThemeStore = defineStore('theme', () => {
     surface,
     accent,
     systemIsDark,
-    editorFontFamily,
     proseFontSize,
     proseFontId,
     isDark,
     setMode,
     setSurface,
     setAccent,
-    setEditorFontFamily,
     setProseFontSize,
     setProseFontId,
     applyTheme,

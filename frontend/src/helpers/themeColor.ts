@@ -1,7 +1,7 @@
 /**
  * 读取语义 token 的实际颜色值。
  *
- * 给需要「具体色值」而非 CSS 变量的第三方组件用（Monaco / Mermaid / CodeMirror
+ * 给需要「具体色值」而非 CSS 变量的第三方组件用（Mermaid / CodeMirror
  * 都只接受 hex 或 rgb 字面量，无法消费 var()）。tokens.css 用 OKLCH 与
  * color-mix 派生，浏览器解析后的形式不固定，故统一走 canvas 光栅化取真值。
  */
@@ -49,19 +49,3 @@ export function readTokenHex(token: string, base = '#ffffff'): string {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
 
-/** 同 readTokenHex，但返回不带 `#` 的六位值（Monaco 的 token rules 要求此格式） */
-export function readTokenRaw(token: string, base = '#ffffff'): string {
-  return readTokenHex(token, base).slice(1)
-}
-
-/** 读取一组 token，返回 { token: '#rrggbb' } */
-export function readTokens(tokens: string[], base?: string): Record<string, string> {
-  const bg = base ?? readTokenHex('background')
-  return Object.fromEntries(tokens.map((t) => [t, readTokenHex(t, bg)]))
-}
-
-/** 在 hex 上叠加透明度，产出 Monaco / CodeMirror 可用的 8 位色值 */
-export function withAlpha(hex: string, alpha: number): string {
-  const a = Math.round(Math.min(Math.max(alpha, 0), 1) * 255)
-  return `${hex}${toHex(a)}`
-}

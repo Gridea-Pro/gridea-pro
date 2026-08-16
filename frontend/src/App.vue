@@ -184,10 +184,8 @@ body {
 input,
 textarea,
 [contenteditable="true"],
-.monaco-editor,
-.monaco-editor *,
-.monaco-editor-wrapper,
-.monaco-editor-container {
+.cm-editor,
+.cm-editor * {
   -webkit-user-select: auto !important;
   user-select: auto !important;
 }
