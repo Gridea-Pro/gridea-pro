@@ -20,7 +20,7 @@
         <slot name="header" />
       </div>
       <div class="editor-body" :class="`mode-${mode}`">
-        <div v-show="mode !== 'source'" ref="richPaneRef" class="rich-pane">
+        <div v-show="mode === 'rich'" class="rich-pane">
           <EditorBubbleMenu
           :editor="editor ?? null"
           @link="openLink"
@@ -36,7 +36,7 @@
           </div>
           <EditorContent :editor="editor" class="rich-content" @keydown="onKeydown" @focus.capture="emit('focus')" />
         </div>
-        <div v-show="mode !== 'rich'" ref="sourcePaneRef" class="source-pane" @keydown="onKeydown" @focusin="emit('focus')">
+        <div v-show="mode === 'source'" class="source-pane" @keydown="onKeydown" @focusin="emit('focus')">
           <SourceEditor ref="sourceRef" v-model:value="model" />
         </div>
       </div>
@@ -234,55 +234,6 @@ function setMode(next: EditorMode) {
     })
   }
 }
-
-// ── 双栏同步滚动 ─────────────────────────────────────
-// 富文本侧滚动者是 .rich-pane；源码侧实际滚动者是 CodeMirror 内部的 .cm-scroller
-// （.cm-editor 高度 100%，外层 .source-pane 并不产生滚动）。按progress比例双向同步，
-// 方向锁 + 超时解锁，防止 programmatic scrollTop 触发的回环。
-const richPaneRef = ref<HTMLElement | null>(null)
-const sourcePaneRef = ref<HTMLElement | null>(null)
-let cmScroller: HTMLElement | null = null
-let syncLock: 'rich' | 'source' | null = null
-let syncUnlockTimer: ReturnType<typeof setTimeout> | null = null
-
-function syncScrollTo(from: HTMLElement, to: HTMLElement) {
-  const fromMax = from.scrollHeight - from.clientHeight
-  const toMax = to.scrollHeight - to.clientHeight
-  if (fromMax <= 0 || toMax <= 0) return
-  to.scrollTop = (from.scrollTop / fromMax) * toMax
-}
-function scheduleSyncUnlock() {
-  if (syncUnlockTimer) clearTimeout(syncUnlockTimer)
-  syncUnlockTimer = setTimeout(() => (syncLock = null), 100)
-}
-function onRichScroll() {
-  if (syncLock === 'source') return
-  syncLock = 'rich'
-  if (richPaneRef.value && cmScroller) syncScrollTo(richPaneRef.value, cmScroller)
-  scheduleSyncUnlock()
-}
-function onSourceScroll() {
-  if (syncLock === 'rich') return
-  syncLock = 'source'
-  if (richPaneRef.value && cmScroller) syncScrollTo(cmScroller, richPaneRef.value)
-  scheduleSyncUnlock()
-}
-function detachScrollSync() {
-  richPaneRef.value?.removeEventListener('scroll', onRichScroll)
-  cmScroller?.removeEventListener('scroll', onSourceScroll)
-  cmScroller = null
-}
-watch(mode, (m) => {
-  detachScrollSync()
-  if (m !== 'split') return
-  nextTick(() => {
-    cmScroller = (sourcePaneRef.value?.querySelector('.cm-scroller') as HTMLElement | null) ?? null
-    richPaneRef.value?.addEventListener('scroll', onRichScroll, { passive: true })
-    cmScroller?.addEventListener('scroll', onSourceScroll, { passive: true })
-    // 进入双栏时先把源码栏对齐到富文本当前位置
-    if (richPaneRef.value && cmScroller) syncScrollTo(richPaneRef.value, cmScroller)
-  })
-})
 
 // ── 图片 ─────────────────────────────────────────────
 function bytesToBase64(bytes: Uint8Array): string {
@@ -708,8 +659,6 @@ onBeforeUnmount(() => {
   // 对缓存的 DOM 解绑，绝不在此访问 editor.value.view（此刻已被 useEditor 先行 destroy）。
   actionDom?.removeEventListener('gridea-editor:action', onEditorAction)
   actionDom = null
-  detachScrollSync()
-  if (syncUnlockTimer) clearTimeout(syncUnlockTimer)
   // 不再手动 destroy：@tiptap/vue-3 的 useEditor 已注册自己的 onBeforeUnmount 负责销毁，
   // 重复 destroy + 访问已销毁 editor 正是本次 Runtime Error 的根因。
 })
@@ -756,10 +705,9 @@ onBeforeUnmount(() => {
 .gridea-tiptap.mode-rich .editor-scroll {
   overflow-y: auto;
 }
-/* source / split：外层不滚，标题区固定在顶部，正文/分栏内部各自滚动
+/* source：外层不滚，标题区固定在顶部，正文内部滚动
    （CodeMirror 源码编辑器自带滚动，需要有界高度才正常） */
-.gridea-tiptap.mode-source .editor-scroll,
-.gridea-tiptap.mode-split .editor-scroll {
+.gridea-tiptap.mode-source .editor-scroll {
   overflow: hidden;
 }
 .editor-header-slot {
@@ -777,19 +725,12 @@ onBeforeUnmount(() => {
 .gridea-tiptap.mode-rich .rich-pane {
   overflow: visible;
 }
-/* source / split：body 撑满剩余高度，正文/分栏内部各自滚动 */
-.gridea-tiptap.mode-source .editor-body,
-.gridea-tiptap.mode-split .editor-body {
+/* source：body 撑满剩余高度，正文内部滚动 */
+.gridea-tiptap.mode-source .editor-body {
   flex: 1;
   overflow: hidden;
 }
 .gridea-tiptap.mode-source .source-pane {
-  overflow: auto;
-}
-.editor-body.mode-split .rich-pane,
-.editor-body.mode-split .source-pane {
-  width: 50%;
-  border-right: 1px solid var(--editor-border);
   overflow: auto;
 }
 
@@ -808,11 +749,6 @@ onBeforeUnmount(() => {
 .editor-body.mode-source .rich-pane {
   display: none;
 }
-/* 单栏正文随容器滚动（高度按内容）；双栏每栏填满各自高度 */
-.gridea-tiptap.mode-split .rich-content {
-  height: 100%;
-}
-
 /* 空文档打字机提示：与正文首行同位（740 限宽居中、同字号行高），不拦截交互 */
 .typewriter-hint {
   position: absolute;
@@ -827,12 +763,6 @@ onBeforeUnmount(() => {
   pointer-events: none;
   user-select: none;
   z-index: 1;
-}
-.gridea-tiptap.mode-split .typewriter-hint {
-  left: 28px; /* 分栏内边距对齐 */
-  right: 28px;
-  margin: 0;
-  max-width: none;
 }
 .tw-caret {
   display: inline-block;

@@ -261,6 +261,13 @@ func Run(assets embed.FS, version string) {
 			application.Startup(ctx)
 			services.Startup(ctx)
 
+			// 前端未被 ErrorBoundary 消化的错误在此汇总，便于用户反馈时从应用日志取证
+			wailsRuntime.EventsOn(ctx, "renderer-error", func(optionalData ...interface{}) {
+				if len(optionalData) > 0 {
+					log.Printf("[renderer-error] %v", optionalData[0])
+				}
+			})
+
 			// 监听前端语言切换事件，运行时重建菜单（仅 macOS 有原生菜单）
 			if !frameless {
 				wailsRuntime.EventsOn(ctx, "app:change-locale", func(optionalData ...interface{}) {

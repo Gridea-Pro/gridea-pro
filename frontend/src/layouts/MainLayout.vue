@@ -120,11 +120,14 @@ fill-rule="evenodd" clip-rule="evenodd"
     <!-- Main Content -->
     <main class="flex-1 flex flex-col min-h-0 overflow-hidden bg-background select-none">
       <div class="flex-1 w-full overflow-y-auto overflow-x-hidden p-0">
-        <router-view v-slot="{ Component }">
-          <keep-alive exclude="Loading,Theme">
-            <component :is="Component" />
-          </keep-alive>
-        </router-view>
+        <!-- 边界只包内容区：某个页面崩了侧栏和部署面板仍可用，可就地重试 -->
+        <ErrorBoundary :label="route.name?.toString()">
+          <router-view v-slot="{ Component }">
+            <keep-alive exclude="Loading,Theme">
+              <component :is="Component" />
+            </keep-alive>
+          </router-view>
+        </ErrorBoundary>
       </div>
     </main>
 
@@ -419,6 +422,7 @@ import {
 } from '@/wailsjs/go/facade/UpdateFacade'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import WindowControls from '@/components/WindowControls/index.vue'
+import ErrorBoundary from '@/components/ErrorBoundary.vue'
 import {
   DocumentTextIcon,
   QueueListIcon,

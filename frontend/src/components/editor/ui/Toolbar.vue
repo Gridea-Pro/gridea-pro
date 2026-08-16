@@ -97,7 +97,6 @@
 
     <div class="tb-group">
       <ToolbarButton :title="t('editor.rich')" :active="mode === 'rich'" @click="emit('update:mode', 'rich')"><Eye /></ToolbarButton>
-      <ToolbarButton :title="t('editor.split')" :active="mode === 'split'" @click="emit('update:mode', 'split')"><Columns2 /></ToolbarButton>
       <ToolbarButton :title="t('editor.source')" :active="mode === 'source'" @click="emit('update:mode', 'source')"><FileCode2 /></ToolbarButton>
     </div>
   </div>
@@ -128,7 +127,7 @@ import {
   IconList as List, IconListNumbers as ListOrdered, IconListCheck as ListChecks, IconBlockquote as Quote, IconMinus as Minus,
   IconAlignLeft as AlignLeft, IconAlignCenter as AlignCenter, IconAlignRight as AlignRight,
   IconLink as LinkIcon, IconPhoto as ImageIcon, IconTable as TableIcon,
-  IconSparkles as Sparkles, IconEye as Eye, IconColumns as Columns2, IconFileCode as FileCode2,
+  IconSparkles as Sparkles, IconEye as Eye, IconFileCode as FileCode2,
   IconDots as Dots, IconFileDescription as FileDescription,
 } from '@tabler/icons-vue'
 
@@ -194,7 +193,7 @@ function run(fn: (c: ChainedCommands) => ChainedCommands) {
   fn(e.chain().focus()).run()
 }
 
-// 同一按钮的双引擎语义：rich/split 走 Tiptap 命令，source 走 CodeMirror Markdown 文本变换
+// 同一按钮的双引擎语义：rich 走 Tiptap 命令，source 走 CodeMirror Markdown 文本变换
 const richActions: Record<string, (c: ChainedCommands) => ChainedCommands> = {
   undo: (c) => c.undo(),
   redo: (c) => c.redo(),

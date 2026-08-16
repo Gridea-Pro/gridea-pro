@@ -12,23 +12,18 @@ position="top-center" :expand="false" rich-colors :duration="2000" :close-button
 
 
 
-    <div v-if="error" class="fixed inset-0 z-[99999] overflow-auto bg-background p-5 text-destructive whitespace-pre-wrap">
-      <h1 class="text-2xl font-bold mb-4">Runtime Error</h1>
-      <pre class="text-sm">{{ error }}</pre>
-    </div>
     <router-view />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onErrorCaptured, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { useThemeStore } from '@/stores/theme'
 import { Toaster } from 'vue-sonner'
 import { safeEventsEmit, safeWindowShow } from '@/helpers/wailsRuntime'
 import { setupToastListeners } from '@/helpers/toast'
 
 const themeStore = useThemeStore()
-const error = ref<string>('')
 const isDev = import.meta.env.DEV
 
 const globalClickListener = (e: MouseEvent) => {
@@ -55,15 +50,6 @@ onUnmounted(() => {
   }
 })
 
-onErrorCaptured((err) => {
-  const errorMessage = err instanceof Error ? err.stack || err.message : String(err)
-  error.value = errorMessage
-  console.error('❌ [App] Error captured:', err)
-
-  safeEventsEmit('renderer-error', errorMessage)
-
-  return false
-})
 </script>
 
 <style>

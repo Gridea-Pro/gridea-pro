@@ -676,6 +676,13 @@
     },
     "render": {
       "failed": "渲染失败"
+    },
+    "boundary": {
+      "title": "此处出错了",
+      "retry": "重试",
+      "copyDiagnostics": "复制诊断信息",
+      "copied": "已复制",
+      "details": "详情"
     }
   },
   "editor": {
@@ -705,7 +712,6 @@
     "table": "表格",
     "aiPolish": "AI 润色",
     "rich": "富文本",
-    "split": "分屏",
     "source": "源码",
     "slash": {
       "h1": "一级标题",

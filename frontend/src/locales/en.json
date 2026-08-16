@@ -679,6 +679,13 @@
     },
     "render": {
       "failed": "Render failed"
+    },
+    "boundary": {
+      "title": "Something went wrong here",
+      "retry": "Retry",
+      "copyDiagnostics": "Copy diagnostics",
+      "copied": "Copied",
+      "details": "Details"
     }
   },
   "editor": {
@@ -708,7 +715,6 @@
     "table": "Table",
     "aiPolish": "AI polish",
     "rich": "Rich text",
-    "split": "Split",
     "source": "Source",
     "slash": {
       "h1": "Heading 1",

@@ -13,7 +13,7 @@ export interface TocItem {
 }
 
 /** 编辑器显示模式 */
-export type EditorMode = 'rich' | 'source' | 'split'
+export type EditorMode = 'rich' | 'source'
 
 /** SourceEditor（CodeMirror 源码栏）暴露给工具栏的 API（defineExpose 的结构化投影） */
 export interface SourcePaneApi {
