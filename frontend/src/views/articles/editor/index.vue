@@ -349,6 +349,8 @@ onUnmounted(() => {
         font-size: 12px;
         color: var(--muted-foreground);
         flex-wrap: wrap;
+        /* 日期 / 字数 / 时长都是数字，等宽数字避免编辑时字数跳动导致整行抖动 */
+        font-variant-numeric: tabular-nums;
 
         .meta-item {
             display: inline-flex;

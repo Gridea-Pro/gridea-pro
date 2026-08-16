@@ -26,7 +26,9 @@
   --editor-hover: color-mix(in srgb, var(--muted-foreground, #64748b) 12%, transparent);
   --editor-radius: var(--radius, 0.5rem);
   --editor-font: var(--font-sans, system-ui, sans-serif);
-  --editor-mono: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Courier New", monospace;
+  /* 指向宿主 --font-mono：此前编辑器自带一套等宽栈，与宿主口径不一致，
+     行内代码 / 代码块 / 源码模式三处各用各的字体。 */
+  --editor-mono: var(--font-mono, ui-monospace, Menlo, Monaco, Consolas, monospace);
 
   /* @ctzhian / MUI 兼容别名（照搬其 CSS 时无需改名） */
   --mui-palette-background-default: var(--editor-bg);

@@ -16,9 +16,23 @@
   outline: none;
   width: 100%;
   min-height: 200px;
-  line-height: 1.75;
-  font-size: 16px;
-  word-break: break-word;
+  font-family: var(--type-family);
+  font-size: var(--type-base);
+  line-height: var(--type-lh);
+  letter-spacing: var(--type-ls);
+  /* 原先用的 `word-break: break-word` 是非标准的废弃值，各引擎解释不一。
+     换成标准写法：overflow-wrap 只在单词长到放不下整行时才断，
+     word-break: normal 保证正常英文单词不会被随意拆开；
+     line-break: strict 启用避头尾禁则，防止逗号句号被挤到行首。 */
+  overflow-wrap: break-word;
+  word-break: normal;
+  line-break: strict;
+  /* macOS WebKit 默认次像素抗锯齿会让中文明显变厚、标题笔画糊连。
+     font-synthesis: style —— 禁止合成粗体（标题内的 strong 会被算到 900，
+     而中文字体没有 900，浏览器会伪造出糊成一团的字形），保留合成斜体
+     （中文无真斜体，禁掉会让 <em> 完全没有视觉反馈）。 */
+  -webkit-font-smoothing: antialiased;
+  font-synthesis: style;
 }
 
 /* ── 文章模式排版（is-post）：单栏限宽居中；双栏各栏填满分栏 ──────────────
@@ -87,8 +101,15 @@
   padding-left: 12px;
 }
 
+/* 垂直节奏。此前所有块级元素一律 0.85em(13.6px)，比行距 28px 还小——
+   段落之间的分隔弱于行与行之间，整屏糊成一块。现在段落按 1 行、
+   代码块/引用/表格/图片这类"有体量"的块按 1.4 行，节奏拉开。 */
 .gridea-tiptap .ProseMirror > * + * {
-  margin-top: 0.85em;
+  margin-top: var(--gap-para);
+}
+.gridea-tiptap .ProseMirror > * + :is(pre, blockquote, table, hr, figure, [data-type='details']),
+.gridea-tiptap .ProseMirror > :is(pre, blockquote, table, hr, figure, [data-type='details']) + * {
+  margin-top: var(--gap-block);
 }
 
 /* 占位符：只在「整篇为空」时显示第一行（.is-empty 会让每个空行都冒出提示，去掉） */
@@ -100,22 +121,36 @@
   height: 0;
 }
 
-/* 标题 */
-.gridea-tiptap .ProseMirror h1,
-.gridea-tiptap .ProseMirror h2,
-.gridea-tiptap .ProseMirror h3,
-.gridea-tiptap .ProseMirror h4,
-.gridea-tiptap .ProseMirror h5,
-.gridea-tiptap .ProseMirror h6 {
+/* 标题。字号取自 --type-h*（与工具栏字号下拉共用同一份派生值，见
+   helpers/typography.ts）；此前用 em 比例，与下拉写死的 26/22/20/18 对不上。
+   h5/h6 此前完全没有字号规则，被 Tailwind preflight 的
+   `h1..h6 { font-size: inherit }` 打回正文大小，六级层级塌成四级。 */
+.gridea-tiptap .ProseMirror :is(h1, h2, h3, h4, h5, h6) {
   font-weight: 700;
-  line-height: 1.3;
-  margin-top: 1.4em;
-  margin-bottom: 0.5em;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  margin-bottom: 0;
 }
-.gridea-tiptap .ProseMirror h1 { font-size: 1.9em; }
-.gridea-tiptap .ProseMirror h2 { font-size: 1.55em; }
-.gridea-tiptap .ProseMirror h3 { font-size: 1.3em; }
-.gridea-tiptap .ProseMirror h4 { font-size: 1.1em; }
+.gridea-tiptap .ProseMirror > :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: var(--gap-heading);
+}
+/* 标题从属于它下面的内容：与上文拉开，与自己的正文贴紧。
+   此前标题的 margin-bottom 会与后续段落的 margin-top 合并，
+   标题上下被撑得一样宽，看起来是"飘"在两段中间而不附着于任何一段。 */
+.gridea-tiptap .ProseMirror > :is(h1, h2, h3, h4, h5, h6) + * {
+  margin-top: calc(var(--rhythm) * 0.4);
+}
+.gridea-tiptap .ProseMirror h1 { font-size: var(--type-h1); }
+.gridea-tiptap .ProseMirror h2 { font-size: var(--type-h2); }
+.gridea-tiptap .ProseMirror h3 { font-size: var(--type-h3); }
+.gridea-tiptap .ProseMirror h4 { font-size: var(--type-h4); }
+.gridea-tiptap .ProseMirror h5 { font-size: var(--type-h5); }
+/* h5/h6 与正文同字号——字号维度到 h4 已用尽，再缩就小于正文。
+   两级靠字重区分，h6 再降一档颜色，保证六级视觉上仍可分辨。 */
+.gridea-tiptap .ProseMirror h6 {
+  font-size: var(--type-h6);
+  color: var(--editor-muted);
+}
 
 /* 链接 */
 .gridea-tiptap .ProseMirror a {
@@ -132,14 +167,27 @@
   margin-left: 0;
   color: var(--editor-muted);
 }
+/* 嵌套容器内部的段落间距：顶层的 `> * + *` 只管直接子元素，
+   引用/折叠块里的多个段落此前完全没有间距规则，全部贴死成一坨。 */
+.gridea-tiptap .ProseMirror blockquote > * + *,
+.gridea-tiptap .ProseMirror [data-type='details'] > * + * {
+  margin-top: var(--gap-para);
+}
 
 /* 列表 */
 /* 列表：Tailwind v4 preflight 会把 ul/ol 的 list-style 清成 none——
    ol 此前漏配导致序号完全不渲染（看起来像"回车不递增"），必须逐级显式恢复。 */
+/* 注意不要在此写 margin：这条规则特异性 (0,2,1) 高于顶层节奏规则
+   `> * + *` 的 (0,2,0)，此前的 `margin: 0.3em 0` 正是这样把列表与
+   上下文的间距压到 4.8px，列表几乎贴死在前后段落上。间距交给节奏规则。 */
 .gridea-tiptap .ProseMirror ul,
 .gridea-tiptap .ProseMirror ol {
   padding-left: 1.6em;
-  margin: 0.3em 0;
+}
+/* 嵌套列表跟随父项，不吃整段间距 */
+.gridea-tiptap .ProseMirror li > ul,
+.gridea-tiptap .ProseMirror li > ol {
+  margin-top: calc(var(--rhythm) * 0.15);
 }
 .gridea-tiptap .ProseMirror ul { list-style: disc; }
 .gridea-tiptap .ProseMirror ul ul { list-style: circle; }
@@ -147,8 +195,10 @@
 .gridea-tiptap .ProseMirror ol { list-style: decimal; }
 .gridea-tiptap .ProseMirror ol ol { list-style: lower-alpha; }
 .gridea-tiptap .ProseMirror ol ol ol { list-style: lower-roman; }
-.gridea-tiptap .ProseMirror li { margin: 0.15em 0; }
+.gridea-tiptap .ProseMirror li { margin: calc(var(--rhythm) * 0.1) 0; }
 .gridea-tiptap .ProseMirror li > p { margin: 0; }
+/* 列表项内的第二段起要有间距，否则多段列表项内部同样贴死 */
+.gridea-tiptap .ProseMirror li > p + p { margin-top: calc(var(--rhythm) * 0.5); }
 /* 列表符号/序号用主题色 */
 .gridea-tiptap .ProseMirror li::marker {
   color: var(--editor-accent);
@@ -168,7 +218,7 @@
   display: flex;
   align-items: flex-start;
   gap: 0.55em;
-  margin: 0.15em 0;
+  margin: calc(var(--rhythm) * 0.1) 0;
 }
 .gridea-tiptap .ProseMirror ul[data-type='taskList'] li > label {
   flex-shrink: 0;
@@ -226,14 +276,36 @@
   text-decoration-color: color-mix(in srgb, var(--editor-muted) 50%, transparent);
 }
 
-/* 行内代码 */
+/* 行内代码。垂直 padding 压到 0.08em 并锁死行高：中文行本就顶满行框，
+   再加垂直内边距会把所在行撑高，段落里出现代码的那一行会比邻行更宽。 */
 .gridea-tiptap .ProseMirror code {
   background: var(--editor-code-bg);
   border-radius: 4px;
-  padding: 0.15em 0.35em;
+  padding: 0.08em 0.35em;
   font-family: var(--editor-mono);
-  font-size: 0.9em;
+  font-size: 0.92em;
+  line-height: inherit;
 }
+
+/* ── 行内语义元素 ──────────────────────────────────────
+   此前 em/s/sub/sup/kbd 全无规则，只能吃 Tailwind preflight 的默认值。 */
+.gridea-tiptap .ProseMirror em { font-style: italic; }
+/* 显式 700 覆盖 preflight 的 `strong { font-weight: bolder }`——bolder 是
+   相对值，在 700 的标题里会算到 900，而中文字体没有 900 字重。 */
+.gridea-tiptap .ProseMirror :is(strong, b) { font-weight: 700; }
+.gridea-tiptap .ProseMirror s { text-decoration-color: color-mix(in srgb, currentColor 55%, transparent); }
+.gridea-tiptap .ProseMirror :is(sub, sup) { font-size: 0.75em; line-height: 0; }
+.gridea-tiptap .ProseMirror kbd {
+  padding: 0.1em 0.4em;
+  border: 1px solid var(--editor-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--editor-secondary);
+  font-family: var(--editor-mono);
+  font-size: 0.85em;
+}
+.gridea-tiptap .ProseMirror dt { font-weight: 600; }
+.gridea-tiptap .ProseMirror dd { margin-left: 1.6em; }
 
 /* 代码块 */
 .gridea-tiptap .ProseMirror pre {
@@ -256,7 +328,7 @@
 .gridea-tiptap .ProseMirror hr {
   border: none;
   border-top: 1px solid var(--editor-border);
-  margin: 1.5em 0;
+  margin: var(--gap-block) 0;
 }
 
 /* 图片 */
@@ -269,11 +341,11 @@
 }
 
 /* 表格 */
+/* 同列表：不在此写 margin，否则会以更高特异性压掉节奏规则（此前 0.5em ≈ 8px） */
 .gridea-tiptap .ProseMirror table {
   border-collapse: collapse;
   table-layout: fixed;
   width: 100%;
-  margin: 0.5em 0;
   overflow: hidden;
 }
 .gridea-tiptap .ProseMirror th,
@@ -318,7 +390,7 @@
 /* 数学公式 */
 .gridea-tiptap .ProseMirror .math-block {
   text-align: center;
-  margin: 1em 0;
+  margin: var(--gap-block) 0;
 }
 .gridea-tiptap .ProseMirror .math-inline { display: inline-block; }
 
@@ -336,7 +408,7 @@
   border-top: 1px dashed var(--editor-accent);
   text-align: center;
   position: relative;
-  margin: 1.5em 0;
+  margin: var(--gap-block) 0;
 }
 .gridea-tiptap .ProseMirror .more-break::after {
   content: 'more';
@@ -346,7 +418,7 @@
   transform: translateX(-50%);
   background: var(--editor-bg);
   color: var(--editor-muted);
-  font-size: 11px;
+  font-size: calc(var(--type-base) * 0.7);
   padding: 0 6px;
 }
 

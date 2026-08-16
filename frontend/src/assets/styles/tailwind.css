@@ -48,9 +48,13 @@
   --default-transition-duration: var(--dur-2);
   --default-transition-timing-function: cubic-bezier(.2, .7, .3, 1);
 
-  /* Fonts */
-  --font-sans: "HarmonyOS_Sans_SC", "Gilroy", "PingFang SC", "PingFang TC", "PingFang HK", -apple-system, BlinkMacSystemFont, "SF UI Text", "STheiti", "Microsoft YaHei", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
+  /* Fonts —— 只列真实可解析的字体：项目不打包任何字体文件，无 @font-face。
+     此前栈首的 HarmonyOS_Sans_SC / Gilroy 两处都没有对应字体，永远解析不到，
+     实际全靠后面的 PingFang 兜底——写了等于骗人，且掩盖了「西文没有独立字体分工」。
+     现在 macOS 走 SF Pro + PingFang，Windows 走 Segoe UI + 微软雅黑，均为系统自带。
+     JetBrains Mono 同样未打包，保留在 mono 栈首是渐进增强：装了就用，没装走系统等宽。 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
 
   /* Spacing */
   --spacing-sidebar: 200px;

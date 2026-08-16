@@ -176,7 +176,7 @@ const editor = useEditor({
     }),
   ],
   editorProps: {
-    attributes: { class: 'markdown-body focus:outline-none' },
+    attributes: { class: 'focus:outline-none' },
     handlePaste: (_view, event) => {
       const files = Array.from(event.clipboardData?.files || []).filter((f) => f.type.startsWith('image/'))
       if (files.length) {
@@ -757,8 +757,9 @@ onBeforeUnmount(() => {
   right: 0;
   margin: 0 auto;
   max-width: 740px;
-  font-size: 16px;
-  line-height: 1.75;
+  /* 必须与正文同源，否则改基准字号后提示层会与首行错位 */
+  font-size: var(--type-base);
+  line-height: var(--type-lh);
   color: var(--editor-muted);
   pointer-events: none;
   user-select: none;
