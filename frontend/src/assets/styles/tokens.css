@@ -127,6 +127,9 @@
      两边都由 helpers/typography.ts 的 typeScale() 派生，结构上不可能对不上。
      下面是 16 基准的默认值；设置面板改基准字号时由该模块整组覆写。 */
   --type-base: 16px;
+  /* 文章标题（整篇的题目）必须压过正文 h1。此前它写死为 Tailwind 的 text-xl(20px)，
+     比正文 h1(30.4px)、h2(24.8px) 都小，整篇的题目反而不如正文里的小标题显眼。 */
+  --type-title: 32px;
   --type-h1: 28px;
   --type-h2: 23px;
   --type-h3: 19px;

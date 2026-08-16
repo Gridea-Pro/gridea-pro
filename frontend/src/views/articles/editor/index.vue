@@ -15,7 +15,7 @@
                     @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)">
                     <template #header>
                         <input ref="titleInputRef" v-model="form.title"
-                            class="post-title py-4 border-none pt-10 pb-2 bg-transparent text-xl focus:outline-none focus:ring-0 text-foreground placeholder:text-muted-foreground/50 font-bold"
+                            class="post-title py-4 border-none pt-10 pb-2 bg-transparent focus:outline-none focus:ring-0 text-foreground placeholder:text-muted-foreground/50 font-bold"
                             :placeholder="$t('article.title')" @change="handleTitleChange" @focus="handleTitleFocus"
                             @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)" />
 
@@ -337,6 +337,11 @@ onUnmounted(() => {
         width: 740px;
         margin: 0 auto;
         display: block;
+        /* 字号走排版 token，随基准字号联动；不能再用 Tailwind 的 text-xl 写死，
+           那会让整篇的题目比正文 h1/h2 还小。 */
+        font-size: var(--type-title);
+        line-height: 1.3;
+        letter-spacing: -0.02em;
     }
 
     .post-meta {

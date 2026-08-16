@@ -12,9 +12,13 @@
 
 /** 六级标题相对正文的比例。h5/h6 = 1 是有意的，见 tokens.css 中的说明。 */
 const HEADING_RATIOS = [1.75, 1.44, 1.2, 1.0625, 1, 1] as const
+/** 文章标题（整篇的题目）必须压过正文 h1，否则层级倒挂。 */
+const TITLE_RATIO = 2
 
 export interface TypeScale {
   base: number
+  /** 文章标题，恒大于 headings[0] */
+  title: number
   /** 下标 0-5 对应 h1-h6 */
   headings: number[]
 }
@@ -22,7 +26,11 @@ export interface TypeScale {
 /** 由基准字号派生整数字号阶。base 非法时回落到 16。 */
 export function typeScale(base: number): TypeScale {
   const b = Number.isFinite(base) && base > 0 ? Math.round(base) : 16
-  return { base: b, headings: HEADING_RATIOS.map((r) => Math.round(b * r)) }
+  return {
+    base: b,
+    title: Math.round(b * TITLE_RATIO),
+    headings: HEADING_RATIOS.map((r) => Math.round(b * r)),
+  }
 }
 
 /** 取某一级标题的字号；level 越界时返回正文字号。 */
@@ -37,6 +45,7 @@ export function headingSize(scale: TypeScale, level: number): number {
 export function applyTypeScale(base: number, root: HTMLElement = document.documentElement): TypeScale {
   const scale = typeScale(base)
   root.style.setProperty('--type-base', `${scale.base}px`)
+  root.style.setProperty('--type-title', `${scale.title}px`)
   scale.headings.forEach((size, i) => root.style.setProperty(`--type-h${i + 1}`, `${size}px`))
   return scale
 }
