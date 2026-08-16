@@ -10,10 +10,13 @@
  * 而字号下拉必须显示整数。取整在派生时一次做掉，样式和 UI 拿到的是同一批整数。
  */
 
-/** 六级标题相对正文的比例。h5/h6 = 1 是有意的，见 tokens.css 中的说明。 */
-const HEADING_RATIOS = [1.75, 1.44, 1.2, 1.0625, 1, 1] as const
+/**
+ * 六级标题相对正文的比例。h5/h6 = 1 是有意的，见 tokens.css 中的说明。
+ * index.html 的防闪脚本内联了同一份比例，由 scripts/check-typography-sync.mts 守护同步。
+ */
+export const HEADING_RATIOS = [1.75, 1.44, 1.2, 1.0625, 1, 1] as const
 /** 文章标题（整篇的题目）必须压过正文 h1，否则层级倒挂。 */
-const TITLE_RATIO = 2
+export const TITLE_RATIO = 2
 
 export interface TypeScale {
   base: number
@@ -54,4 +57,76 @@ export function applyTypeScale(base: number, root: HTMLElement = document.docume
 export function applyTypeFamily(family: string, root: HTMLElement = document.documentElement): void {
   if (family) root.style.setProperty('--type-family', family)
   else root.style.removeProperty('--type-family')
+}
+
+/** 可选的正文基准字号。范围两端由「一屏能读」和「不至于糊成一片」定，不做无级调节。 */
+export const PROSE_SIZES = [14, 15, 16, 17, 18, 20] as const
+export const PROSE_SIZE_DEFAULT = 16
+
+export interface ProseFontOption {
+  id: string
+  labelKey: string
+  /** 完整字体栈；空串表示跟随界面字体（--font-sans） */
+  stack: string
+  /** 可用性探测用的首选字体名；空串表示无需探测（系统默认永远可用） */
+  probe: string
+}
+
+/**
+ * 正文字体候选。只列**系统自带**字体（决策 2：不打包字体文件），
+ * 且每项都要能通过 isFontAvailable 探测——`--font-sans` 栈首那两个
+ * 本机根本不存在的字体名就是反面教材，写了永远解析不到、白白掩盖真实渲染结果。
+ */
+export const PROSE_FONTS: ReadonlyArray<ProseFontOption> = [
+  { id: 'system', labelKey: 'preferences.proseFontSystem', stack: '', probe: '' },
+  {
+    id: 'pingfang',
+    labelKey: 'preferences.proseFontPingFang',
+    stack: '"PingFang SC", "Hiragino Sans GB", sans-serif',
+    probe: 'PingFang SC',
+  },
+  {
+    id: 'yahei',
+    labelKey: 'preferences.proseFontYaHei',
+    stack: '"Microsoft YaHei", sans-serif',
+    probe: 'Microsoft YaHei',
+  },
+  {
+    id: 'songti',
+    labelKey: 'preferences.proseFontSongti',
+    stack: '"Songti SC", "SimSun", serif',
+    probe: 'Songti SC',
+  },
+  {
+    id: 'simsun',
+    labelKey: 'preferences.proseFontSimSun',
+    stack: '"SimSun", "Songti SC", serif',
+    probe: 'SimSun',
+  },
+  {
+    id: 'wenkai',
+    labelKey: 'preferences.proseFontWenKai',
+    stack: '"LXGW WenKai", "LXGW WenKai Screen", serif',
+    probe: 'LXGW WenKai',
+  },
+]
+
+/**
+ * 探测某个字体本机是否真的存在。
+ * 用 canvas 宽度对比而非 document.fonts.check —— 后者对未经 @font-face 声明的
+ * 系统字体判定不可靠，装没装都可能返回 true。
+ */
+export function isFontAvailable(family: string): boolean {
+  if (!family) return true
+  if (typeof document === 'undefined') return true
+  const ctx = document.createElement('canvas').getContext('2d')
+  if (!ctx) return true
+  // 中西文混排样本：只用西文的话，缺失的中文字体会因为西文回退一致而误判为可用
+  const sample = 'MMMWWWlliI0Oo中文字体测试'
+  return ['monospace', 'serif', 'sans-serif'].some((generic) => {
+    ctx.font = `72px ${generic}`
+    const base = ctx.measureText(sample).width
+    ctx.font = `72px "${family}", ${generic}`
+    return ctx.measureText(sample).width !== base
+  })
 }

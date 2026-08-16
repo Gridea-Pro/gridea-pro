@@ -74,6 +74,49 @@
       </div>
     </div>
 
+    <div class="mb-8">
+      <div class="text-sm font-medium text-muted-foreground mb-4">{{ t('preferences.proseFontSize') }}</div>
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-for="size in proseSizes"
+          :key="size"
+          type="button"
+          class="min-w-14 px-3 py-2 bg-card border rounded-lg cursor-pointer transition-colors hover:border-primary/50 tabular-nums"
+          :class="proseFontSize === size ? 'border-primary bg-accent text-primary-text font-medium' : 'border-border text-foreground'"
+          @click="proseFontSize = size"
+        >{{ size }}</button>
+      </div>
+      <div class="text-xs text-muted-foreground mt-2">{{ t('preferences.proseFontSizeHint') }}</div>
+    </div>
+
+    <div class="mb-8">
+      <div class="text-sm font-medium text-muted-foreground mb-4">{{ t('preferences.proseFontFamily') }}</div>
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 max-w-3xl">
+        <button
+          v-for="font in proseFonts"
+          :key="font.id"
+          type="button"
+          :disabled="!font.available"
+          class="flex flex-col items-start gap-1 px-3 py-2.5 bg-card border rounded-lg transition-colors text-left"
+          :class="[
+            proseFontId === font.id ? 'border-primary bg-accent' : 'border-border',
+            font.available ? 'cursor-pointer hover:border-primary/50' : 'opacity-40 cursor-not-allowed',
+          ]"
+          @click="font.available && (proseFontId = font.id)"
+        >
+          <span
+            class="text-base leading-tight"
+            :class="proseFontId === font.id ? 'text-primary-text' : 'text-foreground'"
+            :style="font.stack ? { fontFamily: font.stack } : undefined"
+          >{{ t('preferences.proseFontSample') }}</span>
+          <span class="text-xs text-muted-foreground">
+            {{ font.label }}<template v-if="!font.available"> · {{ t('preferences.proseFontMissing') }}</template>
+          </span>
+        </button>
+      </div>
+      <div class="text-xs text-muted-foreground mt-2">{{ t('preferences.proseFontFamilyHint') }}</div>
+    </div>
+
     <div>
       <div class="text-sm font-medium text-muted-foreground mb-4">{{ t('preferences.editorFontFamily') }}</div>
       <Input
@@ -107,6 +150,7 @@ import {
   SparklesIcon,
 } from '@heroicons/vue/24/outline'
 import { Input } from '@/components/ui/input'
+import { PROSE_FONTS, PROSE_SIZES, isFontAvailable } from '@/helpers/typography'
 
 const { t } = useI18n()
 const themeStore = useThemeStore()
@@ -130,6 +174,30 @@ const editorFontFamily = computed({
   get: () => themeStore.editorFontFamily,
   set: (val: string) => themeStore.setEditorFontFamily(val),
 })
+
+const proseFontSize = computed({
+  get: () => themeStore.proseFontSize,
+  set: (val: number) => themeStore.setProseFontSize(val),
+})
+
+const proseFontId = computed({
+  get: () => themeStore.proseFontId,
+  set: (val: string) => themeStore.setProseFontId(val),
+})
+
+const proseSizes = PROSE_SIZES
+
+// 可用性只探测一次：字体不会在应用运行期间被装上，每次渲染都测 6 次
+// canvas 文本宽度纯属浪费。不可用的候选置灰而不是隐藏，用户能看见"有这个选项、
+// 但本机没装"，比选项凭空消失好解释。
+const proseFonts = computed(() =>
+  PROSE_FONTS.map((f) => ({
+    id: f.id,
+    stack: f.stack,
+    label: t(f.labelKey),
+    available: isFontAvailable(f.probe),
+  }))
+)
 
 const modeOptions = computed(() => [
   { label: t('preferences.light'), value: 'light' as ThemeMode, icon: SunIcon },

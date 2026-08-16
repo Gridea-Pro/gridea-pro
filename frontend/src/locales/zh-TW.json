@@ -629,9 +629,21 @@
     "light": "淺色",
     "dark": "深色",
     "followSystem": "跟隨系統",
-    "editorFontFamily": "編輯器字體",
+    "editorFontFamily": "程式碼編輯器字體",
     "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
-    "editorFontFamilyHint": "多個字體用英文逗號分隔，前面的字體優先使用"
+    "editorFontFamilyHint": "用於主題自訂 CSS 等程式碼輸入框，不影響文章內文",
+    "proseFontSize": "內文字級",
+    "proseFontSizeHint": "行距、段落間距與標題大小會按比例跟隨",
+    "proseFontFamily": "內文字體",
+    "proseFontFamilyHint": "僅列出本機已安裝的系統字體，未安裝的無法選取",
+    "proseFontSample": "內文字體 Aa 123",
+    "proseFontMissing": "未安裝",
+    "proseFontSystem": "跟隨介面",
+    "proseFontPingFang": "蘋方",
+    "proseFontYaHei": "微軟雅黑",
+    "proseFontSongti": "宋體",
+    "proseFontSimSun": "中易宋體",
+    "proseFontWenKai": "霞鶩文楷"
   },
   "shortcutKeys": {
     "editing": "編輯",

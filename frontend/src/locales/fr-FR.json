@@ -629,9 +629,21 @@
     "light": "Clair",
     "dark": "Sombre",
     "followSystem": "Suivre le système",
-    "editorFontFamily": "Police de l'éditeur",
+    "editorFontFamily": "Police de l'éditeur de code",
     "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
-    "editorFontFamilyHint": "Plusieurs polices séparées par des virgules ; la première police disponible est utilisée"
+    "editorFontFamilyHint": "Utilisée par les champs de code comme le CSS personnalisé du thème ; sans effet sur le corps de l'article",
+    "proseFontSize": "Taille du texte",
+    "proseFontSizeHint": "L'interligne, l'espacement des paragraphes et les titres suivent proportionnellement",
+    "proseFontFamily": "Police du texte",
+    "proseFontFamilyHint": "Seules les polices système installées sur cet appareil sont sélectionnables",
+    "proseFontSample": "Texte 汉字 Aa",
+    "proseFontMissing": "non installée",
+    "proseFontSystem": "Suivre l'interface",
+    "proseFontPingFang": "PingFang SC",
+    "proseFontYaHei": "Microsoft YaHei",
+    "proseFontSongti": "Songti SC",
+    "proseFontSimSun": "SimSun",
+    "proseFontWenKai": "LXGW WenKai"
   },
   "shortcutKeys": {
     "editing": "Édition",

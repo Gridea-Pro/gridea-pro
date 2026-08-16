@@ -629,9 +629,21 @@
     "light": "Светлый",
     "dark": "Тёмный",
     "followSystem": "Системный",
-    "editorFontFamily": "Шрифт редактора",
+    "editorFontFamily": "Шрифт редактора кода",
     "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
-    "editorFontFamilyHint": "Несколько шрифтов через запятую; используется первый доступный шрифт"
+    "editorFontFamilyHint": "Применяется к полям кода, например к пользовательскому CSS темы; на текст статьи не влияет",
+    "proseFontSize": "Размер основного текста",
+    "proseFontSizeHint": "Межстрочный интервал, отступы абзацев и размеры заголовков масштабируются пропорционально",
+    "proseFontFamily": "Шрифт основного текста",
+    "proseFontFamilyHint": "Доступны только системные шрифты, установленные на этом устройстве",
+    "proseFontSample": "Текст 汉字 Aa",
+    "proseFontMissing": "не установлен",
+    "proseFontSystem": "Как в интерфейсе",
+    "proseFontPingFang": "PingFang SC",
+    "proseFontYaHei": "Microsoft YaHei",
+    "proseFontSongti": "Songti SC",
+    "proseFontSimSun": "SimSun",
+    "proseFontWenKai": "LXGW WenKai"
   },
   "shortcutKeys": {
     "editing": "Редактирование",

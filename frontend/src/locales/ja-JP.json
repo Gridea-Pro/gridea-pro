@@ -629,9 +629,21 @@
     "light": "ライト",
     "dark": "ダーク",
     "followSystem": "システムに従う",
-    "editorFontFamily": "エディターフォント",
+    "editorFontFamily": "コードエディタのフォント",
     "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
-    "editorFontFamilyHint": "複数のフォントは英字カンマで区切り、率先使用的是前面的字体"
+    "editorFontFamilyHint": "テーマのカスタム CSS など、コード入力欄に適用されます。本文には影響しません",
+    "proseFontSize": "本文の文字サイズ",
+    "proseFontSizeHint": "行間・段落間隔・見出しサイズが比例して変わります",
+    "proseFontFamily": "本文フォント",
+    "proseFontFamilyHint": "この端末にインストール済みのシステムフォントのみ選択できます",
+    "proseFontSample": "本文フォント 漢字 Aa",
+    "proseFontMissing": "未インストール",
+    "proseFontSystem": "画面に合わせる",
+    "proseFontPingFang": "PingFang SC",
+    "proseFontYaHei": "Microsoft YaHei",
+    "proseFontSongti": "Songti SC",
+    "proseFontSimSun": "SimSun",
+    "proseFontWenKai": "LXGW WenKai"
   },
   "shortcutKeys": {
     "editing": "編集",

@@ -629,9 +629,21 @@
     "light": "Claro",
     "dark": "Oscuro",
     "followSystem": "Seguir sistema",
-    "editorFontFamily": "Fuente del editor",
+    "editorFontFamily": "Fuente del editor de código",
     "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
-    "editorFontFamilyHint": "Múltiples fuentes separadas por comas; se usa la primera fuente disponible"
+    "editorFontFamilyHint": "Se usa en campos de código como el CSS personalizado del tema; no afecta al texto del artículo",
+    "proseFontSize": "Tamaño del texto",
+    "proseFontSizeHint": "El interlineado, el espaciado de párrafos y los títulos se escalan proporcionalmente",
+    "proseFontFamily": "Fuente del texto",
+    "proseFontFamilyHint": "Solo se pueden elegir las fuentes del sistema instaladas en este equipo",
+    "proseFontSample": "Texto 汉字 Aa",
+    "proseFontMissing": "no instalada",
+    "proseFontSystem": "Seguir la interfaz",
+    "proseFontPingFang": "PingFang SC",
+    "proseFontYaHei": "Microsoft YaHei",
+    "proseFontSongti": "Songti SC",
+    "proseFontSimSun": "SimSun",
+    "proseFontWenKai": "LXGW WenKai"
   },
   "shortcutKeys": {
     "editing": "Edición",

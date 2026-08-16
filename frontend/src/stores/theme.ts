@@ -1,5 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import {
+  PROSE_FONTS,
+  PROSE_SIZES,
+  PROSE_SIZE_DEFAULT,
+  applyTypeScale,
+  applyTypeFamily,
+} from '@/helpers/typography'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 /** 外观主题：管底色质感 */
@@ -13,6 +20,10 @@ export const STORAGE_KEYS = {
   accent: 'app_theme_accent',
   /** v1 的一维主题色，仅用于一次性迁移 */
   legacyColor: 'app_theme_color',
+  /** 正文基准字号；行距、段距、标题字阶全部由它派生 */
+  proseSize: 'app_prose_font_size',
+  /** 正文字体，取值为 PROSE_FONTS 的 id */
+  proseFont: 'app_prose_font_family',
 } as const
 
 export const DEFAULT_SURFACE: ThemeSurface = 'pure'
@@ -52,8 +63,20 @@ export const ACCENT_REGISTRY: ReadonlyArray<{ value: ThemeAccent; labelKey: stri
 const SURFACES = SURFACE_REGISTRY.map((s) => s.value)
 const ACCENTS = ACCENT_REGISTRY.map((a) => a.value)
 
+/** 代码编辑器（主题自定义 CSS 框）的等宽字体，与正文字体无关 */
 export const EDITOR_FONT_FAMILY_DEFAULT =
   'ui-monospace, Menlo, Monaco, "Cascadia Code", "Segoe UI Mono", Consolas, "Courier New", monospace'
+
+/** 读取正文字号，非法值一律回落到默认，避免脏数据把正文撑成天文数字 */
+function readProseSize(): number {
+  const raw = Number(localStorage.getItem(STORAGE_KEYS.proseSize))
+  return (PROSE_SIZES as readonly number[]).includes(raw) ? raw : PROSE_SIZE_DEFAULT
+}
+
+function readProseFont(): string {
+  const id = localStorage.getItem(STORAGE_KEYS.proseFont) || 'system'
+  return PROSE_FONTS.some((f) => f.id === id) ? id : 'system'
+}
 
 /** 读取外观 + 强调色，必要时从 v1 的单一主题色迁移 */
 function readSurfaceAndAccent(): [ThemeSurface, ThemeAccent] {
@@ -83,6 +106,8 @@ export const useThemeStore = defineStore('theme', () => {
   const editorFontFamily = ref<string>(
     localStorage.getItem('app_editor_font_family') || EDITOR_FONT_FAMILY_DEFAULT
   )
+  const proseFontSize = ref<number>(readProseSize())
+  const proseFontId = ref<string>(readProseFont())
 
   const isDark = computed(() => (mode.value === 'system' ? systemIsDark.value : mode.value === 'dark'))
 
@@ -116,8 +141,29 @@ export const useThemeStore = defineStore('theme', () => {
     localStorage.setItem('app_editor_font_family', value)
   }
 
+  /** 应用排版偏好。字号一变，行距 / 段距 / 标题字阶全部按比例联动。 */
+  function applyTypography() {
+    applyTypeScale(proseFontSize.value)
+    applyTypeFamily(PROSE_FONTS.find((f) => f.id === proseFontId.value)?.stack ?? '')
+  }
+
+  function setProseFontSize(size: number) {
+    if (!(PROSE_SIZES as readonly number[]).includes(size)) return
+    proseFontSize.value = size
+    localStorage.setItem(STORAGE_KEYS.proseSize, String(size))
+    applyTypography()
+  }
+
+  function setProseFontId(id: string) {
+    if (!PROSE_FONTS.some((f) => f.id === id)) return
+    proseFontId.value = id
+    localStorage.setItem(STORAGE_KEYS.proseFont, id)
+    applyTypography()
+  }
+
   function initTheme() {
     applyTheme()
+    applyTypography()
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     systemIsDark.value = mediaQuery.matches
     mediaQuery.addEventListener('change', (e) => {
@@ -134,12 +180,17 @@ export const useThemeStore = defineStore('theme', () => {
     accent,
     systemIsDark,
     editorFontFamily,
+    proseFontSize,
+    proseFontId,
     isDark,
     setMode,
     setSurface,
     setAccent,
     setEditorFontFamily,
+    setProseFontSize,
+    setProseFontId,
     applyTheme,
+    applyTypography,
     initTheme,
   }
 })

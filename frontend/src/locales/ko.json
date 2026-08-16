@@ -629,9 +629,21 @@
     "light": "라이트",
     "dark": "다크",
     "followSystem": "시스템 설정 따르기",
-    "editorFontFamily": "편집기 폰트",
+    "editorFontFamily": "코드 편집기 글꼴",
     "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
-    "editorFontFamilyHint": "여러 폰트는 영문 쉼표로 구분하며, 먼저 나오는 폰트가 우선 사용됩니다"
+    "editorFontFamilyHint": "테마 사용자 CSS 등 코드 입력란에 적용되며 본문에는 영향을 주지 않습니다",
+    "proseFontSize": "본문 글자 크기",
+    "proseFontSizeHint": "줄 간격, 문단 간격, 제목 크기가 비례해 조정됩니다",
+    "proseFontFamily": "본문 글꼴",
+    "proseFontFamilyHint": "이 기기에 설치된 시스템 글꼴만 선택할 수 있습니다",
+    "proseFontSample": "본문 글꼴 漢字 Aa",
+    "proseFontMissing": "미설치",
+    "proseFontSystem": "인터페이스 따르기",
+    "proseFontPingFang": "PingFang SC",
+    "proseFontYaHei": "Microsoft YaHei",
+    "proseFontSongti": "Songti SC",
+    "proseFontSimSun": "SimSun",
+    "proseFontWenKai": "LXGW WenKai"
   },
   "shortcutKeys": {
     "editing": "편집",

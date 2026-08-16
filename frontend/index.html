@@ -42,6 +42,28 @@
           }
           html.setAttribute('data-surface', surface);
           html.setAttribute('data-accent', accent);
+
+          // 排版同理：字号只在 store 挂载后才应用的话，调过字号的用户会先看到
+          // 一帧 16px 默认排版再跳到自己的设置。字阶比例与取整规则必须与
+          // src/helpers/typography.ts 的 typeScale() 一致，改一处需同步另一处。
+          var SIZES = [14, 15, 16, 17, 18, 20];
+          var size = Number(localStorage.getItem('app_prose_font_size'));
+          if (SIZES.indexOf(size) < 0) size = 16;
+          var RATIOS = [1.75, 1.44, 1.2, 1.0625, 1, 1];
+          html.style.setProperty('--type-base', size + 'px');
+          html.style.setProperty('--type-title', Math.round(size * 2) + 'px');
+          for (var i = 0; i < RATIOS.length; i++) {
+            html.style.setProperty('--type-h' + (i + 1), Math.round(size * RATIOS[i]) + 'px');
+          }
+          var FONTS = {
+            pingfang: '"PingFang SC", "Hiragino Sans GB", sans-serif',
+            yahei: '"Microsoft YaHei", sans-serif',
+            songti: '"Songti SC", "SimSun", serif',
+            simsun: '"SimSun", "Songti SC", serif',
+            wenkai: '"LXGW WenKai", "LXGW WenKai Screen", serif'
+          };
+          var stack = FONTS[localStorage.getItem('app_prose_font_family')];
+          if (stack) html.style.setProperty('--type-family', stack);
         } catch (e) {
           document.documentElement.setAttribute('data-surface', 'pure');
           document.documentElement.setAttribute('data-accent', 'green');
