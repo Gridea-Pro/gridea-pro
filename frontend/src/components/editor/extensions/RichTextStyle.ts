@@ -29,11 +29,20 @@ function isGradient(v: unknown): boolean {
   return typeof v === 'string' && v.includes('gradient')
 }
 
-/** DOM style getter 会把 hex 归一成 rgb(...)；序列化统一回小写 hex，保证 .md 形态稳定 */
+/**
+ * DOM style getter 会把 hex 归一成 rgb(...)；序列化统一回小写 hex，保证 .md 形态稳定。
+ * 必须全局替换而非整串匹配：渐变值形如 `linear-gradient(90deg, rgb(...), rgb(...))`，
+ * 内含多个 rgb() 且首尾不是它——只匹配整串会漏掉渐变，导致文章每开一次存一次，
+ * 渐变色就从 hex 变成 rgb，凭空产生一次 .md 改动。
+ */
 export function normalizeCssColor(v: string): string {
-  const m = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/.exec(String(v).trim())
-  if (!m) return String(v)
-  return `#${[m[1], m[2], m[3]].map((n) => (+n).toString(16).padStart(2, '0')).join('')}`
+  return String(v)
+    .trim()
+    .replace(
+      /rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/g,
+      (_m, r: string, g: string, b: string) =>
+        `#${[r, g, b].map((n) => (+n).toString(16).padStart(2, '0')).join('')}`,
+    )
 }
 
 /** textStyle：补 Markdown 序列化（color/fontSize → 内联 span；无属性时原样透传子内容） */
@@ -44,7 +53,7 @@ export const CustomTextStyle = TextStyle.extend({
     const styles: string[] = []
     if (color && isGradient(color)) {
       styles.push(
-        `background-image: ${color}`,
+        `background-image: ${normalizeCssColor(color)}`,
         '-webkit-background-clip: text',
         'background-clip: text',
         '-webkit-text-fill-color: transparent',

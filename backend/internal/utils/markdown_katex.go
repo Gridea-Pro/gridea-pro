@@ -109,13 +109,14 @@ func (p *katexBlockParser) Open(parent ast.Node, reader text.Reader, pc parser.C
 		return node, parser.NoChildren | parser.Close
 	}
 
-	// 多行：把第一行剩余内容（如果有）作为公式开头
+	// 多行：把第一行剩余内容（如果有）作为公式开头。
+	// 这里不能 Advance —— 框架在 Open 返回后会自行推进到下一行，
+	// 多推一次会整行吞掉公式正文（`$$\nAAA\n$$` 会渲染成空公式）。
 	node.accumulating = &bytes.Buffer{}
 	if len(rest) > 0 {
 		node.accumulating.Write(rest)
 		node.accumulating.WriteByte('\n')
 	}
-	reader.Advance(segment.Len())
 	return node, parser.NoChildren
 }
 
@@ -134,8 +135,8 @@ func (p *katexBlockParser) Continue(node ast.Node, reader text.Reader, pc parser
 		return parser.Close
 	}
 
+	// 同 Open：非闭合行只累积、不 Advance，推进交给框架。
 	bm.accumulating.Write(line)
-	reader.Advance(segment.Len())
 	return parser.Continue | parser.NoChildren
 }
 

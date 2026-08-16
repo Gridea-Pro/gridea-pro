@@ -53,7 +53,7 @@ function roundtrip(md: string): string {
  * 有序列表标记间距、无序列表标记 *|+ → -、主题分割线 ***|___ → ---。
  */
 function canon(s: string): string {
-  return s
+  return normalizeColorTokens(s)
     .replace(/\r\n/g, '\n')
     .split('\n')
     .map((line) => {
@@ -178,14 +178,28 @@ const ENTITY_RE = /&(amp|lt|gt|quot|apos|#0?39);/g
 function entityCount(s: string): number {
   return (s.match(ENTITY_RE) || []).length
 }
+/**
+ * rgb(r, g, b) → #rrggbb。序列化侧统一把颜色规范成小写 hex
+ * （见 RichTextStyle.ts 的 normalizeCssColor），因为 DOM 的 style getter 读出来
+ * 一律是 rgb()，不转回去的话用户设的 hex 颜色每开一次文章就漂移一次。
+ * 存量 .md 里的 rgb 写法会被一次性归一化成 hex——等价改写，不是内容丢失。
+ */
+function normalizeColorTokens(s: string): string {
+  return s.replace(
+    /rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/g,
+    (_m, r: string, g: string, b: string) =>
+      `#${[r, g, b].map((n) => (+n).toString(16).padStart(2, '0')).join('')}`,
+  )
+}
+
 function missingWords(from: string, to: string): string[] {
   const count = (arr: string[]) => {
     const m = new Map<string, number>()
     for (const w of arr) m.set(w, (m.get(w) || 0) + 1)
     return m
   }
-  const a = count(words(from))
-  const b = count(words(to))
+  const a = count(words(normalizeColorTokens(from)))
+  const b = count(words(normalizeColorTokens(to)))
   const miss: string[] = []
   for (const [w, c] of a) {
     const c2 = b.get(w) || 0

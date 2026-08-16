@@ -73,14 +73,14 @@ func linkGuardOption() goldmark.Option {
 
 func init() {
 	mdSafe = goldmark.New(
-		goldmark.WithExtensions(extension.GFM, extension.Typographer, extension.Footnote, KatexExtension()),
+		goldmark.WithExtensions(extension.GFM, extension.Typographer, extension.Footnote, KatexExtension(), DialectExtension(), SmartQuoteExtension()),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		linkGuardOption(),
 		goldmark.WithRendererOptions(html.WithHardWraps(), html.WithXHTML()),
 	)
 
 	mdUnsafe = goldmark.New(
-		goldmark.WithExtensions(extension.GFM, extension.Typographer, extension.Footnote, KatexExtension()),
+		goldmark.WithExtensions(extension.GFM, extension.Typographer, extension.Footnote, KatexExtension(), DialectExtension(), SmartQuoteExtension()),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		linkGuardOption(),
 		goldmark.WithRendererOptions(

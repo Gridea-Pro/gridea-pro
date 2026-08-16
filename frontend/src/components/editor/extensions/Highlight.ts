@@ -39,7 +39,7 @@ export const CustomHighlight = Highlight.extend({
     const color = node.attrs?.color
     if (!color) return `==${inner}==`
     if (typeof color === 'string' && color.includes('gradient')) {
-      return `<mark style="background-image: ${color};">${inner}</mark>`
+      return `<mark style="background-image: ${normalizeCssColor(color)};">${inner}</mark>`
     }
     return `<mark style="background-color: ${normalizeCssColor(color)}">${inner}</mark>`
   },
