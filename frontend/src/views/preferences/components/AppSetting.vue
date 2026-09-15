@@ -61,7 +61,7 @@
           <!-- 色卡挂 data-accent 后直接取该强调色的种子，无需另存一份预览色值 -->
           <span
             :data-accent="item.value"
-            class="w-12 h-12 rounded-full mb-2 flex items-center justify-center transition-transform duration-200 shadow-card group-hover:scale-110"
+            class="w-12 h-12 rounded-full mb-2 flex items-center justify-center transition-transform duration-200 shadow-card ring-1 ring-inset ring-black/10 dark:ring-white/15 group-hover:scale-110"
             :style="{ background: 'var(--seed-accent)' }"
           >
             <CheckIcon v-if="accent === item.value" class="w-6 h-6 text-white" />

@@ -66,14 +66,18 @@
 [data-accent='blue']   { --seed-accent: oklch(0.56 0.11 250); }
 /* 暮山紫 —— 沿用产品既有紫 */
 [data-accent='purple'] { --seed-accent: #8b39ff; --seed-accent-dark: #9254DE; }
+/* 远山墨 —— 无彩强调色。深色模式取近白而非纯白：纯白在深底上晃眼，且需与 92% 的正文拉开一档 */
+[data-accent='ink']    { --seed-accent: oklch(0 0 0); --seed-accent-dark: oklch(0.97 0 0); }
 
 /* ══════════════════════════════════════════════════════════════
    语义层 · 浅色
    ══════════════════════════════════════════════════════════════ */
 :root {
-  /* 中性种子 = 强调色色相 × 外观染色浓度 */
+  /* 中性种子 = 强调色色相 × 外观染色浓度。
+     染色浓度以强调色自身彩度为上限：无彩强调色（远山墨）下中性色必须是纯灰，
+     否则色相退化为 0° 后外观的染色会把底色染成极淡的粉；由此规则统一保证，不给外观单独打补丁 */
   --neutral-c: 0.006;
-  --seed-neutral: oklch(from var(--seed-accent) 0.5 var(--neutral-c) h);
+  --seed-neutral: oklch(from var(--seed-accent) 0.5 min(var(--neutral-c), c) h);
 
   /* 明度档位缺省（外观可整体上移/下移） */
   --l-bg: 96.6%;
@@ -225,7 +229,7 @@
   background-image:
     radial-gradient(60rem 38rem at 10% -6%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 60%),
     radial-gradient(50rem 32rem at 100% 24%, color-mix(in srgb, var(--primary) 11%, transparent), transparent 55%),
-    radial-gradient(44rem 36rem at 36% 110%, color-mix(in srgb, oklch(0.7 0.1 320) 10%, transparent), transparent 60%);
+    radial-gradient(44rem 36rem at 36% 110%, color-mix(in srgb, oklch(from var(--seed-accent) 0.7 min(0.1, c) 320) 10%, transparent), transparent 60%);
   background-attachment: fixed;
 }
 

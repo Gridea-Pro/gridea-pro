@@ -17,7 +17,7 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const TOKENS_CSS = resolve(HERE, '../src/assets/styles/tokens.css')
 
 const SURFACES = ['pure', 'paper', 'glass'] as const
-const ACCENTS = ['green', 'rose', 'sakura', 'sunset', 'amber', 'cyan', 'blue', 'purple'] as const
+const ACCENTS = ['green', 'rose', 'sakura', 'sunset', 'amber', 'cyan', 'blue', 'purple', 'ink'] as const
 const MODES = ['light', 'dark'] as const
 
 /** [说明, 前景 token, 背景 token, 最低对比度] */
@@ -92,9 +92,11 @@ function parseHex(s: string): Color | null {
   return rgbToOklch([num(0), num(2), num(4)], alpha)
 }
 
-/** 求 `calc(...)`、`50%`、`0.5`、以及相对色关键字 l/c/h */
+/** 求 `calc(...)`、`min(a, b)`、`50%`、`0.5`、以及相对色关键字 l/c/h */
 function evalComponent(expr: string, base: Color | null, kind: 'l' | 'c' | 'h'): number {
   const src = expr.trim()
+  const min = /^min\((.+),(.+)\)$/is.exec(src)
+  if (min) return Math.min(evalComponent(min[1], base, kind), evalComponent(min[2], base, kind))
   const calc = /^calc\((.*)\)$/is.exec(src)
   const body = calc ? calc[1] : src
 
@@ -110,7 +112,7 @@ function evalComponent(expr: string, base: Color | null, kind: 'l' | 'c' | 'h'):
     return parseFloat(a)
   }
 
-  // tokens.css 里只出现 `x * k` 与 `x + k` 两种形式
+  // tokens.css 的算式只出现 `x * k`、`x + k`、`x - k` 三种形式；min() 在上面单独处理
   const mul = /^(.+?)\s*\*\s*(.+)$/.exec(body)
   if (mul) return resolveAtom(mul[1]) * resolveAtom(mul[2])
   const add = /^(.+?)\s*\+\s*(.+)$/.exec(body)

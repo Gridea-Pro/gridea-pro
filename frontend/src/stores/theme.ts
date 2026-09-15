@@ -12,7 +12,7 @@ export type ThemeMode = 'light' | 'dark' | 'system'
 /** 外观主题：管底色质感 */
 export type ThemeSurface = 'pure' | 'paper' | 'glass'
 /** 强调色：管主题色 */
-export type ThemeAccent = 'green' | 'rose' | 'sakura' | 'sunset' | 'amber' | 'cyan' | 'blue' | 'purple'
+export type ThemeAccent = 'green' | 'rose' | 'sakura' | 'sunset' | 'amber' | 'cyan' | 'blue' | 'purple' | 'ink'
 
 export const STORAGE_KEYS = {
   mode: 'app_theme_mode',
@@ -58,6 +58,7 @@ export const ACCENT_REGISTRY: ReadonlyArray<{ value: ThemeAccent; labelKey: stri
   { value: 'cyan', labelKey: 'preferences.accentCyan' },
   { value: 'blue', labelKey: 'preferences.accentBlue' },
   { value: 'purple', labelKey: 'preferences.accentPurple' },
+  { value: 'ink', labelKey: 'preferences.accentInk' },
 ]
 
 const SURFACES = SURFACE_REGISTRY.map((s) => s.value)
