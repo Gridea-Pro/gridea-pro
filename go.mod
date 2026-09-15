@@ -5,12 +5,12 @@ go 1.25.5
 require (
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3
 	github.com/bluele/gcache v0.0.2
-	github.com/chai2010/webp v1.4.0
 	github.com/cyphar/filepath-securejoin v0.4.1
 	github.com/dop251/goja v0.0.0-20260106131823-651366fbe6e3
 	github.com/esiqveland/notify v0.13.3
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/fsnotify/fsnotify v1.9.0
+	github.com/gen2brain/webp v0.6.4
 	github.com/go-git/go-git/v5 v5.16.5
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/gosimple/slug v1.15.0
@@ -46,6 +46,7 @@ require (
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/dop251/goja_nodejs v0.0.0-20240728170619-29b559befffc // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/ebitengine/purego v0.10.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect

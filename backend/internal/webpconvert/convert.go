@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/chai2010/webp"
+	"github.com/gen2brain/webp"
 )
 
 // Package webpconvert 提供图片转 WebP 的独立转换能力。
@@ -64,25 +64,18 @@ func ConvertToWebP(srcPath string, quality int) (tmpPath string, err error) {
 		return "", fmt.Errorf("解码图片失败: %w", err)
 	}
 
-	// 编码为 WebP（优先 RGBA，失败时降级 RGB）
-	data, err := webp.EncodeRGBA(img, float32(quality))
-	if err != nil {
-		data, err = webp.EncodeRGB(img, float32(quality))
-		if err != nil {
-			return "", fmt.Errorf("WebP 编码失败: %w", err)
-		}
-	}
-
-	// 写入临时文件
+	// 编码为 WebP 并写入临时文件。
+	// 编码器是纯 Go 实现（gen2brain/webp）：不依赖 cgo，MCP 等 CGO_ENABLED=0 的
+	// 静态二进制与交叉编译目标同样可用；带 alpha 的图片保留透明通道。
 	tmpFile, err := os.CreateTemp("", "gridea-webp-*.webp")
 	if err != nil {
 		return "", fmt.Errorf("创建临时文件失败: %w", err)
 	}
 	defer tmpFile.Close()
 
-	if _, err := tmpFile.Write(data); err != nil {
+	if err := webp.Encode(tmpFile, img, webp.Options{Quality: quality}); err != nil {
 		os.Remove(tmpFile.Name())
-		return "", fmt.Errorf("写入临时文件失败: %w", err)
+		return "", fmt.Errorf("WebP 编码失败: %w", err)
 	}
 
 	return tmpFile.Name(), nil
