@@ -261,8 +261,11 @@ jobs:
           $langDir = Join-Path $iscc.DirectoryName "Languages"
           $target = Join-Path $langDir "ChineseSimplified.isl"
           if (Test-Path $target) { Write-Host "ChineseSimplified.isl 已随 Inno Setup 自带"; exit 0 }
-          $ver = ($iscc.VersionInfo.ProductVersion -replace '[^\d.]', '').Split('.')
+          # ISCC.exe 的版本资源为空（实测得 0.0.0.0），以 choco 记录的已安装版本为准
+          $ver = ((choco list innosetup --exact --limit-output) -split '\|')[1].Split('.')
+          if ($ver.Count -lt 3) { throw "无法从 choco 读取 Inno Setup 版本：$($ver -join '.')" }
           $tag = "is-$($ver[0])_$($ver[1])_$($ver[2])"
+          Write-Host "Inno Setup $($ver -join '.') → 语言文件取自 tag $tag"
           foreach ($path in "Files/Languages/ChineseSimplified.isl", "Files/Languages/Unofficial/ChineseSimplified.isl") {
             $url = "https://raw.githubusercontent.com/jrsoftware/issrc/$tag/$path"
             try {
