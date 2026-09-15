@@ -13,6 +13,8 @@ export default tseslint.config(
             'build/**',
             'node_modules/**',
             'wailsjs/**',
+            // Wails 自动生成的绑定，不入库也不 lint（旧写法漏了 src/ 前缀，从未真正生效）
+            'src/wailsjs/**',
             '*.min.js',
             'public/**',
         ],
