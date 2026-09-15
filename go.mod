@@ -10,7 +10,7 @@ require (
 	github.com/esiqveland/notify v0.13.3
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/gen2brain/webp v0.6.4
+	github.com/gen2brain/webp v0.5.5
 	github.com/go-git/go-git/v5 v5.16.5
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/gosimple/slug v1.15.0
@@ -84,6 +84,7 @@ require (
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/tdewolff/parse/v2 v2.8.10 // indirect
+	github.com/tetratelabs/wazero v1.9.0 // indirect
 	github.com/tkrajina/go-reflector v0.5.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
