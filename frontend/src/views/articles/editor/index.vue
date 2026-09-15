@@ -2,40 +2,50 @@
     <div v-if="visible" class="article-update-page" :class="{ 'is-entering': entering }"
         @mousemove="handlePageMousemove">
         <!-- Header & Tools -->
-        <EditorHeader :can-submit="canSubmit" :article-stats="articleStats" @close="close" @save-draft="saveDraft"
-            @publish="publishPost" @emoji-select="handleEmojiSelect" @insert-image="insertImage"
-            @insert-more="insertMore" @open-settings="handleArticleSettingClick" @preview="previewPost(form.content)" />
+        <EditorHeader :can-submit="canSubmit" @close="close" @save-draft="saveDraft" @publish="publishPost" />
 
         <!-- Content -->
         <div class="page-content">
             <div class="editor-wrapper">
-                <input ref="titleInputRef" v-model="form.title"
-                    class="post-title py-4 border-none pt-10 pb-2 bg-transparent text-xl focus:outline-none focus:ring-0 text-foreground placeholder:text-muted-foreground/50 font-bold"
-                    :placeholder="$t('article.title')" @change="handleTitleChange" @focus="handleTitleFocus"
-                    @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)" />
-
-                <div class="post-meta">
-                    <span class="meta-item">
-                        <CalendarIcon class="meta-icon" />
-                        {{ form.createdAt.isValid() ? form.createdAt.format('YYYY-MM-DD') : '' }}
-                    </span>
-                    <span v-if="form.category" class="meta-item">
-                        <FolderIcon class="meta-icon" />
-                        {{ form.category }}
-                    </span>
-                    <span v-if="form.tags.length" class="meta-item">
-                        <TagIcon class="meta-icon" />
-                        {{ form.tags.join(', ') }}
-                    </span>
-                    <span class="meta-item meta-status" :class="form.published ? 'text-emerald-500' : 'text-amber-500'">
-                        {{ form.published ? $t('article.published') : $t('article.draft') }}
-                    </span>
-                </div>
-
-                <monaco-markdown-editor ref="monacoMarkdownEditor" v-model:value="form.content" :is-post-page="true"
+                <!-- 标题/元信息通过 #header 插槽渲染到编辑器工具栏「下方」的滚动区，
+                     使工具栏固定在顶部、其余随内容滚动（贴合 editor-vue 母版布局）。 -->
+                <TiptapEditor ref="tiptapEditor" v-model:value="form.content" :is-post-page="true"
                     :placeholder="$t('article.editorPlaceholder')"
                     class="post-editor" @focus="handleEditorFocus"
-                    @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)"></monaco-markdown-editor>
+                    @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)">
+                    <template #header>
+                        <input ref="titleInputRef" v-model="form.title"
+                            class="post-title py-4 border-none pt-10 pb-2 bg-transparent focus:outline-none focus:ring-0 text-foreground placeholder:text-muted-foreground/50 font-bold"
+                            :placeholder="$t('article.title')" @change="handleTitleChange" @focus="handleTitleFocus"
+                            @keydown="(e: KeyboardEvent) => handleInputKeydown(e, form.content)" />
+
+                        <div class="post-meta">
+                            <span class="meta-item">
+                                <CalendarIcon class="meta-icon" />
+                                {{ form.createdAt.isValid() ? form.createdAt.format('YYYY-MM-DD') : '' }}
+                            </span>
+                            <span v-if="form.category" class="meta-item">
+                                <FolderIcon class="meta-icon" />
+                                {{ form.category }}
+                            </span>
+                            <span v-if="form.tags.length" class="meta-item">
+                                <TagIcon class="meta-icon" />
+                                {{ form.tags.join(', ') }}
+                            </span>
+                            <span class="meta-item meta-status" :class="form.published ? 'text-success' : 'text-warning'">
+                                {{ form.published ? $t('article.published') : $t('article.draft') }}
+                            </span>
+                            <span class="meta-item">
+                                <DocumentTextIcon class="meta-icon" />
+                                {{ articleStats.wordsNumber }} {{ $t('article.wordsUnit') }}
+                            </span>
+                            <span class="meta-item">
+                                <ClockIcon class="meta-icon" />
+                                {{ articleStats.formatTime }}
+                            </span>
+                        </div>
+                    </template>
+                </TiptapEditor>
             </div>
 
             <div class="footer-info">
@@ -71,12 +81,14 @@
 <script lang="ts" setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useSiteStore } from '@/stores/site'
-import MonacoMarkdownEditor from '@/components/MonacoMarkdownEditor/index.vue'
+import TiptapEditor from '@/components/editor/index.vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from '@/helpers/toast'
 import { GenerateSlug } from '@/wailsjs/go/facade/AIFacade'
+import { EventsOn, EventsOff } from '@/wailsjs/runtime'
+import markdownIt from '@/helpers/markdown'
 
-import { CalendarIcon, FolderIcon, TagIcon } from '@heroicons/vue/24/outline'
+import { CalendarIcon, FolderIcon, TagIcon, DocumentTextIcon, ClockIcon } from '@heroicons/vue/24/outline'
 
 import EditorHeader from './components/EditorHeader.vue'
 import ArticleSettingsDrawer from './components/ArticleSettingsDrawer.vue'
@@ -162,7 +174,6 @@ const {
     saveDraft,
     publishPost,
     handleConfirmPublish,
-    handleArticleSettingClick,
     setupEvents,
     cleanupEvents,
 } = useArticleActions({
@@ -177,13 +188,9 @@ const {
 })
 
 const {
-    monacoMarkdownEditor,
+    tiptapEditor,
     previewVisible,
     entering,
-    insertImage,
-    insertMore,
-    handleEmojiSelect,
-    previewPost,
     handleInputKeydown,
     handlePageMousemove,
     openPage,
@@ -194,15 +201,12 @@ const titleInputRef = ref<HTMLInputElement | null>(null)
 
 // 焦点互斥逻辑：修复标题和正文同时出现光标
 const handleTitleFocus = () => {
-    // 当点击标题时，确保 monaco 失去焦点
-    const editor = monacoMarkdownEditor.value?.editor
-    if (editor && (editor as any)._focusTracker) {
-        // 让编辑器失去焦点，使用更安全的方式
-        try {
-            (editor as any)._focusTracker.onBlur()
-        } catch (e) {
-            console.warn('[Focus] Failed to blur monaco editor', e)
-        }
+    // 当点击标题时，确保编辑器失去焦点
+    const ed = tiptapEditor.value?.editor as any
+    try {
+        ed?.commands?.blur?.()
+    } catch (e) {
+        console.warn('[Focus] Failed to blur editor', e)
     }
 }
 
@@ -235,13 +239,37 @@ const confirmClose = () => {
 
 // ── 生命周期 ────────────────────────────────────────────
 
+// ── 菜单事件：预览 / 复制 HTML ────────────────────────────
+// 后端菜单发 menu:toggle-preview / menu:copy-html → MainLayout 转 editor:* → 此处消费。
+// 此前这两个事件（及 find/replace）全无监听，点了菜单/按快捷键静默无响应。
+// find/replace 因 Tiptap 无内置查找替换，已从原生菜单移除，不在此处接。
+const handleTogglePreview = () => {
+    previewHtml.value = markdownIt.render(form.content || '')
+    previewVisible.value = !previewVisible.value
+}
+
+const handleCopyHtml = async () => {
+    try {
+        const html = markdownIt.render(form.content || '')
+        await navigator.clipboard.writeText(html)
+        toast.success(t('editor.copyHtmlSuccess'))
+    } catch (e) {
+        console.error('复制 HTML 失败', e)
+        toast.error(t('editor.copyHtmlFailed'))
+    }
+}
+
 onMounted(() => {
     buildCurrentForm()
     setupEvents()
+    EventsOn('editor:toggle-preview', handleTogglePreview)
+    EventsOn('editor:copy-html', handleCopyHtml)
 })
 
 onUnmounted(() => {
     cleanupEvents()
+    EventsOff('editor:toggle-preview')
+    EventsOff('editor:copy-html')
 })
 </script>
 
@@ -302,15 +330,22 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     flex: 1;
+    /* 关键：flex 列子项默认 min-height:auto 会被内容撑高，导致编辑器无法限定高度、正文无法滚动 */
+    min-height: 0;
 
     .post-title {
-        width: 728px;
+        width: 740px;
         margin: 0 auto;
         display: block;
+        /* 字号走排版 token，随基准字号联动；不能再用 Tailwind 的 text-xl 写死，
+           那会让整篇的题目比正文 h1/h2 还小。 */
+        font-size: var(--type-title);
+        line-height: 1.3;
+        letter-spacing: -0.02em;
     }
 
     .post-meta {
-        width: 728px;
+        width: 740px;
         margin: 0 auto;
         display: flex;
         align-items: center;
@@ -319,6 +354,8 @@ onUnmounted(() => {
         font-size: 12px;
         color: var(--muted-foreground);
         flex-wrap: wrap;
+        /* 日期 / 字数 / 时长都是数字，等宽数字避免编辑时字数跳动导致整行抖动 */
+        font-variant-numeric: tabular-nums;
 
         .meta-item {
             display: inline-flex;
@@ -340,22 +377,13 @@ onUnmounted(() => {
 
     .post-editor {
         flex: 1;
+        min-height: 0;
 
-        :deep(.monaco-markdown-editor) {
-            width: 728px;
-        }
-
-        :deep(.monaco-editor),
-        :deep(.monaco-editor-background) {
-            background-color: transparent !important;
-        }
-
-        :deep(.monaco-editor .inputarea.ime-input) {
-            z-index: 100 !important;
-        }
-
-        :deep(.monaco-editor .view-lines) {
-            user-select: none !important;
+        /* 限宽/居中/分栏排版统一在编辑器母版自身的 editor.css 里按 mode 处理
+           （那里是非 scoped 全局样式，能稳定命中 TipTap 动态生成的 .ProseMirror，
+            不受跨组件 :deep + data-v 匹配的影响）。此处只负责把编辑器撑满高度。 */
+        :deep(.gridea-tiptap) {
+            height: 100%;
         }
     }
 }

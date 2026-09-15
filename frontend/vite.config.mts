@@ -23,7 +23,6 @@ export default defineConfig({
     preprocessorOptions: {
       less: {
         javascriptEnabled: true,
-        additionalData: `@import "${resolve(__dirname, 'src/assets/styles/var.less')}";`,
       },
     },
   },
@@ -41,7 +40,6 @@ export default defineConfig({
         manualChunks: {
           'vendor': ['vue', 'vue-router', 'pinia'],
           'markdown': ['markdown-it'],
-          'editor': ['monaco-markdown'],
         },
       },
     },
@@ -51,9 +49,7 @@ export default defineConfig({
     include: [
       'vue',
       'vue-router',
-      'pinia',
-      'monaco-editor',
-      'monaco-markdown'
+      'pinia'
     ],
   }
 })

@@ -3,6 +3,7 @@ package facade
 import (
 	"context"
 	"log/slog"
+	"sync/atomic"
 
 	"gridea-pro/backend/internal/deploy"
 	"gridea-pro/backend/internal/domain"
@@ -11,25 +12,29 @@ import (
 
 // SettingFacade wraps SettingService
 type SettingFacade struct {
-	internal     *service.SettingService
-	oauthService *service.OAuthService
+	// internal 会被切站(UpdateAppDir)热替换，用原子指针避免与 Wails 并发调用的 data race。
+	internal     atomic.Pointer[service.SettingService]
+	oauthService *service.OAuthService // 应用级单例，切站不替换
 	logger       *slog.Logger
 }
 
 func NewSettingFacade(s *service.SettingService, oauthSvc *service.OAuthService) *SettingFacade {
-	return &SettingFacade{
-		internal:     s,
+	f := &SettingFacade{
 		oauthService: oauthSvc,
 		logger:       slog.Default(),
 	}
+	f.internal.Store(s)
+	return f
 }
+
+func (f *SettingFacade) svc() *service.SettingService { return f.internal.Load() }
 
 func (f *SettingFacade) GetSetting() (domain.Setting, error) {
 	ctx := WailsContext
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.GetSetting(ctx)
+	return f.svc().GetSetting(ctx)
 }
 
 func (f *SettingFacade) SaveAvatar(sourcePath string) error {
@@ -37,7 +42,7 @@ func (f *SettingFacade) SaveAvatar(sourcePath string) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.SaveAvatar(ctx, sourcePath)
+	return f.svc().SaveAvatar(ctx, sourcePath)
 }
 
 func (f *SettingFacade) SaveFavicon(sourcePath string) error {
@@ -45,7 +50,7 @@ func (f *SettingFacade) SaveFavicon(sourcePath string) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.SaveFavicon(ctx, sourcePath)
+	return f.svc().SaveFavicon(ctx, sourcePath)
 }
 
 // SaveSettingFromFrontend 保存设置：
@@ -56,6 +61,9 @@ func (f *SettingFacade) SaveSettingFromFrontend(setting domain.Setting) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
+	// 方法内缓存一次当前 service：本方法内先读旧配置(GetSetting)、后写新配置(SaveSetting)，
+	// 若中途发生切站会导致"前半读旧站、后半写新站"的数据劈半。缓存后整个方法用同一个 service。
+	svc := f.svc()
 
 	// 1. 提取敏感字段并路由到 Keychain
 	if f.oauthService != nil {
@@ -83,10 +91,10 @@ func (f *SettingFacade) SaveSettingFromFrontend(setting domain.Setting) error {
 	}
 
 	// 2. 保存前获取旧配置，用于检测 Vercel 域名变更
-	oldSetting, _ := f.internal.GetSetting(ctx)
+	oldSetting, _ := svc.GetSetting(ctx)
 
 	// 3. 保存非敏感配置到 setting.json
-	if err := f.internal.SaveSetting(ctx, setting); err != nil {
+	if err := svc.SaveSetting(ctx, setting); err != nil {
 		return err
 	}
 
@@ -144,5 +152,5 @@ func (f *SettingFacade) RemoteDetectFromFrontend(setting domain.Setting) (map[st
 		setting.InjectCredentials(creds)
 	}
 
-	return f.internal.RemoteDetect(ctx, setting)
+	return f.svc().RemoteDetect(ctx, setting)
 }

@@ -17,11 +17,12 @@ import (
 )
 
 type ResourceWatcher struct {
-	watcher *fsnotify.Watcher
-	ctx     context.Context
-	appDir  string
-	stop    chan struct{}
-	mu      sync.Mutex
+	watcher   *fsnotify.Watcher
+	ctx       context.Context
+	appDir    string
+	stop      chan struct{}
+	mu        sync.Mutex
+	closeOnce sync.Once
 }
 
 func NewResourceWatcher(appDir string) (*ResourceWatcher, error) {
@@ -157,8 +158,12 @@ func (w *ResourceWatcher) watchLoop() {
 }
 
 func (w *ResourceWatcher) Close() {
-	close(w.stop)
-	w.watcher.Close()
+	// 幂等：并发切站时两个 goroutine 可能拿到同一个旧 watcher 都调 Close，
+	// close(w.stop) 对已关闭的 channel 再次 close 会 panic 并崩溃整个应用。
+	w.closeOnce.Do(func() {
+		close(w.stop)
+		w.watcher.Close()
+	})
 }
 
 // isDir checks if a path is a directory

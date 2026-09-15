@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gridea-pro/backend/internal/config"
 	"gridea-pro/backend/internal/facade"
+	"gridea-pro/backend/internal/localfileauth"
 	"gridea-pro/backend/internal/service"
 	"io"
 	"os"
@@ -185,16 +186,19 @@ func (a *App) switchToPath(newPath string) error {
 		}()
 	}
 
-	// 更新 ResourceWatcher
+	// 更新 ResourceWatcher：读-关-建-写整体纳入 a.mu，避免并发切站时
+	// 两个 goroutine 同时关闭同一个旧 watcher、或后建的实例覆盖丢失导致 goroutine/fd 泄漏。
+	a.mu.Lock()
 	if a.resourceWatcher != nil {
 		a.resourceWatcher.Close()
 	}
-	var watchErr error
-	a.resourceWatcher, watchErr = service.NewResourceWatcher(newPath)
+	newWatcher, watchErr := service.NewResourceWatcher(newPath)
+	a.resourceWatcher = newWatcher
+	a.mu.Unlock()
 	if watchErr != nil {
 		runtime.LogError(a.ctx, "Failed to create resource watcher: "+watchErr.Error())
-	} else if a.resourceWatcher != nil {
-		a.resourceWatcher.Start(a.ctx)
+	} else if newWatcher != nil {
+		newWatcher.Start(a.ctx)
 	}
 
 	// 重新加载站点数据并通知前端
@@ -345,6 +349,10 @@ func (a *App) OpenImageDialog() (string, error) {
 	res, err := runtime.OpenFileDialog(a.ctx, opts)
 	if err != nil {
 		return "", err
+	}
+	// 用户主动选中的图片：授权 /local-file 在 TTL 内预览它（可能位于站点目录之外的桌面/下载）。
+	if res != "" {
+		localfileauth.Authorize(res)
 	}
 	return res, nil
 }

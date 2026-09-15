@@ -6,6 +6,7 @@ require (
 	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3
 	github.com/bluele/gcache v0.0.2
 	github.com/chai2010/webp v1.4.0
+	github.com/cyphar/filepath-securejoin v0.4.1
 	github.com/dop251/goja v0.0.0-20260106131823-651366fbe6e3
 	github.com/esiqveland/notify v0.13.3
 	github.com/flosch/pongo2/v6 v6.0.0
@@ -41,7 +42,6 @@ require (
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
-	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/dop251/goja_nodejs v0.0.0-20240728170619-29b559befffc // indirect

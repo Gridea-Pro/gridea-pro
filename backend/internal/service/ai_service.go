@@ -105,41 +105,19 @@ func (s *AIService) resolveProvider(ctx context.Context) (ai.Provider, string, s
 	return provider, strings.TrimSpace(cfg.Model), strings.TrimSpace(cfg.APIKey), false, nil
 }
 
-// checkBuiltInQuota 检查内置 Key 的调用配额（不增加计数）
-// 错误信息使用 [DAILY_LIMIT] / [RATE_LIMIT] 前缀，供前端 i18n 匹配
-func (s *AIService) checkBuiltInQuota(ctx context.Context) error {
+// reserveBuiltInQuota 原子地"检查并预占"一次内置 Key 配额（检查+自增在同一把锁内完成）。
+// 这样并发请求不会都通过检查、再各自计数导致超配额。配额已满则返回错误且不占用。
+// 错误信息使用 [DAILY_LIMIT] / [RATE_LIMIT] 前缀，供前端 i18n 匹配。
+func (s *AIService) reserveBuiltInQuota(ctx context.Context) error {
 	s.usageMu.Lock()
 	defer s.usageMu.Unlock()
 
-	usage, _ := s.usageRepo.GetAIUsage(ctx)
-	now := time.Now()
-	today := now.Format("2006-01-02")
-	minute := now.Format("2006-01-02 15:04")
-
-	dailyCount := usage.DailyCount
-	if usage.Date != today {
-		dailyCount = 0
+	// 读用量失败（IO/权限/损坏）时 fail-closed：宁可拒绝本次免费调用，也不放行不计数——
+	// 否则读失败就等于无限额度。not-exist 由 repo 内部当新设备处理，不会走到这里。
+	usage, err := s.usageRepo.GetAIUsage(ctx)
+	if err != nil {
+		return fmt.Errorf("[QUOTA_UNAVAILABLE] 无法读取免费额度用量，请稍后再试：%w", err)
 	}
-	minuteCount := usage.MinuteCount
-	if usage.Minute != minute {
-		minuteCount = 0
-	}
-
-	if dailyCount >= builtInDailyLimit {
-		return fmt.Errorf("[DAILY_LIMIT] 今日免费额度已用完（%d 次/天），请明日再试，或在「偏好设置 → AI 配置」中切换为自定义模型", builtInDailyLimit)
-	}
-	if minuteCount >= builtInMinuteLimit {
-		return fmt.Errorf("[RATE_LIMIT] 调用过于频繁，请稍后再试（限制 %d 次/分钟）", builtInMinuteLimit)
-	}
-	return nil
-}
-
-// recordBuiltInUsage 在调用成功后增加内置 Key 计数
-func (s *AIService) recordBuiltInUsage(ctx context.Context) {
-	s.usageMu.Lock()
-	defer s.usageMu.Unlock()
-
-	usage, _ := s.usageRepo.GetAIUsage(ctx)
 	now := time.Now()
 	today := now.Format("2006-01-02")
 	minute := now.Format("2006-01-02 15:04")
@@ -152,8 +130,39 @@ func (s *AIService) recordBuiltInUsage(ctx context.Context) {
 		usage.Minute = minute
 		usage.MinuteCount = 0
 	}
+
+	if usage.DailyCount >= builtInDailyLimit {
+		return fmt.Errorf("[DAILY_LIMIT] 今日免费额度已用完（%d 次/天），请明日再试，或在「偏好设置 → AI 配置」中切换为自定义模型", builtInDailyLimit)
+	}
+	if usage.MinuteCount >= builtInMinuteLimit {
+		return fmt.Errorf("[RATE_LIMIT] 调用过于频繁，请稍后再试（限制 %d 次/分钟）", builtInMinuteLimit)
+	}
+	// 预占：检查通过即自增计数并落盘，后续并发请求会看到已占用的额度。
 	usage.DailyCount++
 	usage.MinuteCount++
+	// 落盘失败视为预占失败：否则计数没持久化，并发/重启后额度形同虚设。
+	if err := s.usageRepo.SaveAIUsage(ctx, usage); err != nil {
+		return fmt.Errorf("[QUOTA_UNAVAILABLE] 无法记录免费额度用量，请稍后再试：%w", err)
+	}
+	return nil
+}
+
+// refundBuiltInUsage 在预占配额后、真实 AI 调用失败（未实际消耗）时回滚一次计数。
+func (s *AIService) refundBuiltInUsage(ctx context.Context) {
+	s.usageMu.Lock()
+	defer s.usageMu.Unlock()
+
+	usage, _ := s.usageRepo.GetAIUsage(ctx)
+	now := time.Now()
+	today := now.Format("2006-01-02")
+	minute := now.Format("2006-01-02 15:04")
+	// 仅在同一天/同一分钟窗口内回滚才有意义（跨窗口计数已重置）。
+	if usage.Date == today && usage.DailyCount > 0 {
+		usage.DailyCount--
+	}
+	if usage.Minute == minute && usage.MinuteCount > 0 {
+		usage.MinuteCount--
+	}
 	_ = s.usageRepo.SaveAIUsage(ctx, usage)
 }
 
@@ -215,9 +224,9 @@ func (s *AIService) GenerateSlug(ctx context.Context, title string) (string, err
 		return "", err
 	}
 
-	// 仅对使用内置模型的用户做本地配额检查
+	// 仅对使用内置模型的用户做本地配额检查（原子预占，避免并发绕过）
 	if isBuiltIn {
-		if err := s.checkBuiltInQuota(ctx); err != nil {
+		if err := s.reserveBuiltInQuota(ctx); err != nil {
 			return "", err
 		}
 	}
@@ -230,6 +239,10 @@ func (s *AIService) GenerateSlug(ctx context.Context, title string) (string, err
 	}
 	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
 	if err != nil {
+		// 真实 AI 调用失败（未实际消耗），回滚上面预占的配额。
+		if isBuiltIn {
+			s.refundBuiltInUsage(ctx)
+		}
 		return "", err
 	}
 
@@ -237,10 +250,192 @@ func (s *AIService) GenerateSlug(ctx context.Context, title string) (string, err
 	if result == "" {
 		return "", errors.New("生成的 Slug 无效，请重试")
 	}
+	// 成功：配额已在 reserveBuiltInQuota 预占，无需再计数。
+	return result, nil
+}
 
-	if isBuiltIn {
-		s.recordBuiltInUsage(ctx)
+// completePrompt 行内 AI 续写提示词（Fill-in-the-Middle 风格）
+func completePrompt(prefix, suffix string) string {
+	return fmt.Sprintf(
+		"You are an inline writing assistant embedded in a Markdown blog editor.\n"+
+			"Continue the text naturally at the cursor position marked by <CURSOR>.\n\n"+
+			"Rules:\n"+
+			"- Output ONLY the continuation that should be inserted at <CURSOR>. No explanation, no quotes, no code fences.\n"+
+			"- Keep the SAME language as the surrounding text.\n"+
+			"- Write a short, natural continuation (a clause or one sentence). Do not repeat the existing text.\n"+
+			"- Match the existing tone, Markdown style and formatting.\n"+
+			"- If the text before the cursor already ends a sentence, you may start a new one.\n\n"+
+			"Text before cursor:\n%s<CURSOR>\n\nText after cursor:\n%s\n\nContinuation:",
+		prefix, suffix,
+	)
+}
+
+// polishPrompt 文本润色提示词
+func polishPrompt(text string) string {
+	return fmt.Sprintf(
+		"You are a writing assistant for a Markdown blog editor.\n"+
+			"Polish the following text: improve clarity, grammar, flow and word choice.\n\n"+
+			"Rules:\n"+
+			"- Keep the ORIGINAL meaning and the SAME language.\n"+
+			"- Preserve Markdown syntax (links, emphasis, code, lists, etc.).\n"+
+			"- Do NOT add new information or commentary.\n"+
+			"- Output ONLY the polished text, with no quotes, no explanation, no code fences.\n\n"+
+			"Text:\n%s\n\nPolished:",
+		text,
+	)
+}
+
+// stripWrapping 去除模型输出常见的包裹（首尾引号 / ``` 代码围栏）
+func stripWrapping(raw string) string {
+	s := strings.TrimSpace(raw)
+	// 去除整体代码围栏：需确有闭合 ``` 才剥离，避免误伤正文中的反引号
+	if strings.HasPrefix(s, "```") {
+		if nl := strings.IndexByte(s, '\n'); nl >= 0 {
+			body := s[nl+1:]
+			if end := strings.LastIndex(body, "```"); end >= 0 {
+				s = strings.TrimSpace(body[:end])
+			}
+		}
 	}
+	// 去除整体包裹引号：仅当首尾为同种引号、且内部不再出现该引号（即确为整段包裹）
+	if len(s) >= 2 {
+		q := s[0]
+		if (q == '"' || q == '\'') && s[len(s)-1] == q {
+			if inner := s[1 : len(s)-1]; !strings.ContainsRune(inner, rune(q)) {
+				s = inner
+			}
+		}
+	}
+	return s
+}
+
+// Complete 行内 AI 续写：给定光标前后文，返回应插入光标处的补全文本
+func (s *AIService) Complete(ctx context.Context, prefix, suffix string) (string, error) {
+	if strings.TrimSpace(prefix) == "" && strings.TrimSpace(suffix) == "" {
+		return "", errors.New("上下文为空")
+	}
+
+	provider, model, apiKey, isBuiltIn, err := s.resolveProvider(ctx)
+	if err != nil {
+		return "", err
+	}
+	if isBuiltIn {
+		if err := s.reserveBuiltInQuota(ctx); err != nil {
+			return "", err
+		}
+	}
+
+	req := ai.ChatRequest{
+		Model:       model,
+		Prompt:      completePrompt(prefix, suffix),
+		Temperature: 0.3,
+		MaxTokens:   160,
+	}
+	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
+	if err != nil {
+		if isBuiltIn {
+			s.refundBuiltInUsage(ctx)
+		}
+		return "", err
+	}
+
+	return stripWrapping(raw), nil
+}
+
+// Polish 文本润色：返回润色后的文本
+func (s *AIService) Polish(ctx context.Context, text string) (string, error) {
+	if strings.TrimSpace(text) == "" {
+		return "", errors.New("待润色文本为空")
+	}
+
+	provider, model, apiKey, isBuiltIn, err := s.resolveProvider(ctx)
+	if err != nil {
+		return "", err
+	}
+	if isBuiltIn {
+		if err := s.reserveBuiltInQuota(ctx); err != nil {
+			return "", err
+		}
+	}
+
+	// 输出 token 上限按输入长度放宽（粗略：rune 数 + 余量）
+	maxTokens := len([]rune(text)) + 200
+	if maxTokens > 2000 {
+		maxTokens = 2000
+	}
+
+	req := ai.ChatRequest{
+		Model:       model,
+		Prompt:      polishPrompt(text),
+		Temperature: 0.4,
+		MaxTokens:   maxTokens,
+	}
+	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
+	if err != nil {
+		if isBuiltIn {
+			s.refundBuiltInUsage(ctx)
+		}
+		return "", err
+	}
+
+	result := stripWrapping(raw)
+	if result == "" {
+		return "", errors.New("润色结果为空，请重试")
+	}
+
+	return result, nil
+}
+
+// summaryPrompt 摘要生成提示词
+func summaryPrompt(content string) string {
+	return "你是一位中文博客编辑。请为下面的文章生成一段摘要，要求：\n" +
+		"1. 100 字以内，单段纯文本；\n" +
+		"2. 概括文章核心内容与价值，语气自然，适合作为博客列表页导语；\n" +
+		"3. 不要使用 Markdown 语法、不要引号包裹、不要「摘要：」前缀，直接输出摘要正文。\n\n" +
+		"文章内容：\n" + content
+}
+
+// Summary 生成文章摘要：输入正文（markdown/纯文本），返回 100 字内摘要
+func (s *AIService) Summary(ctx context.Context, content string) (string, error) {
+	if strings.TrimSpace(content) == "" {
+		return "", errors.New("文章内容为空")
+	}
+
+	provider, model, apiKey, isBuiltIn, err := s.resolveProvider(ctx)
+	if err != nil {
+		return "", err
+	}
+	if isBuiltIn {
+		if err := s.reserveBuiltInQuota(ctx); err != nil {
+			return "", err
+		}
+	}
+
+	// 输入过长截断，避免超 token（摘要看前文即可）
+	runes := []rune(content)
+	if len(runes) > 6000 {
+		content = string(runes[:6000])
+	}
+
+	req := ai.ChatRequest{
+		Model:       model,
+		Prompt:      summaryPrompt(content),
+		Temperature: 0.5,
+		MaxTokens:   400,
+	}
+	raw, err := provider.Chat(ctx, req, apiKey, s.httpClient(ctx))
+	if err != nil {
+		if isBuiltIn {
+			s.refundBuiltInUsage(ctx)
+		}
+		return "", err
+	}
+
+	result := stripWrapping(raw)
+	if result == "" {
+		return "", errors.New("摘要生成为空，请重试")
+	}
+
 	return result, nil
 }
 

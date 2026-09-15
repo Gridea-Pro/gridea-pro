@@ -250,7 +250,7 @@ watch(() => props.open, (isOpen) => {
         margin: 2.24em auto 2.86em;
 
         &:before {
-            color: rgba(0, 0, 0, .2);
+            color: var(--muted-foreground);
             font-size: 1.1em;
             display: block;
             content: "* * *";
@@ -268,7 +268,7 @@ watch(() => props.open, (isOpen) => {
         &:before {
             content: "";
             display: block;
-            border-top: 4px solid rgba(0, 0, 0, .1);
+            border-top: 4px solid var(--border);
             width: 50%;
             max-width: 100px;
             margin: 40px 0 20px;
@@ -301,7 +301,7 @@ watch(() => props.open, (isOpen) => {
 
             &:before {
                 border: transparent;
-                background-color: #9AE6B4;
+                background-color: var(--success);
             }
 
             &:after {
@@ -309,7 +309,7 @@ watch(() => props.open, (isOpen) => {
             }
 
             +.task-list-item-label {
-                color: #999;
+                color: var(--muted-foreground);
                 text-decoration: line-through;
             }
         }
@@ -320,9 +320,9 @@ watch(() => props.open, (isOpen) => {
             height: 16px;
             box-sizing: border-box;
             display: inline-block;
-            border: 1px solid #9AE6B4;
+            border: 1px solid var(--success);
             border-radius: 2px;
-            background-color: #fff;
+            background-color: var(--card);
             position: absolute;
             top: 0;
             left: 0;
@@ -334,7 +334,7 @@ watch(() => props.open, (isOpen) => {
             transform: rotate(-45deg) scale(0);
             width: 9px;
             height: 5px;
-            border: 1px solid #22543D;
+            border: 1px solid var(--success-foreground);
             border-top: none;
             border-right: none;
             position: absolute;
@@ -347,10 +347,10 @@ watch(() => props.open, (isOpen) => {
 
     :deep(.markdownIt-TOC) {
         list-style: none;
-        background: #f7fafc;
+        background: var(--muted);
         padding: 1.5rem;
         border-radius: 0.5rem;
-        color: #4a5568;
+        color: var(--secondary-foreground);
     }
 
     :deep(.markdownIt-TOC ul) {
@@ -359,8 +359,8 @@ watch(() => props.open, (isOpen) => {
     }
 
     :deep(mark) {
-        background: #FAF089;
-        color: #744210;
+        background: color-mix(in srgb, var(--warning) 30%, transparent);
+        color: var(--foreground);
     }
 }
 </style>

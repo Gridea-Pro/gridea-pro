@@ -131,6 +131,13 @@ func (s *PostService) UploadImages(ctx context.Context, files []domain.UploadedF
 	return s.mediaRepo.SaveImages(ctx, files)
 }
 
+// SaveImageBytes 保存内存图片字节（粘贴 / 拖拽），返回相对路径
+func (s *PostService) SaveImageBytes(ctx context.Context, name string, data []byte) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.mediaRepo.SaveImageBytes(ctx, name, data)
+}
+
 func (s *PostService) GetByFileName(ctx context.Context, fileName string) (*domain.Post, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

@@ -2,18 +2,30 @@ package facade
 
 import (
 	"context"
+	"sync/atomic"
+
 	"gridea-pro/backend/internal/domain"
 	"gridea-pro/backend/internal/service"
 )
 
 // CategoryFacade wraps CategoryService
 type CategoryFacade struct {
-	internal *service.CategoryService
-	postRepo domain.PostRepository
+	// internal / postRepo 用原子读写保存：切站（UpdateAppDir）会热替换它们，
+	// 而 Wails 可能并发调用本 facade 的方法，原子读写避免"读到替换一半的状态"的 data race。
+	internal atomic.Pointer[service.CategoryService]
+	postRepo atomic.Value // 存 domain.PostRepository
 }
 
 func NewCategoryFacade(s *service.CategoryService, postRepo domain.PostRepository) *CategoryFacade {
-	return &CategoryFacade{internal: s, postRepo: postRepo}
+	f := &CategoryFacade{}
+	f.internal.Store(s)
+	f.postRepo.Store(postRepo)
+	return f
+}
+
+func (f *CategoryFacade) svc() *service.CategoryService { return f.internal.Load() }
+func (f *CategoryFacade) posts() domain.PostRepository {
+	return f.postRepo.Load().(domain.PostRepository)
 }
 
 func (f *CategoryFacade) LoadCategories() ([]domain.Category, error) {
@@ -21,7 +33,7 @@ func (f *CategoryFacade) LoadCategories() ([]domain.Category, error) {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.LoadCategories(ctx)
+	return f.svc().LoadCategories(ctx)
 }
 
 func (f *CategoryFacade) SaveCategories(categories []domain.Category) error {
@@ -29,7 +41,7 @@ func (f *CategoryFacade) SaveCategories(categories []domain.Category) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.SaveCategories(ctx, categories)
+	return f.svc().SaveCategories(ctx, categories)
 }
 
 // CategoryCascadeResult 分类操作返回结果（含更新后的文章列表）
@@ -56,6 +68,11 @@ func (f *CategoryFacade) SaveCategoryFromFrontend(form CategoryForm) (*CategoryC
 		ctx = context.TODO()
 	}
 
+	// 一次调用内只取一次 svc/posts 快照：避免中途发生切站（UpdateAppDir）导致
+	// "保存到旧站分类、却返回新站文章列表"这类被劈成两半的数据串号。
+	svc := f.svc()
+	posts := f.posts()
+
 	newCategory := domain.Category{
 		ID:          form.ID,
 		Name:        form.Name,
@@ -63,21 +80,21 @@ func (f *CategoryFacade) SaveCategoryFromFrontend(form CategoryForm) (*CategoryC
 		Description: form.Description,
 	}
 
-	if err := f.internal.SaveCategory(ctx, newCategory, form.ID); err != nil {
+	if err := svc.SaveCategory(ctx, newCategory, form.ID); err != nil {
 		return nil, err
 	}
 
-	categories, err := f.internal.LoadCategories(ctx)
+	categories, err := svc.LoadCategories(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	posts, err := f.postRepo.GetAll(ctx)
+	allPosts, err := posts.GetAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &CategoryCascadeResult{Categories: categories, Posts: posts}, nil
+	return &CategoryCascadeResult{Categories: categories, Posts: allPosts}, nil
 }
 
 // DeleteCategoryFromFrontend 按 ID 删除分类，返回更新后的列表
@@ -87,21 +104,24 @@ func (f *CategoryFacade) DeleteCategoryFromFrontend(id string) (*CategoryCascade
 		ctx = context.TODO()
 	}
 
-	if err := f.internal.DeleteCategory(ctx, id); err != nil {
+	svc := f.svc()
+	posts := f.posts()
+
+	if err := svc.DeleteCategory(ctx, id); err != nil {
 		return nil, err
 	}
 
-	categories, err := f.internal.LoadCategories(ctx)
+	categories, err := svc.LoadCategories(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	posts, err := f.postRepo.GetAll(ctx)
+	allPosts, err := posts.GetAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &CategoryCascadeResult{Categories: categories, Posts: posts}, nil
+	return &CategoryCascadeResult{Categories: categories, Posts: allPosts}, nil
 }
 
 // RegisterEvents 注册分类相关事件监听器

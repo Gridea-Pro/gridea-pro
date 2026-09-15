@@ -1,0 +1,277 @@
+<template>
+  <BubbleMenu
+    v-if="editor"
+    :editor="editor"
+    :should-show="shouldShow"
+  >
+    <!-- 选中图片：显示图片相关操作（对齐 ctzhian 原版：编辑/对齐×3/预览/原始大小/复制/删除） -->
+    <div
+      v-if="isImage"
+      class="flex items-center gap-0.5 p-1 bg-popover text-popover-foreground border border-border rounded-md shadow-md"
+    >
+      <button type="button" :class="baseBtn" :title="t('editor.imageMenu.edit')" @mousedown.prevent @click="emit('imageEdit')">
+        <Edit />
+      </button>
+      <div class="w-px h-[18px] mx-0.5 bg-border" />
+      <button
+        type="button"
+        :class="[baseBtn, imageAlign === null || imageAlign === 'left' ? activeCls : '']"
+        :title="t('editor.shortcuts.alignLeft')"
+        @mousedown.prevent
+        @click="setImageAlign(null)"
+      >
+        <AlignLeft />
+      </button>
+      <button
+        type="button"
+        :class="[baseBtn, imageAlign === 'center' ? activeCls : '']"
+        :title="t('editor.shortcuts.alignCenter')"
+        @mousedown.prevent
+        @click="setImageAlign('center')"
+      >
+        <AlignCenter />
+      </button>
+      <button
+        type="button"
+        :class="[baseBtn, imageAlign === 'right' ? activeCls : '']"
+        :title="t('editor.shortcuts.alignRight')"
+        @mousedown.prevent
+        @click="setImageAlign('right')"
+      >
+        <AlignRight />
+      </button>
+      <div class="w-px h-[18px] mx-0.5 bg-border" />
+      <button type="button" :class="baseBtn" :title="t('editor.imageMenu.preview')" @mousedown.prevent @click="emit('imagePreview')">
+        <ZoomIn />
+      </button>
+      <button
+        type="button"
+        :class="baseBtn"
+        :title="t('editor.imageMenu.originalSize')"
+        :disabled="!imageWidth"
+        :style="!imageWidth ? 'opacity:.4;cursor:default' : ''"
+        @mousedown.prevent
+        @click="resetImageSize"
+      >
+        <AspectRatio />
+      </button>
+      <button
+        type="button"
+        :class="baseBtn"
+        :title="t('editor.imageMenu.copySrc')"
+        @mousedown.prevent
+        @click="copyImageSrc"
+      >
+        <Copy />
+      </button>
+      <div class="w-px h-[18px] mx-0.5 bg-border" />
+      <button
+        type="button"
+        :class="baseBtn"
+        :title="t('editor.imageMenu.delete')"
+        @mousedown.prevent
+        @click="run((c) => c.deleteSelection())"
+      >
+        <Trash />
+      </button>
+    </div>
+
+    <div
+      v-else
+      class="flex items-center gap-0.5 p-1 bg-popover text-popover-foreground border border-border rounded-md shadow-md"
+    >
+      <button
+        type="button"
+        :class="btnClass('bold')"
+        :title="t('editor.bold')"
+        @mousedown.prevent
+        @click="run((c) => c.toggleBold())"
+      >
+        <Bold />
+      </button>
+      <button
+        type="button"
+        :class="btnClass('italic')"
+        :title="t('editor.italic')"
+        @mousedown.prevent
+        @click="run((c) => c.toggleItalic())"
+      >
+        <Italic />
+      </button>
+      <button
+        type="button"
+        :class="btnClass('strike')"
+        :title="t('editor.strike')"
+        @mousedown.prevent
+        @click="run((c) => c.toggleStrike())"
+      >
+        <Strikethrough />
+      </button>
+      <button
+        type="button"
+        :class="btnClass('code')"
+        :title="t('editor.code')"
+        @mousedown.prevent
+        @click="run((c) => c.toggleCode())"
+      >
+        <Code />
+      </button>
+      <button
+        type="button"
+        :class="btnClass('highlight')"
+        :title="t('editor.highlight')"
+        @mousedown.prevent
+        @click="run((c) => c.toggleHighlight())"
+      >
+        <Highlighter />
+      </button>
+
+      <div class="w-px h-[18px] mx-0.5 bg-border" />
+
+      <button
+        type="button"
+        :class="btnClass('link')"
+        :title="t('editor.link')"
+        @mousedown.prevent
+        @click="emit('link')"
+      >
+        <LinkIcon />
+      </button>
+      <button
+        type="button"
+        :class="baseBtn"
+        :title="t('editor.aiPolish')"
+        @mousedown.prevent
+        @click="emit('polish')"
+      >
+        <Sparkles />
+      </button>
+    </div>
+  </BubbleMenu>
+</template>
+
+<script setup lang="ts">
+import { onBeforeUnmount, ref, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import type { Editor, ChainedCommands } from '@tiptap/vue-3'
+import { BubbleMenu } from '@tiptap/vue-3/menus'
+import type { EditorState } from '@tiptap/pm/state'
+import {
+  IconBold as Bold,
+  IconItalic as Italic,
+  IconStrikethrough as Strikethrough,
+  IconCode as Code,
+  IconHighlight as Highlighter,
+  IconLink as LinkIcon,
+  IconSparkles as Sparkles,
+  IconAspectRatio as AspectRatio,
+  IconCopy as Copy,
+  IconTrash as Trash,
+  IconEdit as Edit,
+  IconZoomIn as ZoomIn,
+  IconAlignLeft as AlignLeft,
+  IconAlignCenter as AlignCenter,
+  IconAlignRight as AlignRight,
+} from '@tabler/icons-vue'
+
+const props = defineProps<{ editor: Editor | null }>()
+const emit = defineEmits<{
+  link: []
+  polish: []
+  imageEdit: []
+  imagePreview: []
+}>()
+
+const { t } = useI18n()
+
+// 让 isActive 随选区实时刷新。editor 在 onMounted 时可能仍为 undefined（useEditor 异步就绪），
+// 用 watch 待其出现再绑定，否则监听器永不注册、高亮态不更新。
+const tick = ref(0)
+function bump() {
+  tick.value++
+}
+watch(
+  () => props.editor,
+  (ed, prev) => {
+    prev?.off('transaction', bump)
+    prev?.off('selectionUpdate', bump)
+    ed?.on('transaction', bump)
+    ed?.on('selectionUpdate', bump)
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => {
+  props.editor?.off('transaction', bump)
+  props.editor?.off('selectionUpdate', bump)
+})
+
+// tiptap 的 shouldShow 回调参数形态较细，此处用宽松类型
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function shouldShow(p: any): boolean {
+  const state = p.state as EditorState
+  const ed = p.editor as Editor
+  const view = p.view as { hasFocus?: () => boolean } | undefined
+  if (view?.hasFocus && !view.hasFocus()) return false // 失焦（如切到源码栏）时隐藏
+  return ed.isEditable && state.selection.from !== state.selection.to && !ed.isActive('codeBlock')
+}
+
+const baseBtn =
+  'inline-flex items-center justify-center w-7 h-7 rounded-md cursor-pointer transition-colors ed-ctl'
+
+// ── 图片选中态：气泡切换为图片操作 ─────────────────────
+const isImage = computed(() => {
+  void tick.value
+  return !!props.editor?.isActive('image')
+})
+const imageWidth = computed(() => {
+  void tick.value
+  return (props.editor?.getAttributes('image').width as number | null) || null
+})
+const activeCls = 'ed-active'
+const imageAlign = computed(() => {
+  void tick.value
+  return (props.editor?.getAttributes('image').textAlign as string | null) || null
+})
+function setImageAlign(align: string | null) {
+  props.editor?.chain().focus().updateAttributes('image', { textAlign: align }).run()
+}
+function resetImageSize() {
+  props.editor?.chain().focus().updateAttributes('image', { width: null }).run()
+}
+async function copyImageSrc() {
+  const src = (props.editor?.getAttributes('image').src as string) || ''
+  if (!src) return
+  try {
+    await navigator.clipboard.writeText(src)
+  } catch {
+    /* ignore */
+  }
+}
+
+function isActive(name: string): boolean {
+  // 读取 tick 触发依赖，保证选区变化时模板重算
+  void tick.value
+  return props.editor?.isActive(name) ?? false
+}
+
+function btnClass(name: string): string {
+  return isActive(name) ? `${baseBtn} text-primary bg-accent` : baseBtn
+}
+
+function run(fn: (c: ChainedCommands) => ChainedCommands): void {
+  const e = props.editor
+  if (!e) return
+  fn(e.chain().focus()).run()
+}
+</script>
+
+<style scoped>
+button {
+  border: none;
+  background: transparent;
+}
+button :deep(svg) {
+  width: 17px;
+  height: 17px;
+}
+</style>

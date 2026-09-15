@@ -9,14 +9,14 @@
         <!-- Form Content -->
         <div class="space-y-6">
           <div class="flex items-center justify-between">
-            <label class="text-sm font-medium text-[var(--text-primary)]">{{ t('settings.comment.enable') }}</label>
+            <label class="text-sm font-medium text-foreground">{{ t('settings.comment.enable') }}</label>
             <Switch
 size="sm" class="focus-visible:ring-0 focus-visible:ring-offset-0" :checked="formState.enable"
               @update:checked="val => formState.enable = val" />
           </div>
 
           <div>
-            <Label class="text-sm font-medium text-[var(--text-primary)] mb-2 block">{{ t('settings.comment.platform')
+            <Label class="text-sm font-medium text-foreground mb-2 block">{{ t('settings.comment.platform')
             }}</Label>
             <Select v-model="formState.platform">
               <SelectTrigger>
@@ -32,7 +32,7 @@ size="sm" class="focus-visible:ring-0 focus-visible:ring-offset-0" :checked="for
             </div>
           </div>
 
-          <div v-if="formState.enable" class="space-y-4 pt-4 border-t border-[var(--color-border)]">
+          <div v-if="formState.enable" class="space-y-4 pt-4 border-t border-border">
             <template v-if="['Valine', 'Waline'].includes(formState.platform)">
               <!-- Shared config interface for Valine/Waline -->
               <ValineWalineConfig
@@ -70,6 +70,7 @@ variant="outline"
           @click="onClose">{{ t('common.cancel') }}</Button>
         <Button
 variant="default"
+          :disabled="loadFailed"
           class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
           @click="save">{{ t('common.save') }}</Button>
       </SheetFooter>
@@ -103,6 +104,8 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+// 加载失败标志：评论设置读取失败时表单为空，禁止保存以免空值覆盖评论平台密钥。
+const loadFailed = ref(false)
 
 const emit = defineEmits(['update:open'])
 
@@ -125,9 +128,18 @@ const formState = ref<CommentSettings>({
 watch(() => props.open, async (newVal) => {
   if (newVal) {
     // Load settings from backend first
-    await commentStore.loadSettings()
+    try {
+      await commentStore.loadSettings()
+      loadFailed.value = false
+    } catch (e) {
+      // 加载失败：禁止保存，否则空表单一存就把评论平台密钥覆盖成空值。
+      console.error('Failed to load comment settings', e)
+      loadFailed.value = true
+      toast.error(t('settings.loadFailedNoSave'))
+      return
+    }
 
-    // Safely update formState without losing reactivity references if possible, 
+    // Safely update formState without losing reactivity references if possible,
     // or just strict replacement.
     const newSettings = JSON.parse(JSON.stringify(commentStore.settings))
 
@@ -154,6 +166,10 @@ const onClose = () => {
 import { toast } from '@/helpers/toast'
 
 const save = async () => {
+  if (loadFailed.value) {
+    toast.error(t('settings.loadFailedNoSave'))
+    return
+  }
   // Ensure we are saving the current state
   const settingsToSave = {
     ...formState.value,

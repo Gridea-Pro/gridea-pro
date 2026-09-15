@@ -198,6 +198,11 @@ func updateSettingsHandler(s *service.SettingService) server.ToolHandlerFunc {
 			}
 		}
 
+		// 安全：剥离 configJson 里可能夹带的敏感字段（token/password/privateKey），
+		// 避免明文写入 setting.json 并绕过 Keychain。正常保存路径会把敏感字段转存 Keychain，
+		// 但 MCP 进程不持有 Keychain 访问权，因此这里直接丢弃——与工具「不暴露敏感字段」的声明一致。
+		_ = current.ExtractSensitiveFields()
+
 		if err := s.SaveSetting(ctx, current); err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to save settings: %v", err)), nil
 		}

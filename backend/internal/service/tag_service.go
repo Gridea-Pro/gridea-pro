@@ -204,44 +204,39 @@ func (s *TagService) generateSlug(name string, existingTags []domain.Tag) string
 }
 
 func (s *TagService) cascadeTagRename(ctx context.Context, oldName, newName string) error {
-	posts, err := s.postRepo.GetAll(ctx)
-	if err != nil {
-		return err
-	}
-	for i := range posts {
+	// 走 RewritePostTags：整个"读-改-写"在 postRepo 写锁内完成，与用户 SavePost 互斥，
+	// 只改标签字段、不整篇覆盖，杜绝级联抹掉用户此刻刚保存的正文。
+	return s.postRepo.RewritePostTags(ctx, func(p *domain.Post) bool {
 		changed := false
-		for j, t := range posts[i].Tags {
+		newTags := make([]string, len(p.Tags))
+		for j, t := range p.Tags {
 			if t == oldName {
-				posts[i].Tags[j] = newName
+				newTags[j] = newName
 				changed = true
+			} else {
+				newTags[j] = t
 			}
 		}
 		if changed {
-			if err := s.postRepo.Update(ctx, &posts[i]); err != nil {
-				return err
-			}
+			p.Tags = newTags
 		}
-	}
-	return nil
+		return changed
+	})
 }
 
 func (s *TagService) cascadeTagDelete(ctx context.Context, tagID, tagName string) error {
-	posts, err := s.postRepo.GetAll(ctx)
-	if err != nil {
-		return err
-	}
-	for i := range posts {
+	return s.postRepo.RewritePostTags(ctx, func(p *domain.Post) bool {
 		changed := false
-		var newTags []string
-		for _, t := range posts[i].Tags {
+		newTags := make([]string, 0, len(p.Tags))
+		for _, t := range p.Tags {
 			if t != tagName {
 				newTags = append(newTags, t)
 			} else {
 				changed = true
 			}
 		}
-		var newTagIDs []string
-		for _, id := range posts[i].TagIDs {
+		newTagIDs := make([]string, 0, len(p.TagIDs))
+		for _, id := range p.TagIDs {
 			if id != tagID {
 				newTagIDs = append(newTagIDs, id)
 			} else {
@@ -249,20 +244,11 @@ func (s *TagService) cascadeTagDelete(ctx context.Context, tagID, tagName string
 			}
 		}
 		if changed {
-			posts[i].Tags = newTags
-			if posts[i].Tags == nil {
-				posts[i].Tags = []string{}
-			}
-			posts[i].TagIDs = newTagIDs
-			if posts[i].TagIDs == nil {
-				posts[i].TagIDs = []string{}
-			}
-			if err := s.postRepo.Update(ctx, &posts[i]); err != nil {
-				return err
-			}
+			p.Tags = newTags
+			p.TagIDs = newTagIDs
 		}
-	}
-	return nil
+		return changed
+	})
 }
 
 var TagColors = []string{

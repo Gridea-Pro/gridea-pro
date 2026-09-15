@@ -5,7 +5,9 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 	"sync"
 
@@ -58,11 +60,11 @@ func verifyUsageSig(u domain.AIUsage) bool {
 	return hmac.Equal([]byte(u.Sig), []byte(expected))
 }
 
-func (r *aiUsageRepository) loadIfNeeded() {
+func (r *aiUsageRepository) loadIfNeeded() error {
 	r.mu.RLock()
 	if r.loaded {
 		r.mu.RUnlock()
-		return
+		return nil
 	}
 	r.mu.RUnlock()
 
@@ -70,30 +72,38 @@ func (r *aiUsageRepository) loadIfNeeded() {
 	defer r.mu.Unlock()
 
 	if r.loaded {
-		return
+		return nil
 	}
 
 	var usage domain.AIUsage
 	if err := LoadJSONFile(r.filePath(), &usage); err != nil {
-		// 文件不存在 → 视为新设备，计数从 0 开始
-		r.cache = &domain.AIUsage{}
-		r.loaded = true
-		return
+		// 只有「文件不存在」才视为新设备、计数从 0 开始。
+		// IO/权限/JSON 损坏等错误不能重置为 0——否则杀软锁文件或磁盘异常就成了绕过配额的路径。
+		// 这类错误 fail-closed：不缓存、不置 loaded，向上抛错让 reserveBuiltInQuota 拒绝本次调用并可重试。
+		if errors.Is(err, fs.ErrNotExist) {
+			r.cache = &domain.AIUsage{}
+			r.loaded = true
+			return nil
+		}
+		return err
 	}
 
-	// 文件存在但 sig 校验失败 → 用户篡改过，静默重置
+	// 文件存在但 sig 校验失败 → 用户篡改过，静默重置（反作弊语义，与 IO 错误区别对待）
 	if !verifyUsageSig(usage) {
 		r.cache = &domain.AIUsage{}
 		r.loaded = true
-		return
+		return nil
 	}
 
 	r.cache = &usage
 	r.loaded = true
+	return nil
 }
 
 func (r *aiUsageRepository) GetAIUsage(ctx context.Context) (domain.AIUsage, error) {
-	r.loadIfNeeded()
+	if err := r.loadIfNeeded(); err != nil {
+		return domain.AIUsage{}, err
+	}
 
 	r.mu.RLock()
 	defer r.mu.RUnlock()

@@ -94,7 +94,7 @@ import {
 import { useCommentStore } from '@/stores/comment'
 import { Environment } from '@/wailsjs/runtime'
 import { parseEmoji } from '@/utils/emoji'
-import markdownIt from '@/helpers/markdown'
+import { renderCommentMarkdown } from '@/helpers/markdown'
 import type { Comment } from '@/types/comment'
 
 const { t } = useI18n()
@@ -119,7 +119,7 @@ const comments = computed(() => {
     raw = raw.replace(/^>([^\s])/gm, '> $1')
     return {
       ...c,
-      content: markdownIt.render(parseEmoji(raw))
+      content: renderCommentMarkdown(parseEmoji(raw))
     }
   })
 })

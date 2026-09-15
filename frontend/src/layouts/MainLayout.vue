@@ -34,7 +34,7 @@ variant="ghost"
                   <span class="text-xs flex-1 text-left">{{ menu.text }}</span>
                   <span
 v-if="menu.router === '/comments' && commentStore.unreadCount > 0"
-                    class="ml-auto bg-red-500 text-white text-[9px] font-bold px-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full leading-none">
+                    class="ml-auto bg-destructive text-white text-[9px] font-bold px-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full leading-none">
                     {{ commentStore.unreadCount > 99 ? '99+' : commentStore.unreadCount }}
                   </span>
                   <span
@@ -120,11 +120,14 @@ fill-rule="evenodd" clip-rule="evenodd"
     <!-- Main Content -->
     <main class="flex-1 flex flex-col min-h-0 overflow-hidden bg-background select-none">
       <div class="flex-1 w-full overflow-y-auto overflow-x-hidden p-0">
-        <router-view v-slot="{ Component }">
-          <keep-alive exclude="Loading,Theme">
-            <component :is="Component" />
-          </keep-alive>
-        </router-view>
+        <!-- 边界只包内容区：某个页面崩了侧栏和部署面板仍可用，可就地重试 -->
+        <ErrorBoundary :label="route.name?.toString()">
+          <router-view v-slot="{ Component }">
+            <keep-alive exclude="Loading,Theme">
+              <component :is="Component" />
+            </keep-alive>
+          </router-view>
+        </ErrorBoundary>
       </div>
     </main>
 
@@ -150,8 +153,8 @@ fill-rule="evenodd" clip-rule="evenodd"
               </span>
               <span
                 v-else-if="deployOutcome === 'success'"
-                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-[11px] font-medium">
-                <span class="size-1.5 rounded-full bg-green-500"></span>
+                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success/10 text-success text-[11px] font-medium">
+                <span class="size-1.5 rounded-full bg-success"></span>
                 部署完成
               </span>
               <span
@@ -190,7 +193,7 @@ fill-rule="evenodd" clip-rule="evenodd"
               :style="{ width: `${deployProgress.pct}%` }"></div>
           </div>
           <div v-if="deployProgress.failed > 0" class="mt-2 flex items-center gap-3 text-[10px]">
-            <span class="text-green-600 dark:text-green-400">
+            <span class="text-success">
               ✓ 成功 {{ deployProgress.done - deployProgress.failed }}
             </span>
             <span class="text-destructive">✗ 失败 {{ deployProgress.failed }}</span>
@@ -419,6 +422,7 @@ import {
 } from '@/wailsjs/go/facade/UpdateFacade'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import WindowControls from '@/components/WindowControls/index.vue'
+import ErrorBoundary from '@/components/ErrorBoundary.vue'
 import {
   DocumentTextIcon,
   QueueListIcon,
@@ -560,8 +564,8 @@ const logLineIcon = (entry: string): string => {
 
 const logLineClass = (entry: string): string => {
   if (/^上传\s.+\s失败/.test(entry) || /^\s*✗\s/.test(entry) || /❌/.test(entry)) return 'text-destructive'
-  if (/^✅/.test(entry) || /部署成功|上传完成，共上传/.test(entry)) return 'text-green-600 dark:text-green-400'
-  if (/⚠️|警告/.test(entry)) return 'text-amber-600 dark:text-amber-400'
+  if (/^✅/.test(entry) || /部署成功|上传完成，共上传/.test(entry)) return 'text-success'
+  if (/⚠️|警告/.test(entry)) return 'text-warning'
   return 'text-muted-foreground'
 }
 
@@ -872,13 +876,7 @@ onMounted(() => {
     console.log('[Menu] Export - TODO: 待实现')
   })
 
-  // 编辑菜单
-  EventsOn('menu:find', () => {
-    EventsEmit('editor:find')
-  })
-  EventsOn('menu:replace', () => {
-    EventsEmit('editor:replace')
-  })
+  // 编辑菜单：复制 HTML（find/replace 已从原生菜单移除——Tiptap 无内置查找替换）
   EventsOn('menu:copy-html', () => {
     EventsEmit('editor:copy-html')
   })

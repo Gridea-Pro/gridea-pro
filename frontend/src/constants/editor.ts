@@ -6,9 +6,6 @@
  * 编辑器配置常量
  */
 export const EDITOR_CONSTANTS = {
-    /** Monaco编辑器高度更新延迟（毫秒） */
-    MONACO_HEIGHT_UPDATE_DELAY: 0,
-
     /** 自动保存间隔（毫秒） */
     AUTO_SAVE_INTERVAL: 30000, // 30秒
 

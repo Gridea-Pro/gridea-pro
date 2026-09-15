@@ -9,6 +9,7 @@ export interface IThemeConfigArrayField {
   label?: string
   note?: string
   card?: string
+  value?: unknown
   options?: IThemeConfigItemOption[]
 }
 
@@ -42,4 +43,5 @@ export interface ITheme {
   feedCount: number
   postPath: string
   tagPath: string
+  katexEnabled: boolean
 }

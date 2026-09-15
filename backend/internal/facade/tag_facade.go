@@ -2,26 +2,36 @@ package facade
 
 import (
 	"context"
+	"sync/atomic"
+
 	"gridea-pro/backend/internal/domain"
 	"gridea-pro/backend/internal/service"
 )
 
 // TagFacade wraps TagService
 type TagFacade struct {
-	internal *service.TagService
-	postRepo domain.PostRepository
+	// internal / postRepo 用原子读写保存：切站（UpdateAppDir）会热替换它们，
+	// 而 Wails 可能并发调用本 facade 的方法，原子读写避免"读到替换一半的状态"的 data race。
+	internal atomic.Pointer[service.TagService]
+	postRepo atomic.Value // 存 domain.PostRepository
 }
 
 func NewTagFacade(s *service.TagService, postRepo domain.PostRepository) *TagFacade {
-	return &TagFacade{internal: s, postRepo: postRepo}
+	f := &TagFacade{}
+	f.internal.Store(s)
+	f.postRepo.Store(postRepo)
+	return f
 }
+
+func (f *TagFacade) svc() *service.TagService     { return f.internal.Load() }
+func (f *TagFacade) posts() domain.PostRepository { return f.postRepo.Load().(domain.PostRepository) }
 
 func (f *TagFacade) LoadTags() ([]domain.Tag, error) {
 	ctx := WailsContext
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.LoadTags(ctx)
+	return f.svc().LoadTags(ctx)
 }
 
 func (f *TagFacade) SaveTag(tag domain.Tag, originalName string) error {
@@ -29,7 +39,7 @@ func (f *TagFacade) SaveTag(tag domain.Tag, originalName string) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.SaveTag(ctx, tag, originalName)
+	return f.svc().SaveTag(ctx, tag, originalName)
 }
 
 func (f *TagFacade) DeleteTag(name string) error {
@@ -37,7 +47,7 @@ func (f *TagFacade) DeleteTag(name string) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.DeleteTag(ctx, name)
+	return f.svc().DeleteTag(ctx, name)
 }
 
 func (f *TagFacade) SaveTags(tags []domain.Tag) error {
@@ -45,7 +55,7 @@ func (f *TagFacade) SaveTags(tags []domain.Tag) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.SaveTags(ctx, tags)
+	return f.svc().SaveTags(ctx, tags)
 }
 
 func (f *TagFacade) GetTagColors() []string {
@@ -68,46 +78,53 @@ type TagCascadeResult struct {
 
 // SaveTagFromFrontend accepts a TagForm directly from frontend
 func (f *TagFacade) SaveTagFromFrontend(form TagForm) (*TagCascadeResult, error) {
+	// 一次调用内只取一次 svc/posts 快照，避免中途切站把"保存到旧站、返回新站列表"劈成两半。
+	svc := f.svc()
+	posts := f.posts()
+
 	newTag := domain.Tag{
 		Name:  form.Name,
 		Slug:  form.Slug,
 		Color: form.Color,
 	}
 
-	if err := f.SaveTag(newTag, form.OriginalName); err != nil {
+	if err := svc.SaveTag(ctx(), newTag, form.OriginalName); err != nil {
 		return nil, err
 	}
 
-	tags, err := f.LoadTags()
+	tags, err := svc.LoadTags(ctx())
 	if err != nil {
 		return nil, err
 	}
 
-	posts, err := f.postRepo.GetAll(ctx())
+	allPosts, err := posts.GetAll(ctx())
 	if err != nil {
 		return nil, err
 	}
 
-	return &TagCascadeResult{Tags: tags, Posts: posts}, nil
+	return &TagCascadeResult{Tags: tags, Posts: allPosts}, nil
 }
 
 // DeleteTagFromFrontend accepts a tag name and returns updated list
 func (f *TagFacade) DeleteTagFromFrontend(name string) (*TagCascadeResult, error) {
-	if err := f.DeleteTag(name); err != nil {
+	svc := f.svc()
+	posts := f.posts()
+
+	if err := svc.DeleteTag(ctx(), name); err != nil {
 		return nil, err
 	}
 
-	tags, err := f.LoadTags()
+	tags, err := svc.LoadTags(ctx())
 	if err != nil {
 		return nil, err
 	}
 
-	posts, err := f.postRepo.GetAll(ctx())
+	allPosts, err := posts.GetAll(ctx())
 	if err != nil {
 		return nil, err
 	}
 
-	return &TagCascadeResult{Tags: tags, Posts: posts}, nil
+	return &TagCascadeResult{Tags: tags, Posts: allPosts}, nil
 }
 
 func ctx() context.Context {

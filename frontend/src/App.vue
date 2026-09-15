@@ -12,23 +12,18 @@ position="top-center" :expand="false" rich-colors :duration="2000" :close-button
 
 
 
-    <div v-if="error" class="fixed inset-0 z-[99999] overflow-auto bg-white p-5 text-red-600 whitespace-pre-wrap">
-      <h1 class="text-2xl font-bold mb-4">Runtime Error</h1>
-      <pre class="text-sm">{{ error }}</pre>
-    </div>
     <router-view />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onErrorCaptured, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { useThemeStore } from '@/stores/theme'
 import { Toaster } from 'vue-sonner'
 import { safeEventsEmit, safeWindowShow } from '@/helpers/wailsRuntime'
 import { setupToastListeners } from '@/helpers/toast'
 
 const themeStore = useThemeStore()
-const error = ref<string>('')
 const isDev = import.meta.env.DEV
 
 const globalClickListener = (e: MouseEvent) => {
@@ -55,28 +50,13 @@ onUnmounted(() => {
   }
 })
 
-onErrorCaptured((err) => {
-  const errorMessage = err instanceof Error ? err.stack || err.message : String(err)
-  error.value = errorMessage
-  console.error('❌ [App] Error captured:', err)
-
-  safeEventsEmit('renderer-error', errorMessage)
-
-  return false
-})
 </script>
-
-<style lang="less">
-@import './assets/styles/main.less';
-@import './assets/styles/custom.less';
-</style>
-
 
 <style>
 /* Global CSS */
 body {
-  background: var(--bg-body);
-  color: var(--text-primary);
+  background: var(--background);
+  color: var(--foreground);
 }
 
 html,
@@ -87,7 +67,7 @@ body {
   width: 100vw;
   margin: 0;
   padding: 0;
-  background-color: var(--bg-body);
+  background-color: var(--background);
 }
 
 #app {
@@ -129,48 +109,29 @@ body {
   align-items: center !important;
 }
 
-/* sonner toast 背景色 */
-[data-sonner-toaster] [data-sonner-toast][data-type="success"] {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-  border: 1px solid #000000 !important;
+/* Toast 用中性弹层表面，紧急程度只由图标的状态色表达——不整条染色。
+   见「UI 设计规范 v1 · 用色纪律」 */
+[data-sonner-toaster] [data-sonner-toast] {
+  background-color: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-2) !important;
 }
 
-/* Success 图标颜色 */
 [data-sonner-toaster] [data-sonner-toast][data-type="success"] [data-icon] {
-  color: #4ade80 !important;
-  /* using green-400 for visibility on black */
-}
-
-[data-sonner-toaster] [data-sonner-toast][data-type="error"] {
-  background-color: #FA5C5C !important;
-  color: #ffffff !important;
-  border: 1px solid #FA5C5C !important;
+  color: var(--success) !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast][data-type="error"] [data-icon] {
-  color: #ffffff !important;
-}
-
-[data-sonner-toaster] [data-sonner-toast][data-type="warning"] {
-  background-color: #FFC107 !important;
-  color: #ffffff !important;
-  border: 1px solid #FFC107 !important;
+  color: var(--destructive) !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast][data-type="warning"] [data-icon] {
-  color: #ffffff !important;
-}
-
-[data-sonner-toaster] [data-sonner-toast][data-type="info"] {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  color: var(--warning) !important;
 }
 
 [data-sonner-toaster] [data-sonner-toast][data-type="info"] [data-icon] {
-  color: #3b82f6 !important;
-  /* blue-500 for info icon on black */
+  color: var(--info) !important;
 }
 
 
@@ -223,10 +184,8 @@ body {
 input,
 textarea,
 [contenteditable="true"],
-.monaco-editor,
-.monaco-editor *,
-.monaco-editor-wrapper,
-.monaco-editor-container {
+.cm-editor,
+.cm-editor * {
   -webkit-user-select: auto !important;
   user-select: auto !important;
 }

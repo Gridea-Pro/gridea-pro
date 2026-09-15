@@ -5,18 +5,25 @@ import (
 	"fmt"
 	"gridea-pro/backend/internal/domain"
 	"gridea-pro/backend/internal/service"
+	"sync/atomic"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // LinkFacade wraps LinkService
 type LinkFacade struct {
-	internal *service.LinkService
+	// internal 用原子读写保存：切站（UpdateAppDir）会热替换它，
+	// 而 Wails 可能并发调用本 facade 的方法，原子读写避免"读到替换一半的状态"的 data race。
+	internal atomic.Pointer[service.LinkService]
 }
 
 func NewLinkFacade(s *service.LinkService) *LinkFacade {
-	return &LinkFacade{internal: s}
+	f := &LinkFacade{}
+	f.internal.Store(s)
+	return f
 }
+
+func (f *LinkFacade) svc() *service.LinkService { return f.internal.Load() }
 
 func (f *LinkFacade) LoadLinks() ([]domain.Link, error) {
 	ctx := WailsContext
@@ -24,7 +31,7 @@ func (f *LinkFacade) LoadLinks() ([]domain.Link, error) {
 		ctx = context.TODO()
 	}
 	// No side effects here anymore. Migration/Fixing should be explicit or at startup.
-	return f.internal.LoadLinks(ctx)
+	return f.svc().LoadLinks(ctx)
 }
 
 // SaveLinks wraps service SaveLinks
@@ -33,7 +40,7 @@ func (f *LinkFacade) SaveLinks(links []domain.Link) error {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	return f.internal.SaveLinks(ctx, links)
+	return f.svc().SaveLinks(ctx, links)
 }
 
 // LinkForm for frontend usage
@@ -51,6 +58,9 @@ func (f *LinkFacade) SaveLinkFromFrontend(form LinkForm) ([]domain.Link, error) 
 	if ctx == nil {
 		ctx = context.TODO()
 	}
+	// 一次调用内只取一次 svc 快照，避免"写旧站、读新站列表"被切站劈成两半。
+	svc := f.svc()
+
 	newLink := domain.Link{
 		ID:          form.ID,
 		Name:        form.Name,
@@ -60,17 +70,17 @@ func (f *LinkFacade) SaveLinkFromFrontend(form LinkForm) ([]domain.Link, error) 
 	}
 
 	if newLink.ID == "" {
-		if err := f.internal.CreateLink(ctx, newLink); err != nil {
+		if err := svc.CreateLink(ctx, newLink); err != nil {
 			runtime.LogError(ctx, fmt.Sprintf("Failed to create link: %v", err))
 			return nil, err
 		}
 	} else {
-		if err := f.internal.UpdateLink(ctx, newLink); err != nil {
+		if err := svc.UpdateLink(ctx, newLink); err != nil {
 			return nil, err
 		}
 	}
 
-	return f.internal.LoadLinks(ctx)
+	return svc.LoadLinks(ctx)
 }
 
 // DeleteLinkFromFrontend accepts a link ID and returns updated list
@@ -79,10 +89,11 @@ func (f *LinkFacade) DeleteLinkFromFrontend(id string) ([]domain.Link, error) {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	if err := f.internal.DeleteLink(ctx, id); err != nil {
+	svc := f.svc()
+	if err := svc.DeleteLink(ctx, id); err != nil {
 		return nil, err
 	}
-	return f.internal.LoadLinks(ctx)
+	return svc.LoadLinks(ctx)
 }
 
 // RegisterEvents 注册友链相关事件监听器

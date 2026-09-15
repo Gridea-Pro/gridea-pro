@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/bluele/gcache"
 	"github.com/yuin/goldmark"
@@ -108,13 +109,14 @@ func (p *katexBlockParser) Open(parent ast.Node, reader text.Reader, pc parser.C
 		return node, parser.NoChildren | parser.Close
 	}
 
-	// 多行：把第一行剩余内容（如果有）作为公式开头
+	// 多行：把第一行剩余内容（如果有）作为公式开头。
+	// 这里不能 Advance —— 框架在 Open 返回后会自行推进到下一行，
+	// 多推一次会整行吞掉公式正文（`$$\nAAA\n$$` 会渲染成空公式）。
 	node.accumulating = &bytes.Buffer{}
 	if len(rest) > 0 {
 		node.accumulating.Write(rest)
 		node.accumulating.WriteByte('\n')
 	}
-	reader.Advance(segment.Len())
 	return node, parser.NoChildren
 }
 
@@ -133,8 +135,8 @@ func (p *katexBlockParser) Continue(node ast.Node, reader text.Reader, pc parser
 		return parser.Close
 	}
 
+	// 同 Open：非闭合行只累积、不 Advance，推进交给框架。
 	bm.accumulating.Write(line)
-	reader.Advance(segment.Len())
 	return parser.Continue | parser.NoChildren
 }
 
@@ -325,6 +327,11 @@ func renderKatex(eq []byte, display bool) (out []byte) {
 		if err != nil {
 			return fallbackHTML(eq, display)
 		}
+		// 防病态/超大公式（如超大 \begin{matrix}、深层嵌套 \frac）拖死渲染：
+		// 限制单次 Eval 的执行时间与内存。超限时 Eval 返回错误，走下方 fallback 并重建 VM，
+		// 避免一个坏公式永久挂住全局 vmMu、进而拖垮所有含公式文章的渲染。
+		_ = v.SetEvalTimeout(5 * time.Second)
+		v.SetMemoryLimit(256 << 20) // 256 MiB
 		if _, err := v.Eval(katexjs.Script, quickjs.EvalGlobal); err != nil {
 			v.Close()
 			return fallbackHTML(eq, display)

@@ -128,7 +128,7 @@
                       </div>
                       <!-- 悬浮删除/重置按钮 -->
                       <div v-if="form[item.name]"
-                        class="delete-btn hidden absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
+                        class="delete-btn hidden absolute top-1 right-1 bg-destructive hover:bg-destructive/90 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
                         :title="t('settings.theme.removeImage')" @click.stop="resetFormItem(item.name)">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
                           class="w-3.5 h-3.5">
@@ -140,10 +140,12 @@
                   </div>
                 </div>
 
-                <!-- Markdown -->
-                <div v-if="item.type === 'markdown'" class="border border-input rounded-lg overflow-hidden shadow-sm">
-                  <monaco-markdown-editor ref="monacoMarkdownEditor"
-                    v-model:value="form[item.name]"></monaco-markdown-editor>
+                <!-- Markdown：复用编辑器的 CodeMirror 源码栏（此前是 Monaco，
+                     为一个零主题使用的字段类型扛了 154 MB 依赖，已移除）。
+                     SourceEditor 高度为 100%，需由外层给定高度。 -->
+                <div v-if="item.type === 'markdown'"
+                  class="border border-input rounded-lg overflow-hidden shadow-sm h-80">
+                  <SourceEditor v-model:value="form[item.name]" />
                 </div>
 
                 <!-- Array -->
@@ -152,7 +154,7 @@
                     class="p-4 border border-input rounded-lg bg-card relative group">
                     <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button size="icon" variant="ghost"
-                        class="h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                        class="h-6 w-6 text-info hover:text-info hover:bg-info/10"
                         @click="addConfigItem(item.name, Number(configItemIndex), item.arrayItems)">
                         <i class="ri-add-line"></i>
                       </Button>
@@ -200,7 +202,7 @@
                         <Input v-model="configItem[field.name]" :placeholder="t('settings.theme.imageUrlPlaceholder')" class="max-w-sm" />
                         <div class="flex items-center gap-2">
                           <div
-                            class="relative w-full h-32 border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer hover:border-gray-400 dark:hover:border-zinc-500 transition-colors"
+                            class="relative w-full h-32 border-2 border-dashed border-border rounded-lg overflow-hidden flex items-center justify-center cursor-pointer hover:border-muted-foreground/40 transition-colors"
                             @mouseenter="($event.currentTarget as HTMLElement).querySelector('.delete-btn')?.classList.remove('hidden')"
                             @mouseleave="($event.currentTarget as HTMLElement).querySelector('.delete-btn')?.classList.add('hidden')"
                             @click="handleImageUpload(item.name, field.name, Number(configItemIndex))">
@@ -210,7 +212,7 @@
 
                             <!-- 悬浮删除/重置按钮 -->
                             <div v-if="configItem[field.name]"
-                              class="delete-btn hidden absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
+                              class="delete-btn hidden absolute top-2 right-2 bg-destructive hover:bg-destructive/90 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
                               :title="t('settings.theme.removeImage')" @click.stop="resetFormItem(item.name, field.name, Number(configItemIndex))">
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
                                 class="w-3.5 h-3.5">
@@ -265,7 +267,7 @@ import { useRouter } from 'vue-router'
 import { useSiteStore } from '@/stores/site'
 import { toast } from '@/helpers/toast'
 import urlJoin from 'url-join'
-import MonacoMarkdownEditor from '@/components/MonacoMarkdownEditor/index.vue'
+import SourceEditor from '@/components/editor/SourceEditor.vue'
 import FooterBox from '@/components/FooterBox/index.vue'
 import ColorCard from '@/components/ColorCard/index.vue'
 import ArticleSelectCard from '@/views/articles/list/components/ArticleSelectCard.vue'
@@ -298,10 +300,11 @@ const currentThemeConfig = computed<IThemeConfigItem[]>(() => {
 
 const groups = computed(() => {
   if (!currentThemeConfig.value.length) return []
-  let list = currentThemeConfig.value.map((item) => item.group)
-  list = list.filter((g) => g) // filter undefined or null
-  list = [...new Set(list)]
-  return list
+  // 用类型守卫过滤，narrow 成 string[]，避免 group 为 string|undefined 触发 activeGroup 赋值的 TS2322。
+  const list = currentThemeConfig.value
+    .map((item) => item.group)
+    .filter((g): g is string => !!g)
+  return [...new Set(list)]
 })
 
 const activeGroup = ref('')
@@ -429,8 +432,18 @@ const handleImageUpload = async (formItemName: string, arrayFieldItemName?: stri
 
 const resetFormItem = (formItemName: string, arrayFieldItemName?: string, configItemIndex?: number) => {
   const originalItem = currentThemeConfig.value.find((item) => item.name === formItemName)
+  // 主题更新后可能重命名/删除了某配置项，而 form 里还留着旧字段名。此时 originalItem/foundItem
+  // 为 undefined，直接访问 .value 会抛 TypeError 崩溃整个主题自定义面板，必须守卫。
+  if (!originalItem) {
+    console.warn('[CustomSetting] resetFormItem: 配置项已不存在于当前主题:', formItemName)
+    return
+  }
   if (arrayFieldItemName && typeof configItemIndex === 'number') {
-    const foundItem = originalItem?.arrayItems?.find((item) => item.name === arrayFieldItemName)
+    const foundItem = originalItem.arrayItems?.find((item) => item.name === arrayFieldItemName)
+    if (!foundItem) {
+      console.warn('[CustomSetting] resetFormItem: 数组字段已不存在于当前主题:', arrayFieldItemName)
+      return
+    }
     form[formItemName][configItemIndex][arrayFieldItemName] = foundItem.value
   } else {
     form[formItemName] = originalItem.value

@@ -116,6 +116,7 @@
       <div class="flex justify-end items-center w-full">
         <Button
           variant="default"
+          :disabled="loadFailed"
           class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
           @click="submit">
           {{ t('common.save') }}
@@ -143,6 +144,9 @@ const siteStore = useSiteStore()
 
 const iconPath = ref('')
 const toFileUrl = (p: string) => `/local-file?path=${encodeURIComponent(p)}&t=${Date.now()}`
+
+// 加载失败标志：设置读取失败时表单为空，禁止保存以免空值覆盖磁盘配置。
+const loadFailed = ref(false)
 
 const form = reactive({
   enabled: false,
@@ -209,10 +213,16 @@ onMounted(async () => {
     updateIconPath()
   } catch (e) {
     console.error('Failed to load PWA settings', e)
+    loadFailed.value = true
+    toast.error(t('settings.loadFailedNoSave'))
   }
 })
 
 const submit = async () => {
+  if (loadFailed.value) {
+    toast.error(t('settings.loadFailedNoSave'))
+    return
+  }
   try {
     const settingDomain = new domain.PwaSetting(form)
     await SavePwaSettingFromFrontend(settingDomain)

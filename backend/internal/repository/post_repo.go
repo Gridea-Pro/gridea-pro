@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	securejoin "github.com/cyphar/filepath-securejoin"
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	"gopkg.in/yaml.v3"
 )
@@ -181,7 +182,7 @@ func (r *postRepository) save(ctx context.Context, post *domain.Post, isUpdate b
 	feature := post.FeatureImagePath
 
 	// Handle Image Copy
-	if post.FeatureImage.Name != "" && post.FeatureImage.Path != "" {
+	if post.FeatureImage.Name != "" && post.FeatureImage.Path != "" && isImageExt(post.FeatureImage.Path) {
 		srcPath := post.FeatureImage.Path
 		ext := filepath.Ext(post.FeatureImage.Name)
 
@@ -242,25 +243,25 @@ func (r *postRepository) save(ctx context.Context, post *domain.Post, isUpdate b
 
 	postPath := filepath.Join(postsDir, post.FileName+".md")
 
-	if isUpdate {
-		if post.DeleteFileName != "" && post.DeleteFileName != post.FileName {
-			oldPath := filepath.Join(postsDir, post.DeleteFileName+".md")
-			// 标记为 self-write：rename 场景下 fsnotify 会看到 oldPath REMOVE 事件，
-			// 让 watcher 跳过这次自激，避免"改文件名保存 → 两次渲染"。
-			DefaultWriteGate.MarkSelfWrite(oldPath)
-			_ = os.Remove(oldPath)
-			// Remove from cache logic below handles "old" file by filtering/looping
-		}
-	} else {
+	if !isUpdate {
 		if _, err := os.Stat(postPath); err == nil {
 			return fmt.Errorf("post file already exists: %s", post.FileName)
 		}
 	}
 
-	// Idempotent check optimization could be here, but with cache update we probably want to proceed.
 	// Write file atomically to prevent data loss
 	if err := WriteFileAtomic(postPath, []byte(mdContent), 0644); err != nil {
 		return fmt.Errorf("failed to write post file: %w", err)
+	}
+
+	// 改名场景：必须在新文件写入成功之后再删除旧文件。
+	// 若先删旧文件、后写新文件而写入失败，旧文件已丢、新文件未建，文章会彻底丢失。
+	if isUpdate && post.DeleteFileName != "" && post.DeleteFileName != post.FileName {
+		oldPath := filepath.Join(postsDir, post.DeleteFileName+".md")
+		// 标记为 self-write：rename 场景下 fsnotify 会看到 oldPath REMOVE 事件，
+		// 让 watcher 跳过这次自激，避免"改文件名保存 → 两次渲染"。
+		DefaultWriteGate.MarkSelfWrite(oldPath)
+		_ = os.Remove(oldPath)
 	}
 
 	// Update Cache
@@ -309,6 +310,9 @@ func (r *postRepository) save(ctx context.Context, post *domain.Post, isUpdate b
 
 func (r *postRepository) Delete(ctx context.Context, fileName string) error {
 	fileName = normalizeFileName(fileName)
+	if !domain.IsSafeFileName(fileName) {
+		return fmt.Errorf("invalid filename: %s", fileName)
+	}
 	if err := r.scanPosts(); err != nil {
 		return err
 	}
@@ -324,8 +328,9 @@ func (r *postRepository) Delete(ctx context.Context, fileName string) error {
 	if err == nil {
 		post, _ := r.parsePost(string(content), fileName+".md")
 		if post.Feature != "" && !strings.HasPrefix(post.Feature, "http") {
-			featurePath := filepath.Join(r.appDir, strings.TrimPrefix(post.Feature, "/"))
-			_ = os.Remove(featurePath)
+			if featurePath := r.resolveInsideSite(post.Feature); featurePath != "" {
+				_ = os.Remove(featurePath)
+			}
 		}
 		re := regexp.MustCompile(`!\[.*?\]\((.+?)\)`)
 		matches := re.FindAllStringSubmatch(post.Content, -1)
@@ -333,8 +338,9 @@ func (r *postRepository) Delete(ctx context.Context, fileName string) error {
 			if len(match) > 1 {
 				imgPath := match[1]
 				if !strings.HasPrefix(imgPath, "http") {
-					fullPath := filepath.Join(r.appDir, strings.TrimPrefix(imgPath, "/"))
-					_ = os.Remove(fullPath)
+					if fullPath := r.resolveInsideSite(imgPath); fullPath != "" {
+						_ = os.Remove(fullPath)
+					}
 				}
 			}
 		}
@@ -362,6 +368,32 @@ func (r *postRepository) Delete(ctx context.Context, fileName string) error {
 	r.saveCacheJSON()
 
 	return nil
+}
+
+// isImageExt 校验特色图源文件是否为受支持的图片扩展名。特色图来自前端文件选择器，
+// 加白名单避免被诱导把任意本地文件（如密钥、配置）复制进公开的 post-images 目录后随站点发布泄露。
+func isImageExt(path string) bool {
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".avif", ".tif", ".tiff", ".ico":
+		return true
+	}
+	return false
+}
+
+// resolveInsideSite 把站点相对的媒体路径（post.Feature / 正文 ![](...)）安全解析为绝对路径，
+// 保证结果落在站点目录内。若路径含 ../ 穿越到站点目录之外（这些路径来自文章 frontmatter/正文，
+// 可由前端或 MCP 完全控制），返回空串——避免删除文章时被诱导 os.Remove 站点外的任意本地文件。
+func (r *postRepository) resolveInsideSite(rel string) string {
+	rel = strings.TrimPrefix(rel, "/")
+	if rel == "" {
+		return ""
+	}
+	// SecureJoin 会把 ../ 夹在根内解析，绝不逃逸 r.appDir。
+	joined, err := securejoin.SecureJoin(r.appDir, rel)
+	if err != nil {
+		return ""
+	}
+	return joined
 }
 
 func (r *postRepository) GetByFileName(ctx context.Context, fileName string) (*domain.Post, error) {
@@ -422,6 +454,64 @@ func (r *postRepository) GetAll(ctx context.Context) ([]domain.Post, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return slices.Clone(r.cache), nil
+}
+
+// RewritePostTags 见接口注释：全程持 r.mu 对 live cache 逐篇改标签并落盘，
+// 与 save()（同样持 r.mu）互斥，杜绝级联覆盖用户刚保存正文的丢编辑窗口。
+func (r *postRepository) RewritePostTags(ctx context.Context, mutate func(p *domain.Post) bool) error {
+	if err := r.scanPosts(); err != nil {
+		return err
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	postsDir := filepath.Join(r.appDir, "posts")
+	for i := range r.cache {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		// 传副本给 mutate，避免其在返回 false 时留下半改状态污染缓存。
+		p := r.cache[i]
+		if !mutate(&p) {
+			continue
+		}
+
+		// 仅重写标签字段，正文与其余 frontmatter 取自当前缓存（即最新已提交内容），
+		// 不 bump UpdatedAt——级联是系统操作，不应改动文章的"最后修改时间"（影响 RSS 排序等）。
+		meta := postYaml{
+			ID:          p.ID,
+			Title:       p.Title,
+			CreatedAt:   p.CreatedAt.Format(domain.TimeLayout),
+			UpdatedAt:   p.UpdatedAt.Format(domain.TimeLayout),
+			Tags:        p.Tags,
+			TagIDs:      p.TagIDs,
+			Categories:  p.Categories,
+			CategoryIDs: p.CategoryIDs,
+			Published:   p.Published,
+			HideInList:  p.HideInList,
+			Feature:     p.Feature,
+			IsTop:       p.IsTop,
+		}
+		yamlBytes, err := yaml.Marshal(&meta)
+		if err != nil {
+			return fmt.Errorf("marshal post yaml (cascade): %w", err)
+		}
+		mdContent := fmt.Sprintf("---\n%s---\n\n%s", string(yamlBytes), p.Content)
+		postPath := filepath.Join(postsDir, p.FileName+".md")
+		// 标记 self-write：级联落盘不应触发 watcher 再渲染（调用方负责统一 reload）。
+		DefaultWriteGate.MarkSelfWrite(postPath)
+		if err := WriteFileAtomic(postPath, []byte(mdContent), 0644); err != nil {
+			return fmt.Errorf("write post file (cascade): %w", err)
+		}
+		r.cache[i] = p
+	}
+
+	r.saveCacheJSON()
+	return nil
 }
 
 func (r *postRepository) saveCacheJSON() {

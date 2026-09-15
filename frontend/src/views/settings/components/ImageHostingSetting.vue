@@ -65,7 +65,7 @@
                 <img :src="file.url" :alt="file.filename" class="w-full h-full object-cover" />
                 <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <button
-                    class="text-white text-xs bg-red-500/80 hover:bg-red-500 rounded px-2 py-1 cursor-pointer"
+                    class="text-white text-xs bg-destructive/80 hover:bg-destructive rounded px-2 py-1 cursor-pointer"
                     @click.stop="deleteImage(file.hash)"
                   >
                     {{ t('common.delete') }}

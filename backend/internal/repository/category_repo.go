@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"gridea-pro/backend/internal/domain"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
@@ -10,11 +12,13 @@ import (
 
 type categoryRepository struct {
 	*BaseJSONRepository[domain.Category]
+	// writeMu 串行化 Create/Update 的"读列表→查唯一性→写入"整个流程，消除 TOCTOU 窗口。
+	writeMu sync.Mutex
 }
 
 func NewCategoryRepository(appDir string) domain.CategoryRepository {
 	base := NewBaseJSONRepository[domain.Category](appDir, "categories.json", "categories")
-	return &categoryRepository{base}
+	return &categoryRepository{BaseJSONRepository: base}
 }
 
 // ensureID 若分类没有 ID（老数据），自动生成 NanoID
@@ -28,6 +32,8 @@ func ensureCategoryID(category *domain.Category) {
 
 func (r *categoryRepository) Create(ctx context.Context, category *domain.Category) error {
 	ensureCategoryID(category)
+	r.writeMu.Lock()
+	defer r.writeMu.Unlock()
 	existing, err := r.List(ctx)
 	if err != nil {
 		return err
@@ -41,6 +47,8 @@ func (r *categoryRepository) Create(ctx context.Context, category *domain.Catego
 func (r *categoryRepository) Update(ctx context.Context, id string, category *domain.Category) error {
 	// 保持 ID 不变
 	category.ID = id
+	r.writeMu.Lock()
+	defer r.writeMu.Unlock()
 	existing, err := r.List(ctx)
 	if err != nil {
 		return err

@@ -4,20 +4,139 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gridea Pro</title>
+    <script>
+      /**
+       * 主题防闪（FOUC）：在首帧渲染前把明暗与主题属性挂到 <html>。
+       * 必须内联同步执行——Pinia store 要等到 app mount 之后才跑 applyTheme()，
+       * 那时深色/非默认主题的用户已经看到一帧浅色默认界面了。
+       *
+       * 迁移映射与 src/stores/theme.ts 的 LEGACY_THEME_MAP 保持一致，改一处需同步另一处。
+       * 此处只读不写，持久化交给 store。
+       */
+      (function () {
+        try {
+          var LEGACY = {
+            default: ['pure', 'green'],
+            blue: ['pure', 'blue'],
+            warm: ['paper', 'sunset'],
+            sakura: ['pure', 'sakura'],
+            twilight: ['pure', 'purple'],
+            glass: ['glass', 'cyan'],
+          };
+          var SURFACES = ['pure', 'paper', 'glass'];
+          var ACCENTS = ['green', 'rose', 'sakura', 'sunset', 'amber', 'cyan', 'blue', 'purple', 'ink'];
+          var html = document.documentElement;
+
+          var mode = localStorage.getItem('app_theme_mode') || 'system';
+          var isDark = mode === 'system'
+            ? window.matchMedia('(prefers-color-scheme: dark)').matches
+            : mode === 'dark';
+          if (isDark) html.classList.add('dark');
+
+          var surface = localStorage.getItem('app_theme_surface');
+          var accent = localStorage.getItem('app_theme_accent');
+          if (!(surface && accent && SURFACES.indexOf(surface) >= 0 && ACCENTS.indexOf(accent) >= 0)) {
+            var pair = LEGACY[localStorage.getItem('app_theme_color')] || ['pure', 'green'];
+            surface = pair[0];
+            accent = pair[1];
+          }
+          html.setAttribute('data-surface', surface);
+          html.setAttribute('data-accent', accent);
+
+          // 排版同理：字号只在 store 挂载后才应用的话，调过字号的用户会先看到
+          // 一帧 16px 默认排版再跳到自己的设置。字阶比例与取整规则必须与
+          // src/helpers/typography.ts 的 typeScale() 一致，改一处需同步另一处。
+          var SIZES = [14, 15, 16, 17, 18, 20];
+          var size = Number(localStorage.getItem('app_prose_font_size'));
+          if (SIZES.indexOf(size) < 0) size = 16;
+          var RATIOS = [1.75, 1.44, 1.2, 1.0625, 1, 1];
+          html.style.setProperty('--type-base', size + 'px');
+          html.style.setProperty('--type-title', Math.round(size * 2) + 'px');
+          for (var i = 0; i < RATIOS.length; i++) {
+            html.style.setProperty('--type-h' + (i + 1), Math.round(size * RATIOS[i]) + 'px');
+          }
+          var FONTS = {
+            pingfang: '"PingFang SC", "Hiragino Sans GB", sans-serif',
+            yahei: '"Microsoft YaHei", sans-serif',
+            songti: '"Songti SC", "SimSun", serif',
+            simsun: '"SimSun", "Songti SC", serif',
+            wenkai: '"LXGW WenKai", "LXGW WenKai Screen", serif'
+          };
+          var stack = FONTS[localStorage.getItem('app_prose_font_family')];
+          if (stack) html.style.setProperty('--type-family', stack);
+        } catch (e) {
+          document.documentElement.setAttribute('data-surface', 'pure');
+          document.documentElement.setAttribute('data-accent', 'green');
+        }
+      })();
+    </script>
   </head>
   <body>
-    <div id="global-error-display" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; color:red; z-index:999999; padding:20px; overflow:auto; white-space:pre-wrap; font-family:monospace;"></div>
+    <div id="boot-error" hidden></div>
     <script>
-      window.addEventListener('error', function(event) {
-        var display = document.getElementById('global-error-display');
-        display.style.display = 'block';
-        display.innerText += 'Global Error: ' + (event.error ? event.error.stack : event.message) + '\n\n';
-      });
-      window.addEventListener('unhandledrejection', function(event) {
-        var display = document.getElementById('global-error-display');
-        display.style.display = 'block';
-        display.innerText += 'Unhandled Promise Rejection: ' + event.reason + '\n\n';
-      });
+      /**
+       * 启动期错误兜底：只负责「应用还没挂起来」这一段窗口期，避免白屏无提示。
+       * app.mount() 成功后 main.ts 会置 window.__GRIDEA_APP_READY__，此后所有错误
+       * 交给应用层（ErrorBoundary / app.config.errorHandler）处理——运行中的错误
+       * 绝不能再由这里接管，否则会退化成整窗口遮挡。
+       */
+      (function () {
+        var box = document.getElementById('boot-error');
+
+        function show(message) {
+          if (window.__GRIDEA_APP_READY__ || box.hasAttribute('data-shown')) return;
+          box.setAttribute('data-shown', '');
+          box.hidden = false;
+          box.textContent = '';
+          box.setAttribute(
+            'style',
+            'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;' +
+              'z-index:99999;font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;' +
+              'background:Canvas;color:CanvasText;'
+          );
+
+          var card = document.createElement('div');
+          card.setAttribute(
+            'style',
+            'max-width:420px;padding:24px;border:1px solid rgba(128,128,128,.3);border-radius:8px;'
+          );
+
+          var title = document.createElement('div');
+          title.textContent = '应用启动失败';
+          title.setAttribute('style', 'font-weight:600;margin-bottom:8px;');
+
+          var detail = document.createElement('pre');
+          detail.textContent = String(message || '').slice(0, 500);
+          detail.setAttribute(
+            'style',
+            'margin:0 0 16px;padding:8px;max-height:180px;overflow:auto;white-space:pre-wrap;' +
+              'word-break:break-word;font-size:12px;opacity:.7;background:rgba(128,128,128,.1);border-radius:4px;'
+          );
+
+          var retry = document.createElement('button');
+          retry.textContent = '重新加载';
+          retry.setAttribute(
+            'style',
+            'padding:6px 14px;border:1px solid rgba(128,128,128,.4);border-radius:6px;' +
+              'background:transparent;color:inherit;cursor:pointer;font:inherit;'
+          );
+          retry.onclick = function () {
+            location.reload();
+          };
+
+          card.appendChild(title);
+          card.appendChild(detail);
+          card.appendChild(retry);
+          box.appendChild(card);
+        }
+
+        window.addEventListener('error', function (event) {
+          show(event.error ? event.error.stack || event.error.message : event.message);
+        });
+        window.addEventListener('unhandledrejection', function (event) {
+          show(event.reason && event.reason.stack ? event.reason.stack : event.reason);
+        });
+      })();
     </script>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>

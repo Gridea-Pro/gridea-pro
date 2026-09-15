@@ -20,7 +20,7 @@ class="font-semibold text-foreground"
                     </div>
                 </a>
 
-                <span class="text-xs text-gray-400">{{ formatTime(comment.createdAt) }}</span>
+                <span class="text-xs text-muted-foreground">{{ formatTime(comment.createdAt) }}</span>
             </div>
 
             <div class="flex items-center gap-1">

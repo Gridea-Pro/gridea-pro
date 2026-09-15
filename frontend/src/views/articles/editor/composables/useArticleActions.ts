@@ -105,7 +105,11 @@ export function useArticleActions(options: UseArticleActionsOptions) {
     // ── 静默保存 (Ctrl+S / 菜单) ──────────────────────────
 
     const normalSavePost = async () => {
-        if (!canSubmit.value) return
+        // canSubmit 为 false 时（如标题为空）Cmd+S 之前完全静默，用户以为存了。给一条可见提示。
+        if (!canSubmit.value) {
+            toast.error(t('article.saveBlocked'))
+            return
+        }
         const formData = formatForm()
         if (!formData) return
 
@@ -114,7 +118,9 @@ export function useArticleActions(options: UseArticleActionsOptions) {
             updateArticleSavedStatus()
             onFetchData()
         } catch (e) {
+            // 保存失败前只有 console.error，用户以为存了就切站/关窗，改动丢失。改为可见报错。
             console.error(e)
+            toast.error(t('article.saveFailed'))
         }
     }
 
@@ -129,11 +135,11 @@ export function useArticleActions(options: UseArticleActionsOptions) {
     // ── Wails Events 生命周期 ──────────────────────────────
 
     const setupEvents = () => {
-        EventsOff('click-menu-save')
+        EventsOff('editor:save')
         EventsOff('app-post-created')
         EventsOff('image-uploaded')
 
-        EventsOn('click-menu-save', () => {
+        EventsOn('editor:save', () => {
             normalSavePost()
         })
 
@@ -148,7 +154,7 @@ export function useArticleActions(options: UseArticleActionsOptions) {
     }
 
     const cleanupEvents = () => {
-        EventsOff('click-menu-save')
+        EventsOff('editor:save')
         EventsOff('app-post-created')
         EventsOff('image-uploaded')
     }

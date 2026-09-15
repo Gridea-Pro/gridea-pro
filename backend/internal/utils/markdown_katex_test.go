@@ -29,6 +29,44 @@ func TestKatexBlockRendered(t *testing.T) {
 	if strings.Contains(out, `<p><span class="katex-display"`) {
 		t.Fatalf("块级公式被 <p> 包住了，HTML 嵌套不合法:\n%s", out)
 	}
+	// 只断言 katex-display 存在是不够的：曾经 Open/Continue 里多调了一次
+	// reader.Advance，公式正文被整行吞掉，渲染出的是一个内容为空的 katex-display，
+	// 上面两条断言全都能过。必须校验公式原文确实进了输出。
+	if got := katexAnnotation(out); got != "a + b = c" {
+		t.Fatalf("块级公式内容丢失，annotation = %q，期望 %q\n%s", got, "a + b = c", out)
+	}
+}
+
+// TestKatexBlockMultiLineContent 多行块公式必须逐行完整保留，不能吞行。
+func TestKatexBlockMultiLineContent(t *testing.T) {
+	cases := map[string]string{
+		"$$\nAAA\n$$":                "AAA",
+		"$$\nAAA\nBBB\n$$":           "AAA\nBBB",
+		"$$\nAAA\nBBB\nCCC\n$$":      "AAA\nBBB\nCCC",
+		"$$AAA\nBBB\n$$":             "AAA\nBBB",
+		"$$\nAAA":                    "AAA", // 未闭合兜底
+		"文本\n\n$$\nE=mc^2\n$$\n\n文本": "E=mc^2",
+	}
+	for md, want := range cases {
+		if got := katexAnnotation(ToHTMLUnsafe(md)); got != want {
+			t.Errorf("块公式内容不符\n  输入: %q\n  得到: %q\n  期望: %q", md, got, want)
+		}
+	}
+}
+
+// katexAnnotation 取出 KaTeX 输出里的 LaTeX 原文（<annotation> 的内容）。
+func katexAnnotation(html string) string {
+	const open = `encoding="application/x-tex">`
+	i := strings.Index(html, open)
+	if i < 0 {
+		return ""
+	}
+	rest := html[i+len(open):]
+	j := strings.Index(rest, "</annotation>")
+	if j < 0 {
+		return ""
+	}
+	return rest[:j]
 }
 
 // TestKatexBlockSingleLine 单行 `$$ x $$` 也应该被识别成块级。

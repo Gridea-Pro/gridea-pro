@@ -127,7 +127,10 @@
     "previewServiceFailed": "预览服务获取失败",
     "selectLocalImage": "点击选择本地图片",
     "contextMenuTip": "编辑区域右键能弹出快捷菜单哦",
-    "editorPlaceholder": "随便写点什么..."
+    "editorPlaceholder": "随便写点什么...",
+    "wordsUnit": "字",
+    "saveBlocked": "请先填写标题再保存",
+    "saveFailed": "保存失败"
   },
   "tag": {
     "new": "新标签",
@@ -552,7 +555,8 @@
     "system": {
       "displayLanguage": "显示语言",
       "version": "版本"
-    }
+    },
+    "loadFailedNoSave": "设置加载失败，请勿保存，以免用空值覆盖磁盘上的配置"
   },
   "comment": {
     "empty": "暂无评论",
@@ -610,19 +614,35 @@
   },
   "preferences": {
     "themeMode": "主题模式",
-    "themeColor": "主题色",
+    "themeSurface": "外观主题",
+    "themeAccent": "强调色",
+    "surfacePure": "纯白",
+    "surfacePaper": "纸张",
+    "surfaceGlass": "玻璃",
+    "accentGreen": "春山翠",
+    "accentRose": "霜叶红",
+    "accentSakura": "晚樱粉",
+    "accentSunset": "日落暖",
+    "accentAmber": "麦浪金",
+    "accentCyan": "雨过青",
+    "accentBlue": "秋水蓝",
+    "accentPurple": "暮山紫",
+    "accentInk": "远山墨",
     "light": "浅色",
     "dark": "深色",
     "followSystem": "跟随系统",
-    "colorDefault": "珍珠白",
-    "colorBlue": "极客蓝",
-    "colorWarm": "日落暖",
-    "colorSakura": "樱花粉",
-    "colorTwilight": "暮山紫",
-    "colorGlass": "毛玻璃",
-    "editorFontFamily": "编辑器字体",
-    "editorFontFamilyPlaceholder": "Menlo, Monaco, Consolas, monospace",
-    "editorFontFamilyHint": "多个字体用英文逗号分隔，前面的字体优先使用"
+    "proseFontSize": "正文字号",
+    "proseFontSizeHint": "行距、段落间距与标题大小会按比例跟随",
+    "proseFontFamily": "正文字体",
+    "proseFontFamilyHint": "只列出本机已安装的系统字体，未安装的不可选",
+    "proseFontSample": "正文字体 Aa 123",
+    "proseFontMissing": "未安装",
+    "proseFontSystem": "跟随界面",
+    "proseFontPingFang": "苹方",
+    "proseFontYaHei": "微软雅黑",
+    "proseFontSongti": "宋体",
+    "proseFontSimSun": "中易宋体",
+    "proseFontWenKai": "霞鹜文楷"
   },
   "shortcutKeys": {
     "editing": "编辑",
@@ -666,6 +686,229 @@
     },
     "render": {
       "failed": "渲染失败"
+    },
+    "boundary": {
+      "title": "此处出错了",
+      "retry": "重试",
+      "copyDiagnostics": "复制诊断信息",
+      "copied": "已复制",
+      "details": "详情"
     }
+  },
+  "editor": {
+    "undo": "撤销",
+    "redo": "重做",
+    "h1": "一级标题",
+    "h2": "二级标题",
+    "h3": "三级标题",
+    "bold": "加粗",
+    "italic": "斜体",
+    "strike": "删除线",
+    "code": "行内代码",
+    "highlight": "高亮",
+    "sub": "下标",
+    "sup": "上标",
+    "bulletList": "无序列表",
+    "orderedList": "有序列表",
+    "taskList": "任务列表",
+    "blockquote": "引用",
+    "codeBlock": "代码块",
+    "hr": "分割线",
+    "alignLeft": "左对齐",
+    "alignCenter": "居中对齐",
+    "alignRight": "右对齐",
+    "link": "链接",
+    "image": "图片",
+    "table": "表格",
+    "aiPolish": "AI 润色",
+    "rich": "富文本",
+    "source": "源码",
+    "slash": {
+      "h1": "一级标题",
+      "h2": "二级标题",
+      "h3": "三级标题",
+      "bulletList": "无序列表",
+      "orderedList": "有序列表",
+      "taskList": "任务列表",
+      "blockquote": "引用",
+      "codeBlock": "代码块",
+      "hr": "分割线",
+      "table": "表格",
+      "more": "阅读更多分隔",
+      "image": "图片",
+      "link": "链接",
+      "inlineMath": "行内公式",
+      "blockMath": "块级公式",
+      "emoji": "表情",
+      "empty": "无匹配命令",
+      "group": {
+        "basic": "基础",
+        "block": "块",
+        "insert": "插入"
+      },
+      "mermaid": "Mermaid 流程图",
+      "details": "折叠面板",
+      "footnote": "脚注"
+    },
+    "dragHandle": {
+      "title": "拖拽以移动，点击打开菜单",
+      "duplicate": "复制本块",
+      "clearFormat": "清除格式",
+      "delete": "删除本块"
+    },
+    "color": {
+      "title": "文字颜色",
+      "presets": "预设颜色",
+      "clear": "清除颜色",
+      "textTitle": "文字颜色",
+      "highlightTitle": "荧光笔",
+      "default": "默认",
+      "noColor": "无颜色",
+      "palette": "艺术色卡",
+      "gradient": "渐变色",
+      "recent": "最近使用",
+      "custom": "其他颜色"
+    },
+    "emoji": {
+      "title": "插入表情"
+    },
+    "linkDialog": {
+      "title": "编辑链接",
+      "url": "链接地址",
+      "urlPlaceholder": "https://example.com",
+      "text": "显示文本",
+      "textPlaceholder": "可选",
+      "remove": "移除",
+      "cancel": "取消",
+      "confirm": "确定"
+    },
+    "imageDialog": {
+      "insert": "插入图片",
+      "fromUrl": "网络地址",
+      "fromLocal": "本地文件",
+      "urlPlaceholder": "请输入图片链接（https://…）",
+      "localHint": "从本机选择一张图片插入到文档中。",
+      "pickLocal": "选择本地图片",
+      "cancel": "取消"
+    },
+    "tableMenu": {
+      "menu": "表格操作",
+      "addRowBefore": "上方插入行",
+      "addRowAfter": "下方插入行",
+      "addColumnBefore": "左侧插入列",
+      "addColumnAfter": "右侧插入列",
+      "deleteRow": "删除行",
+      "deleteColumn": "删除列",
+      "mergeCells": "合并单元格",
+      "splitCell": "拆分单元格",
+      "toggleHeaderRow": "切换表头行",
+      "deleteTable": "删除表格"
+    },
+    "mermaid": {
+      "error": "渲染失败",
+      "empty": "点击编辑 Mermaid 流程图",
+      "edit": "编辑",
+      "placeholder": "输入 Mermaid 语法，如 graph TD; A-->B",
+      "cancel": "取消",
+      "save": "保存"
+    },
+    "math": {
+      "cancel": "取消",
+      "save": "保存",
+      "empty": "在下方输入 LaTeX"
+    },
+    "footnote": {
+      "placeholder": "脚注内容…",
+      "back": "返回引用处"
+    },
+    "details": {
+      "summary": "摘要标题"
+    },
+    "heading": {
+      "title": "标题",
+      "paragraph": "正文",
+      "level": "标题{n}"
+    },
+    "fontSize": {
+      "title": "字号",
+      "default": "默认"
+    },
+    "shortcuts": {
+      "title": "快捷键",
+      "basic": "基础编辑",
+      "textStyle": "文本样式",
+      "paragraph": "段落样式",
+      "align": "段落对齐",
+      "lists": "列表与引用",
+      "insert": "插入",
+      "undo": "撤销",
+      "redo": "重做",
+      "save": "保存",
+      "slash": "斜杠菜单",
+      "underline": "下划线",
+      "alignLeft": "左对齐",
+      "alignCenter": "居中对齐",
+      "alignRight": "右对齐",
+      "aiAccept": "接受 AI 续写"
+    },
+    "codeBlockView": {
+      "plain": "纯文本",
+      "copy": "复制",
+      "copied": "已复制"
+    },
+    "imageMenu": {
+      "originalSize": "原始大小",
+      "copySrc": "复制图片地址",
+      "delete": "删除图片",
+      "edit": "编辑图片",
+      "preview": "预览"
+    },
+    "imageEdit": {
+      "title": "编辑图片",
+      "src": "图片地址",
+      "srcPlaceholder": "输入图片地址",
+      "alt": "描述（alt）",
+      "altPlaceholder": "输入图片描述",
+      "save": "保存",
+      "cancel": "取消"
+    },
+    "more": "更多",
+    "aiSummary": "AI 摘要",
+    "summaryDialog": {
+      "title": "AI 摘要",
+      "generating": "正在生成摘要…",
+      "placeholder": "摘要内容（可编辑）",
+      "regenerate": "重新生成",
+      "copy": "复制",
+      "copied": "已复制",
+      "insertTop": "插入文首",
+      "failed": "摘要生成失败",
+      "emptyContent": "文章内容为空"
+    },
+    "emojiPicker": {
+      "search": "搜索 emoji…",
+      "empty": "未找到匹配的 emoji",
+      "recent": "最近",
+      "smileys": "表情",
+      "people": "人物",
+      "nature": "动物",
+      "food": "食物",
+      "travel": "旅行",
+      "activity": "活动",
+      "objects": "物品",
+      "symbols": "符号",
+      "flags": "旗帜"
+    },
+    "typewriterTips": [
+      "随便写点什么…",
+      "输入 / 唤起插入菜单：表格、公式、Mermaid 图…",
+      "选中文字试试 AI 润色，⌘K 插入链接",
+      "行首输入 1. 或 - 加空格，快速开始列表",
+      "双击图片可预览，拖动四角可调整大小",
+      "⌘S 保存草稿，右下角键盘图标查看全部快捷键"
+    ],
+    "copyHtmlSuccess": "已复制 HTML",
+    "copyHtmlFailed": "复制 HTML 失败",
+    "serializeFailed": "内容序列化失败，已保留上次正常内容，请检查最近的编辑（如复杂表格/公式）"
   }
 }
