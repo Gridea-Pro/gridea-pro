@@ -254,9 +254,26 @@ jobs:
         shell: pwsh
         run: |
           choco install innosetup -y
-          $langDir = "C:\Program Files (x86)\Inno Setup 6\Languages"
-          $langUrl = "https://raw.githubusercontent.com/jrsoftware/issrc/main/Files/Languages/Unofficial/ChineseSimplified.isl"
-          Invoke-WebRequest -Uri $langUrl -OutFile "$langDir\ChineseSimplified.isl"
+          # 简体中文语言文件必须与已安装的 Inno Setup 版本匹配：语言文件格式随大版本变化，
+          # 且它在上游仓库里的位置也变过（2026-06 从 Unofficial/ 升格为官方目录），
+          # 所以按 ISCC.exe 的实际版本定位到对应 tag，再依次尝试官方 / 非官方两个路径。
+          $iscc = Get-Item "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          $langDir = Join-Path $iscc.DirectoryName "Languages"
+          $target = Join-Path $langDir "ChineseSimplified.isl"
+          if (Test-Path $target) { Write-Host "ChineseSimplified.isl 已随 Inno Setup 自带"; exit 0 }
+          $ver = ($iscc.VersionInfo.ProductVersion -replace '[^\d.]', '').Split('.')
+          $tag = "is-$($ver[0])_$($ver[1])_$($ver[2])"
+          foreach ($path in "Files/Languages/ChineseSimplified.isl", "Files/Languages/Unofficial/ChineseSimplified.isl") {
+            $url = "https://raw.githubusercontent.com/jrsoftware/issrc/$tag/$path"
+            try {
+              Invoke-WebRequest -Uri $url -OutFile $target
+              Write-Host "已下载 $url"
+              exit 0
+            } catch {
+              Write-Host "未命中 $url"
+            }
+          }
+          throw "找不到与 Inno Setup $($iscc.VersionInfo.ProductVersion) 匹配的 ChineseSimplified.isl"
 
       - name: Build Windows ${{ matrix.arch }}
         shell: bash
