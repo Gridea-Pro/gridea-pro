@@ -33,23 +33,33 @@ func (s *CategoryService) SaveCategories(ctx context.Context, categories []domai
 // SaveCategory 创建或更新分类
 // originalID: 若为空则创建新分类；若非空则按 ID 更新
 func (s *CategoryService) SaveCategory(ctx context.Context, category domain.Category, originalID string) error {
-	// 在持锁前校验用户输入，失败即返回 —— 避免 Wails 调用链拿不到锁时堆积
-	if err := utils.ValidateSlug(category.Slug); err != nil {
-		return fmt.Errorf("%w：分类 URL slug %q 不合法，只能包含小写字母、数字和连字符", err, category.Slug)
-	}
-
-	s.mu.Lock()
-
+	// 新建：必须校验格式，在持锁前拦掉 —— 避免 Wails 调用链拿不到锁时堆积
 	if originalID == "" {
+		if err := utils.ValidateSlug(category.Slug); err != nil {
+			return fmt.Errorf("%w：分类 URL slug %q 不合法，只能包含字母、数字和连字符", err, category.Slug)
+		}
+		s.mu.Lock()
 		err := s.repo.Create(ctx, &category)
 		s.mu.Unlock()
 		return err
 	}
 
+	s.mu.Lock()
+
 	existing, err := s.repo.GetByID(ctx, originalID)
 	if err != nil {
 		s.mu.Unlock()
 		return err
+	}
+
+	// 编辑：只有 slug 真被改动时才校验格式。历史数据里可能存在不符合当前规则的
+	// slug（旧版本写入、或经 MCP 由外部写入），不能因此连带阻止用户修改描述、封面
+	// 等其它字段——那是在惩罚用户没做过的操作。
+	if category.Slug != existing.Slug {
+		if err := utils.ValidateSlug(category.Slug); err != nil {
+			s.mu.Unlock()
+			return fmt.Errorf("%w：分类 URL slug %q 不合法，只能包含字母、数字和连字符", err, category.Slug)
+		}
 	}
 
 	isRename := existing.Name != category.Name

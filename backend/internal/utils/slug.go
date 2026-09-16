@@ -13,20 +13,21 @@ import (
 // ErrInvalidSlug 用户输入的 slug 不符合 URL-safe 规则。调用方用 errors.Is 识别。
 var ErrInvalidSlug = errors.New("invalid slug")
 
-// slugPattern 允许的 slug 形态：小写字母 / 数字 / 中间的连字符。
+// slugPattern 允许的 slug 形态：字母（不限大小写）/ 数字 / 中间的连字符。
 //
-// 为什么只允许小写：
-//   - macOS（APFS 默认）/ Windows 的文件系统大小写不敏感，
-//     若 slug 大小写混用，磁盘上会和另一个仅大小写不同的 slug 撞同一个目录，
-//     互相覆盖生成的 tag/category 页
-//   - URL 层面大小写是敏感的，`Slug-A` 和 `slug-a` 会被当成两个不同地址，
-//     造成 SEO 与用户期望不符
+// 为什么允许大写：
+//   - 「两个仅大小写不同的 slug 在大小写不敏感的文件系统上撞同一个目录」这个风险，
+//     由 repository 的唯一性校验独立堵住（Name/Slug 比较走 EqualFold，见 uniqueness.go），
+//     系统里不可能同时存在 `Tech` 与 `tech`。禁大写对这个故障没有额外防护作用。
+//   - 反过来，禁大写会让历史数据（旧版本写入的、或经 MCP 由外部写入的带大写 slug）
+//     连带无法被编辑——用户只想改描述或封面，却会被 slug 格式拦下。
+//   - 自动生成仍统一产出小写（见 SlugifyName），大写只在用户显式指定时出现。
 //
 // 为什么禁中文 / 特殊字符：
 //   - `#` 在 URL 里是 fragment 分隔符，`/tag/C#/` 浏览器解析为 `/tag/C` + `#/`
 //   - `/`、`?`、`&`、空格、emoji 等同理会破坏 URL 路径或引入编码歧义
 //   - 想用中文标签名，由 SlugifyName（拼音归一）自动生成 slug，别让用户手填
-var slugPattern = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
+var slugPattern = regexp.MustCompile(`^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$`)
 
 // SlugifyName 将人类可读的名称（可能含中文、标点、空格等）转成 URL-safe 的 slug。
 //
@@ -68,8 +69,8 @@ func SlugifyName(name string) string {
 // ValidateSlug 校验用户输入的 slug 是否可直接作为 URL path 段 + 跨平台文件名。
 // 不合法时返回 wrap 了 ErrInvalidSlug 的 error，消息面向用户可直接展示。
 //
-// 合法规则：`^[a-z0-9]+(-[a-z0-9]+)*$`
-//   - 只允许小写字母、数字、中间的连字符
+// 合法规则：`^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$`
+//   - 只允许字母（不限大小写）、数字、中间的连字符
 //   - 不允许空串 / 前后连字符 / 连续连字符
 func ValidateSlug(s string) error {
 	if s == "" {

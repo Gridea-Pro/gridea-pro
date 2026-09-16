@@ -105,15 +105,18 @@ export function useTag() {
         }
     }
 
-    // slug 必须是 URL-safe + 跨平台文件系统安全的：小写字母 / 数字 / 中间的连字符。
+    // slug 必须是 URL-safe + 跨平台文件系统安全的：字母 / 数字 / 中间的连字符。
     // 与后端 utils.ValidateSlug 的正则保持一致，避免后端兜底拒绝后用户才发现。
-    const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
+    const slugPattern = /^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$/
 
     // checkTagValid 依次检查 slug 合法性 → name 冲突 → slug 冲突。
     // 唯一性比对走 toLowerCase，与后端 EqualFold 对齐 —— macOS/Windows 文件系统
     // 大小写不敏感，`Go` 和 `GO` 不应被放行为两个不同 slug。
     const checkTagValid = (): { ok: true } | { ok: false; reason: 'slugInvalid' | 'name' | 'slug' } => {
-        if (!slugPattern.test(form.slug)) {
+        // 只有新建、或 slug 真被改动时才校验格式（与后端 SaveTag 一致）：历史数据里
+        // 可能存在不符合当前规则的 slug，不能因此阻止用户修改标签名或颜色。
+        const isNew = !form.originalSlug
+        if ((isNew || form.slug !== form.originalSlug) && !slugPattern.test(form.slug)) {
             return { ok: false, reason: 'slugInvalid' }
         }
         const tags = [...siteStore.tags]

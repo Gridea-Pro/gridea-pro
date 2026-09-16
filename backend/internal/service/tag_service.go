@@ -29,11 +29,8 @@ func (s *TagService) LoadTags(ctx context.Context) ([]domain.Tag, error) {
 }
 
 func (s *TagService) SaveTag(ctx context.Context, tag domain.Tag, originalName string) error {
-	// 在持锁前校验用户输入，失败即返回 —— 避免 Wails 调用链拿不到锁时堆积
-	if err := utils.ValidateSlug(tag.Slug); err != nil {
-		return fmt.Errorf("%w：标签 URL slug %q 不合法，只能包含小写字母、数字和连字符", err, tag.Slug)
-	}
-
+	// slug 格式校验挪到锁内：要先找到 existing 才能判断 slug 是否真被改动，
+	// 而这个判断必须有——否则历史数据里不合规的 slug 会连带锁死标签名、颜色的修改。
 	s.mu.Lock()
 
 	tags, err := s.repo.List(ctx)
@@ -56,6 +53,15 @@ func (s *TagService) SaveTag(ctx context.Context, tag domain.Tag, originalName s
 				existing = &t
 				break
 			}
+		}
+	}
+
+	// 只有新建、或 slug 真被改动时才校验格式。历史数据里可能存在不符合当前规则的
+	// slug（旧版本写入、或经 MCP 由外部写入），不能因此阻止用户修改其它字段。
+	if existing == nil || tag.Slug != existing.Slug {
+		if err := utils.ValidateSlug(tag.Slug); err != nil {
+			s.mu.Unlock()
+			return fmt.Errorf("%w：标签 URL slug %q 不合法，只能包含字母、数字和连字符", err, tag.Slug)
 		}
 	}
 

@@ -29,6 +29,7 @@ export function useCategory() {
         description: string
         cover: string
         index: number
+        originalSlug: string // 打开编辑时的 slug，用于判断用户是否真的改过它
     }
 
     const form = reactive<IForm>({
@@ -38,6 +39,7 @@ export function useCategory() {
         description: '',
         cover: '',
         index: -1,
+        originalSlug: '',
     })
 
     const { getImageUrl } = useImageUrl()
@@ -104,14 +106,17 @@ export function useCategory() {
         }
     }
 
-    // slug 必须是 URL-safe + 跨平台文件系统安全的：小写字母 / 数字 / 中间的连字符。
+    // slug 必须是 URL-safe + 跨平台文件系统安全的：字母 / 数字 / 中间的连字符。
     // 与后端 utils.ValidateSlug 的正则保持一致。
-    const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
+    const slugPattern = /^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$/
 
     // checkCategoryValid 依次检查 slug 合法性 → name 冲突 → slug 冲突。
     // 唯一性比对走 toLowerCase，与后端 EqualFold 对齐。
     const checkCategoryValid = (): { ok: true } | { ok: false; reason: 'slugInvalid' | 'name' | 'slug' } => {
-        if (!slugPattern.test(form.slug)) {
+        // 只有新建、或 slug 真被改动时才校验格式（与后端 SaveCategory 一致）：历史
+        // 数据里可能存在不符合当前规则的 slug，不能因此阻止用户修改描述、封面等字段。
+        const isNew = !form.originalSlug
+        if ((isNew || form.slug !== form.originalSlug) && !slugPattern.test(form.slug)) {
             return { ok: false, reason: 'slugInvalid' }
         }
         const categories = [...siteStore.categories]
@@ -136,6 +141,7 @@ export function useCategory() {
         form.description = ''
         form.cover = ''
         form.index = -1
+        form.originalSlug = ''
         slugChanged.value = false
         visible.value = true
         isUpdate.value = false
@@ -150,6 +156,7 @@ export function useCategory() {
         form.description = category.description || ''
         form.cover = category.cover || ''
         form.index = index
+        form.originalSlug = category.slug || ''
         slugChanged.value = true
     }
 

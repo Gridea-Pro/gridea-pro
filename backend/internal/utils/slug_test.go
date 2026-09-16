@@ -65,10 +65,13 @@ func TestValidateSlug(t *testing.T) {
 		{"trailing_hyphen", "abc-", false},
 		{"double_hyphen", "a--b", false},
 
-		// 不合法 —— 大小写混用（#99 核心回归）
-		{"uppercase_only", "ABC", false},
-		{"mixed_case", "AbC", false},
-		{"one_upper", "aBc", false},
+		// 合法 —— 大写。#99 真正要防的是「两个仅大小写不同的 slug 撞同一个目录」，
+		// 那个风险由 repository 的大小写不敏感唯一性校验独立堵住；禁大写反而会让
+		// 历史数据（旧版本或经 MCP 写入的带大写 slug）无法被编辑。
+		{"uppercase_only", "ABC", true},
+		{"mixed_case", "AbC", true},
+		{"one_upper", "aBc", true},
+		{"mixed_case_with_hyphen", "Gridea-Pro", true},
 
 		// 不合法 —— URL 保留字符（#99 触发场景）
 		{"hash", "c#", false},
