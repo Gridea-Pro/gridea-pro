@@ -19,12 +19,13 @@ const (
 	FileMainBundleCSS = "main.min.css"
 
 	// Defaults
-	DefaultTheme        = "simple"
-	DefaultPostPath     = "post"
-	DefaultTagPath      = "tag"
-	DefaultTagsPath     = "tags"
-	DefaultArchivesPath = "archives"
-	DefaultCategoryPath = "category"
-	DefaultMemosPath    = "memos"
-	DefaultLinksPath    = "links"
+	DefaultTheme          = "simple"
+	DefaultPostPath       = "post"
+	DefaultTagPath        = "tag"
+	DefaultTagsPath       = "tags"
+	DefaultArchivesPath   = "archives"
+	DefaultCategoryPath   = "category"
+	DefaultCategoriesPath = "categories"
+	DefaultMemosPath      = "memos"
+	DefaultLinksPath      = "links"
 )

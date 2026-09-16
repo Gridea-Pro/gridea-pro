@@ -93,6 +93,21 @@
         </div>
       </div>
 
+      <div class="grid grid-cols-[180px_1fr] items-start gap-4">
+        <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('category.urlPath') }}</label>
+        <div class="w-full max-w-sm">
+          <Select v-model="categoryPathSelectValue">
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="category" title="example.com/category/xxx">{{ $t('settings.theme.default') }}</SelectItem>
+              <SelectItem value="__empty__" title="example.com/xxx">{{ $t('article.concise') }}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
 
       <div class="grid grid-cols-[180px_1fr] items-start gap-4">
         <label class="text-sm font-medium text-right text-muted-foreground pt-2">{{ $t('settings.basic.dateFormat')
@@ -198,6 +213,7 @@ import {
   DEFAULT_FEED_COUNT,
   DEFAULT_POST_PATH,
   DEFAULT_TAG_PATH,
+  DEFAULT_CATEGORY_PATH,
 } from '@/helpers/constants'
 import ga from '@/helpers/analytics'
 import { domain } from '@/wailsjs/go/models'
@@ -221,6 +237,7 @@ const form = reactive({
   feedCount: DEFAULT_FEED_COUNT,
   postPath: DEFAULT_POST_PATH,
   tagPath: DEFAULT_TAG_PATH,
+  categoryPath: DEFAULT_CATEGORY_PATH,
   katexEnabled: true,
   webpConvertEnabled: false,
 })
@@ -264,6 +281,13 @@ const tagPathSelectValue = computed({
   get: () => (form.tagPath === '' ? '__empty__' : String(form.tagPath || '')),
   set: (val: string) => {
     form.tagPath = val === '__empty__' ? '' : val
+  },
+})
+
+const categoryPathSelectValue = computed({
+  get: () => (form.categoryPath === '' ? '__empty__' : String(form.categoryPath || '')),
+  set: (val: string) => {
+    form.categoryPath = val === '__empty__' ? '' : val
   },
 })
 
@@ -314,6 +338,7 @@ onMounted(async () => {
   form.feedCount = config.feedCount || DEFAULT_FEED_COUNT
   form.postPath = config.postPath || DEFAULT_POST_PATH
   form.tagPath = config.tagPath || DEFAULT_TAG_PATH
+  form.categoryPath = config.categoryPath || DEFAULT_CATEGORY_PATH
   form.katexEnabled = typeof config.katexEnabled === 'boolean' ? config.katexEnabled : true
 
   // 加载 WebP 转换设置

@@ -12,6 +12,8 @@ import (
 	"log/slog"
 	"path/filepath"
 	"sync"
+
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // WailsContext holds the global application context
@@ -124,6 +126,18 @@ func NewAppServices(appDir string, assets embed.FS) *AppServices {
 	rendererService.SetTagRepo(tagRepo)
 	rendererService.SetMemoRepo(memoRepo)
 	rendererService.SetCategoryRepo(categoryRepo)
+	// 渲染期间的非致命问题（如主题缺分类模板走了回退）推到界面上。
+	// 只写日志的话用户永远不会知道自己的站点渲染成了什么样。
+	rendererService.SetWarningHandler(func(msg string) {
+		if WailsContext == nil {
+			return
+		}
+		wailsRuntime.EventsEmit(WailsContext, "app:toast", map[string]interface{}{
+			"message":  msg,
+			"type":     "warning",
+			"duration": 8000,
+		})
+	})
 	settingService := service.NewSettingService(appDir, settingRepo)
 	scaffoldService := service.NewScaffoldService(assets)
 	// CommentService

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }} | {{ config.siteName }}{% endblock %}
+
+{% block content %}
+<section class="tag-section category-section">
+  <div class="page-header">
+    <h1 class="page-title">{{ category.name }}</h1>
+    <p class="page-description">{{ posts|length }} posts in this category</p>
+  </div>
+
+  <div class="post-list">
+    {% for post in posts %}
+    {% include "partials/post-card.html" %}
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

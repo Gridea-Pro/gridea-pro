@@ -25,8 +25,10 @@ v-model="categoryList" handle=".handle" item-key="slug" class="grid grid-cols-1 
 
     <!-- Edit/New Drawer -->
     <CategoryEditor
-v-model:open="visible" :form="form" :can-submit="canSubmit" @save="saveCategory" @close="closeSheet"
-      @name-change="handleNameChange" @slug-change="handleSlugChange" />
+v-model:open="visible" :form="form" :can-submit="canSubmit" :cover-preview="coverPreviewUrl"
+      @save="saveCategory" @close="closeSheet"
+      @name-change="handleNameChange" @slug-change="handleSlugChange"
+      @upload-cover="uploadCover" @remove-cover="removeCover" />
 
     <DeleteConfirmDialog v-model:open="deleteModalVisible" @confirm="handleDelete" />
 
@@ -59,6 +61,9 @@ const {
   handleCategorySort,
   handleNameChange,
   handleSlugChange,
+  coverPreviewUrl,
+  uploadCover,
+  removeCover,
 } = useCategory()
 
 </script>

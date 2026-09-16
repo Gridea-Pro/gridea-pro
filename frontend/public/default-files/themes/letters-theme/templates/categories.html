@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Categories | {{ config.siteName }}{% endblock %}
+
+{% block content %}
+<section class="tags-section categories-section">
+  <div class="page-header">
+    <h1 class="page-title">Categories</h1>
+  </div>
+
+  <div class="tags-cloud categories-cloud">
+    {% for category in categories %}
+    <a href="{{ category.link }}" class="tag-item category-item">
+      <span class="tag-name category-name">{{ category.name }}</span>
+      <span class="tag-count category-count">{{ category.count }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

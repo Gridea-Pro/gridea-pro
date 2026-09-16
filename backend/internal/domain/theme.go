@@ -42,6 +42,8 @@ type ThemeConfig struct {
 	PostPath         string `json:"postPath"`
 	TagPath          string `json:"tagPath"`
 	TagsPath         string `json:"tagsPath"`
+	CategoryPath     string `json:"categoryPath"`
+	CategoriesPath   string `json:"categoriesPath"`
 	LinkPath         string `json:"linkPath"`
 	MemosPath        string `json:"memosPath"`
 	// KatexEnabled 控制是否在站点渲染产物里自动注入 KaTeX 公式样式。

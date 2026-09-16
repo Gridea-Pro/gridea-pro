@@ -486,3 +486,254 @@
 }
 
 
+
+
+/* ============================================================================
+   § CATEGORY — 分类落地页（沉浸封面）与分类总览页（封面网格）
+   ============================================================================
+   分类封面是可选的：配了图走图，没配图走降级形态。降级不是「退化版」，
+   而是同一套版式骨架的另一种状态——大多数分类一开始都没有封面。
+   ========================================================================= */
+
+/* ── 分类落地页：沉浸封面头 ───────────────────────────────────────────── */
+.cat-hero {
+  position: relative;
+  height: 340px;
+  overflow: hidden;
+}
+
+.cat-hero__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 双向渐变：底部压暗保证标题可读，顶部压暗让亮色封面和黑色页头衔接不突兀 */
+.cat-hero__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.55) 45%, rgba(0, 0, 0, 0.15) 100%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, transparent 28%);
+}
+
+.cat-hero__inner {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--max-width);
+  padding: 0 24px;
+  z-index: 2;
+}
+
+.cat-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-badge-gold);
+  margin-bottom: 14px;
+}
+
+.cat-hero__eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: var(--color-badge-gold);
+}
+
+.cat-hero__title {
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: #fff;
+  margin: 0;
+}
+
+.cat-hero__desc {
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 620px;
+}
+
+.cat-hero__count {
+  display: block;
+  margin-top: 16px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* 独占一行：和下面的 eyebrow 同为行内元素时会挤在一起 */
+.cat-hero__back {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.cat-hero__back:hover {
+  color: #fff;
+}
+
+/* 没配封面：高度改为自适应，纯色底 + 同样的版式骨架 */
+.cat-hero--bare {
+  height: auto;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cat-hero--bare .cat-hero__inner {
+  position: static;
+  transform: none;
+  margin: 0 auto;
+  padding: 56px 24px 44px;
+}
+
+.cat-hero--bare .cat-hero__title {
+  color: var(--color-text-primary);
+}
+
+.cat-hero--bare .cat-hero__desc {
+  color: var(--color-text-secondary);
+}
+
+.cat-hero--bare .cat-hero__count {
+  color: var(--color-text-muted);
+}
+
+.cat-hero--bare .cat-hero__back {
+  color: var(--color-text-muted);
+}
+
+.cat-hero--bare .cat-hero__back:hover {
+  color: var(--color-text-primary);
+}
+
+/* ── 分类总览页：封面网格 ─────────────────────────────────────────────── */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.cat-grid__item {
+  display: block;
+  text-decoration: none;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-surface);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.cat-grid__item:hover {
+  border-color: var(--color-border-hover);
+  transform: translateY(-2px);
+}
+
+.cat-grid__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.cat-grid__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 没配封面：深灰底 + 低对比首字。刻意不用高饱和色块——
+   总览页里空封面往往占多数，一排彩色块会盖过真正配了图的分类。 */
+.cat-grid__fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 走主题变量而不是写死深色：flavor 支持浅色模式，而「没配封面」
+     在总览页上往往是多数，写死深色会在浅色下出现一排突兀的黑块 */
+  background: var(--color-border-light);
+  font-family: var(--font-heading);
+  font-size: 3.4rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--color-text-muted);
+  opacity: 0.55;
+}
+
+.cat-grid__count {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  backdrop-filter: blur(6px);
+}
+
+.cat-grid__body {
+  padding: 14px 16px 16px;
+}
+
+.cat-grid__name {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+.cat-grid__desc {
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .cat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .cat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cat-hero {
+    height: 240px;
+  }
+
+  .cat-hero__title {
+    font-size: 2rem;
+  }
+
+  .cat-hero__inner {
+    bottom: 28px;
+  }
+}

@@ -22,6 +22,11 @@
               <span>
                 <%= post.stats.text %>
               </span>
+              <% post.categories.forEach(function(category) { %>
+                <a href="<%= category.link %>" class="post-tag post-category">
+                  <%= category.name %>
+                </a>
+              <% }); %>
               <% post.tags.forEach(function(tag) { %>
                 <a href="<%= tag.link %>" class="post-tag">
                   # <%= tag.name %>

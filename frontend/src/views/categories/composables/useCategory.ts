@@ -5,6 +5,9 @@ import { generateId } from '@/utils/id'
 import slug from '@/helpers/slug'
 import { toast } from '@/helpers/toast'
 import { SaveCategoryFromFrontend, DeleteCategoryFromFrontend, SaveCategories } from '@/wailsjs/go/facade/CategoryFacade'
+import { UploadImagesFromFrontend } from '@/wailsjs/go/facade/PostFacade'
+import { domain } from '@/wailsjs/go/models'
+import { useImageUrl } from '@/composables/useImageUrl'
 
 export function useCategory() {
     const { t } = useI18n()
@@ -24,6 +27,7 @@ export function useCategory() {
         name: string
         slug: string
         description: string
+        cover: string
         index: number
     }
 
@@ -32,8 +36,41 @@ export function useCategory() {
         name: '',
         slug: '',
         description: '',
+        cover: '',
         index: -1,
     })
+
+    const { getImageUrl } = useImageUrl()
+
+    // 封面存的是站点内相对路径（/post-images/xxx），预览时要还原成绝对路径
+    // 交给 AssetServer；外链则原样使用。
+    const coverPreviewUrl = computed(() => {
+        const cover = form.cover
+        if (!cover) return ''
+        if (cover.startsWith('http') || cover.startsWith('data:')) return cover
+        return getImageUrl(`${siteStore.site.appDir}${cover}`)
+    })
+
+    // 即时上传：选完图就落到站点的 post-images/（与文章插图同一个通道，
+    // 自动走 WebP 压缩），表单里只存相对路径。
+    const uploadCover = async () => {
+        try {
+            const filePath = await (window as any).go.app.App.OpenImageDialog()
+            if (!filePath) return
+            const name = filePath.split(/[\\/]/).pop() || 'cover'
+            const paths = await UploadImagesFromFrontend([new domain.UploadedFile({ name, path: filePath })])
+            if (paths && paths.length > 0) {
+                form.cover = paths[0]
+            }
+        } catch (e) {
+            console.error('uploadCover error', e)
+            toast.error(t('category.coverUploadFailed'))
+        }
+    }
+
+    const removeCover = () => {
+        form.cover = ''
+    }
 
     const canSubmit = computed(() => {
         return !!(form.name && form.slug)
@@ -97,6 +134,7 @@ export function useCategory() {
         form.name = ''
         form.slug = ''
         form.description = ''
+        form.cover = ''
         form.index = -1
         slugChanged.value = false
         visible.value = true
@@ -110,6 +148,7 @@ export function useCategory() {
         form.name = category.name
         form.slug = category.slug
         form.description = category.description || ''
+        form.cover = category.cover || ''
         form.index = index
         slugChanged.value = true
     }
@@ -137,6 +176,7 @@ export function useCategory() {
                 name: form.name,
                 slug: form.slug,
                 description: form.description,
+                cover: form.cover,
                 originalSlug: '',
             })
 
@@ -210,5 +250,8 @@ export function useCategory() {
         handleCategorySort,
         handleNameChange,
         handleSlugChange,
+        coverPreviewUrl,
+        uploadCover,
+        removeCover,
     }
 }

@@ -5,6 +5,9 @@ class="group relative flex rounded-xl relative cursor-pointer transition-all dur
         <div class="flex items-center pl-4 handle cursor-move">
             <Bars3Icon class="size-3 text-muted-foreground" />
         </div>
+        <div v-if="coverUrl" class="flex items-center pl-3">
+            <img :src="coverUrl" class="w-10 h-10 rounded-md object-cover border border-primary/10" />
+        </div>
         <div class="p-4 flex-1 min-w-0">
             <div class="text-xs font-medium text-foreground mb-1 truncate group-hover:text-primary">
                 {{ category.name }}
@@ -40,6 +43,7 @@ class="group relative flex rounded-xl relative cursor-pointer transition-all dur
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSiteStore, type ICategory } from '@/stores/site'
+import { useImageUrl } from '@/composables/useImageUrl'
 import {
     Bars3Icon,
     TrashIcon,
@@ -55,6 +59,14 @@ defineEmits(['edit', 'delete'])
 
 const { t } = useI18n()
 const siteStore = useSiteStore()
+const { getImageUrl } = useImageUrl()
+
+const coverUrl = computed(() => {
+    const cover = props.category.cover
+    if (!cover) return ''
+    if (cover.startsWith('http') || cover.startsWith('data:')) return cover
+    return getImageUrl(`${siteStore.site.appDir}${cover}`)
+})
 
 const postCount = computed(() => {
     return siteStore.posts.filter(p => p.published && (p.categories || []).includes(props.category.name)).length

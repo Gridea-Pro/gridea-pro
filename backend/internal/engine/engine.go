@@ -79,6 +79,27 @@ type Engine struct {
 
 	// 渲染产物跟踪器（单次渲染内共享）
 	manifest *RenderManifest
+
+	// onWarning 上报面向用户的渲染警告。用回调注入而不是直接 EventsEmit，
+	// 是为了让 engine 包不依赖 wails runtime（与 deploy.LogFunc 同样的考虑）。
+	onWarning func(string)
+}
+
+// SetWarningHandler 注入渲染警告的上报通道。
+// 不注入时警告只留在日志里，渲染行为不受影响。
+func (s *Engine) SetWarningHandler(fn func(string)) {
+	s.onWarning = fn
+}
+
+// reportWarnings 把本次渲染累积的警告推给上层展示。
+func (s *Engine) reportWarnings() {
+	warnings := s.pageRenderer.TakeWarnings()
+	if s.onWarning == nil {
+		return
+	}
+	for _, w := range warnings {
+		s.onWarning(w)
+	}
 }
 
 func New(
@@ -331,6 +352,7 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 		{"首页", func() error { return s.pageRenderer.RenderIndex(ctx, buildDir, templateData) }},
 		{"博客列表页", func() error { return s.pageRenderer.RenderBlog(ctx, buildDir, templateData) }},
 		{"标签页", func() error { return s.pageRenderer.RenderTags(ctx, buildDir, templateData, themeConfig) }},
+		{"分类总览页", func() error { return s.pageRenderer.RenderCategories(ctx, buildDir, templateData) }},
 		{"归档页", func() error { return s.pageRenderer.RenderArchives(ctx, buildDir, templateData) }},
 		{"标签文章页", func() error { return s.pageRenderer.RenderTagPages(ctx, buildDir, templateData, themeConfig) }},
 		{"分类文章页", func() error { return s.pageRenderer.RenderCategoryPages(ctx, buildDir, templateData) }},
@@ -464,6 +486,8 @@ func (s *Engine) renderAllImpl(ctx context.Context) error {
 	if err := s.manifest.Save(s.appDir); err != nil {
 		s.logger.Warn("保存渲染 manifest 失败", "error", err)
 	}
+
+	s.reportWarnings()
 
 	totalDuration := time.Since(startTime)
 	s.logger.Info(fmt.Sprintf("渲染完成，共 %d 篇文章，耗时: %v", len(posts), totalDuration))

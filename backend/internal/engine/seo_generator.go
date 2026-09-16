@@ -305,7 +305,28 @@ func (g *SeoGenerator) RenderSitemap(buildDir string, data *template.TemplateDat
 		})
 	}
 
-	// 8. 友链页
+	// 8. 分类总览页与各分类页。
+	// 只在真的有分类时收录——没有分类时这两类页面根本不会被渲染出来，
+	// 写进 sitemap 会变成 404 链接。
+	if len(data.Categories) > 0 {
+		categoriesPath := categoriesPathOf(data.ThemeConfig.CategoriesPath)
+		urlset.Urls = append(urlset.Urls, sitemapURL{
+			Loc:        safeUrl(domainUrl + "/" + categoriesPath + "/"),
+			LastMod:    nowDate,
+			ChangeFreq: "weekly",
+			Priority:   "0.5",
+		})
+		for _, cat := range data.Categories {
+			urlset.Urls = append(urlset.Urls, sitemapURL{
+				Loc:        safeUrl(domainUrl + cat.Link),
+				LastMod:    nowDate,
+				ChangeFreq: "weekly",
+				Priority:   "0.4",
+			})
+		}
+	}
+
+	// 9. 友链页
 	linkPath := data.ThemeConfig.LinkPath
 	if linkPath == "" {
 		linkPath = DefaultLinksPath

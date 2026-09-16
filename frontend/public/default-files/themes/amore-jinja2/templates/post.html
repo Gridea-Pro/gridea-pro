@@ -15,6 +15,13 @@
         <time datetime="{{ post.dateFormat }}">
             {{ post.dateFormat }}
         </time> • {{ post.stats.text }} •
+        {% for category in post.categories %}
+        <a href="{{ category.link }}" class="mod-post__category">
+            {{ category.name }}
+        </a>
+        {% if forloop.Counter0 < post.categories | length - 1 %} · {% endif %}
+        {% endfor %}
+        {% if post.categories | length > 0 and post.tags | length > 0 %} • {% endif %}
         {% for tag in post.tags %}
         <a href="{{ tag.link }}">
             {{ tag.name }}

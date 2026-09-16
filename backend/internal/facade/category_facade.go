@@ -56,6 +56,7 @@ type CategoryForm struct {
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
+	Cover       string `json:"cover"`
 	// 已废弃：OriginalSlug 保留字段以防老版前端调用，逻辑忽略
 	OriginalSlug string `json:"originalSlug"`
 }
@@ -78,6 +79,7 @@ func (f *CategoryFacade) SaveCategoryFromFrontend(form CategoryForm) (*CategoryC
 		Name:        form.Name,
 		Slug:        form.Slug,
 		Description: form.Description,
+		Cover:       form.Cover,
 	}
 
 	if err := svc.SaveCategory(ctx, newCategory, form.ID); err != nil {

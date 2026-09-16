@@ -2,7 +2,6 @@ package service
 
 import (
 	"bytes"
-	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,11 +14,13 @@ import (
 )
 
 type ScaffoldService struct {
-	assets embed.FS
+	// fs.FS 而不是 embed.FS：运行时传入的就是 embed.FS，放宽成接口只是为了
+	// 让测试能注入内存文件系统，验证「补齐缺失文件但不覆盖已有文件」的行为。
+	assets fs.FS
 	mu     sync.Mutex
 }
 
-func NewScaffoldService(assets embed.FS) *ScaffoldService {
+func NewScaffoldService(assets fs.FS) *ScaffoldService {
 	return &ScaffoldService{
 		assets: assets,
 	}
@@ -59,7 +60,9 @@ func saveManifest(manifestPath string, m *scaffoldManifest) error {
 // Uses a .scaffold.json manifest to track what was copied:
 //   - Posts & memos: only copied on first init, never again (user deletions are respected)
 //   - Themes: copied on first init; new themes from new app versions are auto-added,
-//     but themes the user previously deleted won't come back
+//     but themes the user previously deleted won't come back. Themes still present on
+//     disk also get missing files topped up, so template files added by a new app
+//     version reach existing sites — existing files are never overwritten.
 //   - Config & static files: always checked, re-created if missing (skip if exists)
 //   - output/ directory & config.json sourceFolder: patched on every startup
 func (s *ScaffoldService) InitSite(appDir string) error {
@@ -92,7 +95,7 @@ func (s *ScaffoldService) InitSite(appDir string) error {
 	if len(manifest.Posts) == 0 {
 		postsSrc := path.Join(srcRoot, "posts")
 		postsDst := filepath.Join(appDir, "posts")
-		if entries, err := s.assets.ReadDir(postsSrc); err == nil {
+		if entries, err := fs.ReadDir(s.assets, postsSrc); err == nil {
 			_ = os.MkdirAll(postsDst, 0755)
 			for _, entry := range entries {
 				if entry.IsDir() {
@@ -124,7 +127,7 @@ func (s *ScaffoldService) InitSite(appDir string) error {
 		knownThemes[t] = true
 	}
 	themesSrc := path.Join(srcRoot, "themes")
-	if entries, err := s.assets.ReadDir(themesSrc); err == nil {
+	if entries, err := fs.ReadDir(s.assets, themesSrc); err == nil {
 		themesDst := filepath.Join(appDir, "themes")
 		_ = os.MkdirAll(themesDst, 0755)
 		for _, entry := range entries {
@@ -132,13 +135,22 @@ func (s *ScaffoldService) InitSite(appDir string) error {
 				continue
 			}
 			themeName := entry.Name()
-			if knownThemes[themeName] {
-				// Already tracked — user may have deleted it intentionally, skip
-				continue
-			}
-			// New theme (not in manifest) — copy it
 			src := path.Join(themesSrc, themeName)
 			dst := filepath.Join(themesDst, themeName)
+
+			if knownThemes[themeName] {
+				// Theme directory gone entirely — user deleted it on purpose, don't resurrect it.
+				if _, err := os.Stat(dst); err != nil {
+					continue
+				}
+				// Theme still in use: top up files this app version added (e.g. new
+				// category templates). copyFileFromEmbed skips paths that already
+				// exist, so the user's own edits are never overwritten.
+				_ = s.copyDirFromEmbed(src, dst)
+				continue
+			}
+
+			// New theme (not in manifest) — copy it
 			_ = s.copyDirFromEmbed(src, dst)
 			manifest.Themes = append(manifest.Themes, themeName)
 		}
@@ -150,12 +162,12 @@ func (s *ScaffoldService) InitSite(appDir string) error {
 	for _, dir := range alwaysCopyDirs {
 		src := path.Join(srcRoot, dir)
 		dst := filepath.Join(appDir, dir)
-		if _, err := s.assets.ReadDir(src); err == nil {
+		if _, err := fs.ReadDir(s.assets, src); err == nil {
 			_ = s.copyDirFromEmbed(src, dst)
 		}
 	}
 	// Also copy root-level files (favicon.ico etc.)
-	if entries, err := s.assets.ReadDir(srcRoot); err == nil {
+	if entries, err := fs.ReadDir(s.assets, srcRoot); err == nil {
 		for _, entry := range entries {
 			if entry.IsDir() {
 				continue
@@ -238,7 +250,7 @@ func (s *ScaffoldService) fillMemoDates(appDir string) {
 }
 
 func (s *ScaffoldService) copyDirFromEmbed(src string, dst string) error {
-	entries, err := s.assets.ReadDir(src)
+	entries, err := fs.ReadDir(s.assets, src)
 	if err != nil {
 		return err
 	}

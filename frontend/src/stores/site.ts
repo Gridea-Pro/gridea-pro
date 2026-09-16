@@ -16,6 +16,9 @@ import {
   DEFAULT_ARCHIVES_PATH,
   DEFAULT_POST_PATH,
   DEFAULT_TAG_PATH,
+  DEFAULT_TAGS_PATH,
+  DEFAULT_CATEGORY_PATH,
+  DEFAULT_CATEGORIES_PATH,
 } from '@/helpers/constants'
 
 export interface ThemeInfo {
@@ -40,6 +43,7 @@ export interface ICategory {
   name: string
   slug: string
   description: string
+  cover?: string   // 封面图，站点内相对路径（/post-images/xxx）或外链
 }
 
 export interface SiteState {
@@ -77,6 +81,9 @@ const defaultThemeConfig: ITheme = {
   feedFullText: true,
   postPath: DEFAULT_POST_PATH,
   tagPath: DEFAULT_TAG_PATH,
+  tagsPath: DEFAULT_TAGS_PATH,
+  categoryPath: DEFAULT_CATEGORY_PATH,
+  categoriesPath: DEFAULT_CATEGORIES_PATH,
   katexEnabled: true, // 与后端老配置默认开启 KaTeX 的语义保持一致
 }
 
@@ -203,6 +210,9 @@ export const useSiteStore = defineStore('site', () => {
           feedCount: siteData.themeConfig?.feedCount || DEFAULT_FEED_COUNT,
           postPath: siteData.themeConfig?.postPath || DEFAULT_POST_PATH,
           tagPath: siteData.themeConfig?.tagPath || DEFAULT_TAG_PATH,
+          tagsPath: siteData.themeConfig?.tagsPath || DEFAULT_TAGS_PATH,
+          categoryPath: siteData.themeConfig?.categoryPath || DEFAULT_CATEGORY_PATH,
+          categoriesPath: siteData.themeConfig?.categoriesPath || DEFAULT_CATEGORIES_PATH,
           feedEnabled: typeof siteData.themeConfig?.feedEnabled === 'boolean'
             ? siteData.themeConfig.feedEnabled
             : true,

@@ -148,3 +148,31 @@ func TestConvertPost_DuplicateNameDifferentSlugResolvedByID(t *testing.T) {
 		t.Errorf("expected slugs lang-a and lang-b, got %v", slugs)
 	}
 }
+
+func TestConvertPost_CategoryLinkFollowsConfiguredPath(t *testing.T) {
+	b := newTestBuilder()
+
+	categoryByID := map[string]domain.Category{
+		"cat-1": {ID: "cat-1", Name: "技术笔记", Slug: "tech"},
+	}
+	post := domain.Post{
+		FileName:    "hello",
+		Categories:  []string{"技术笔记"},
+		CategoryIDs: []string{"cat-1"},
+	}
+
+	// 未配置时回退到默认的 category 前缀
+	view := b.convertPost(post, domain.ThemeConfig{}, categoryByID, nil, nil, nil)
+	if len(view.Categories) != 1 {
+		t.Fatalf("expected 1 category, got %d", len(view.Categories))
+	}
+	if view.Categories[0].Link != "/category/tech/" {
+		t.Errorf("expected default link /category/tech/, got %q", view.Categories[0].Link)
+	}
+
+	// 配置了自定义前缀时必须跟随配置，否则文章页里的分类链接会指向不存在的页面
+	view = b.convertPost(post, domain.ThemeConfig{CategoryPath: "topics"}, categoryByID, nil, nil, nil)
+	if view.Categories[0].Link != "/topics/tech/" {
+		t.Errorf("expected configured link /topics/tech/, got %q", view.Categories[0].Link)
+	}
+}

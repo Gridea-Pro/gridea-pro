@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}分类 | {{ config.siteName }}{% endblock %}
+
+{% block content %}
+{% include "partials/header.html" %}
+
+<article class="mod-post mod-post__type-post">
+
+    <header>
+        <h1 class="mod-post__title">
+            分类
+        </h1>
+    </header>
+
+    <div class="mod-post__entry wzulli">
+
+        <div class="tags categories">
+            {% if categories|length > 0 %}
+            <ul class="tags-list categories-list">
+                {% for category in categories %}
+                <li>
+                    <a href="{{ category.link }}" rel="category" class="size-10" title="{{ category.count }} 篇文章">
+                        {{ category.name }} <span>({{ category.count }})</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <li>
+                没有任何分类
+            </li>
+            {% endif %}
+        </div>
+
+    </div>
+
+</article>
+
+{% include "partials/footer.html" %}
+{% endblock %}

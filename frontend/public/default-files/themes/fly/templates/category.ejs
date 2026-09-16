@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <%- include('./includes/head', { siteTitle: `${category.name} | ${themeConfig.siteName}` }) %>
+  </head>
+  <body>
+    <div id="app" class="main">
+      <%- include('./includes/header') %>
+
+      <div class="content-container">
+
+        <div class="current-tag-container current-category-container">
+          <h2 class="title">
+            <i class="icon icon-folder-outline"></i> <%= category.name %>
+          </h2>
+        </div>
+
+        <%- include('./includes/post-list') %>
+
+      </div>
+
+      <%- include('./includes/footer') %>
+
+    </div>
+    <%- include('./includes/scripts') %>
+  </body>
+</html>

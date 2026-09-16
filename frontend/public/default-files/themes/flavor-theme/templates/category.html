@@ -1,16 +1,29 @@
 {% extends "base.html" %}
 {% block title %}{{ category.name }} | {{ config.siteName }}{% endblock %}
 {% block content %}
-<div class="container">
-  <div class="page-header">
-    <h1 class="page-title">{{ category.name }}</h1>
+
+{# 配了封面走沉浸大图，没配则退成同版式的纯色头 #}
+<header class="cat-hero{% if not category.cover %} cat-hero--bare{% endif %}">
+  {% if category.cover %}
+  <img class="cat-hero__img" src="{{ category.cover }}" alt="{{ category.name }}" />
+  <div class="cat-hero__scrim"></div>
+  {% endif %}
+  <div class="cat-hero__inner">
+    <a href="/categories" class="cat-hero__back">&larr; 所有分类</a>
+    <span class="cat-hero__eyebrow">分类</span>
+    <h1 class="cat-hero__title">{{ category.name }}</h1>
+    {% if category.description %}
+    <p class="cat-hero__desc">{{ category.description }}</p>
+    {% endif %}
     {% if posts|length > 0 %}
-    <p class="page-subtitle meta-text">共 {{ category.count }} 篇文章</p>
+    <span class="cat-hero__count">共 {{ category.count }} 篇文章</span>
     {% endif %}
   </div>
+</header>
 
+<div class="container">
   {% if posts|length > 0 %}
-  <div class="post-list">
+  <div class="post-list" style="margin-top:40px">
     {% for post in posts %}
     {% include "partials/post-card.html" %}
     {% endfor %}

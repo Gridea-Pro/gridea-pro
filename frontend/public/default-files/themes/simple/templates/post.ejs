@@ -22,6 +22,15 @@
             <div class="post-content" v-pre>
               <%- post.content %>
             </div>
+            <% if (post.categories.length > 0) { %>
+              <div class="tag-container category-container">
+                <% post.categories.forEach(function(category) { %>
+                  <a href="<%= category.link %>" class="tag category">
+                    <%= category.name %>
+                  </a>
+                <% }); %>
+              </div>
+            <% } %>
             <% if (post.tags.length > 0) { %>
               <div class="tag-container">
                 <% post.tags.forEach(function(tag, index) { %>

@@ -15,6 +15,13 @@
                     <time datetime="<%= post.dateFormat %>">
                         <%= post.dateFormat %>
                     </time> • <%= post.stats.text %> •
+                        <% post.categories.forEach(function(category, index) { %>
+                            <a href="<%= category.link %>" class="mod-post__category">
+                                <%= category.name %>
+                            </a>
+                            <% if (index < post.categories.length - 1) { %> · <% } %>
+                        <% }); %>
+                        <% if (post.categories.length > 0 && post.tags.length > 0) { %> • <% } %>
                         <% post.tags.forEach(function(tag, index) { %>
                             <a href="<%= tag.link %>">
                                 <%= tag.name %>

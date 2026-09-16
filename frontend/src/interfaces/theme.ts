@@ -43,5 +43,8 @@ export interface ITheme {
   feedCount: number
   postPath: string
   tagPath: string
+  tagsPath: string
+  categoryPath: string
+  categoriesPath: string
   katexEnabled: boolean
 }

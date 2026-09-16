@@ -63,8 +63,13 @@ export function useMenu() {
                 value: urlJoin(domain, 'archives'),
             },
             {
+                // 标签总览页用 tagsPath（默认 tags），不是单个标签页的 tagPath（默认 tag）
                 text: '🏷️ Tags',
-                value: urlJoin(domain, themeConfig.tagPath || 'tags'),
+                value: urlJoin(domain, themeConfig.tagsPath || 'tags'),
+            },
+            {
+                text: '📂 Categories',
+                value: urlJoin(domain, themeConfig.categoriesPath || 'categories'),
             },
             ...posts,
         ].filter((item) => typeof item.value === 'string' && item.value.trim() !== '')

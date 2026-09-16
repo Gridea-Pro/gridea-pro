@@ -83,8 +83,12 @@ func (b *TemplateDataBuilder) Build(ctx context.Context, posts []domain.Post, co
 	//    - categoryByName: name → Category（兜底，用于老文章无 CategoryIDs 时按名称反查 slug）
 	categoryByID := make(map[string]domain.Category)
 	categoryByName := make(map[string]domain.Category)
+	// orderedCategories 保留仓库里的原始顺序（即用户在分类管理里的排列），
+	// 供后面构建全站分类列表时使用——map 遍历无序，直接用会让总览页每次重排。
+	var orderedCategories []domain.Category
 	if b.categoryRepo != nil {
 		if cats, err := b.categoryRepo.List(ctx); err == nil {
+			orderedCategories = cats
 			for _, c := range cats {
 				if c.ID != "" {
 					categoryByID[c.ID] = c
@@ -228,6 +232,49 @@ func (b *TemplateDataBuilder) Build(ctx context.Context, posts []domain.Post, co
 		})
 	}
 
+	// 统计每个分类在文章中的出现次数。
+	// 口径刻意与分类页实际列出的文章一致（排除草稿与"不在列表显示"的文章），
+	// 否则总览页会显示出比点进去能看到的更多的篇数。
+	categoryCount := make(map[string]int)         // slug -> 篇数
+	categoryNameBySlug := make(map[string]string) // slug -> 名称（供仓库中已删除的分类兜底）
+	for _, pv := range getVisiblePosts(postViews) {
+		for _, c := range pv.Categories {
+			categoryCount[c.Slug]++
+			if _, ok := categoryNameBySlug[c.Slug]; !ok {
+				categoryNameBySlug[c.Slug] = c.Name
+			}
+		}
+	}
+	catPath := categoryPathOf(config.CategoryPath)
+
+	// 全站分类列表：以仓库顺序为准，只列出有可见文章的分类（与标签列表的口径一致）
+	var allCategories []template.CategoryView
+	for _, rc := range orderedCategories {
+		count := categoryCount[rc.Slug]
+		if count == 0 {
+			continue
+		}
+		allCategories = append(allCategories, template.CategoryView{
+			Name:        rc.Name,
+			Slug:        rc.Slug,
+			Link:        "/" + catPath + "/" + rc.Slug + "/",
+			Count:       count,
+			Cover:       rc.Cover,
+			Description: rc.Description,
+		})
+		delete(categoryCount, rc.Slug)
+	}
+	// 兜底：文章里引用了、但分类仓库中已不存在的分类（分类被删除但文章未更新）。
+	// 这些分类仍会被渲染出落地页，总览页也要能链接过去，否则会出现孤儿页面。
+	for slug, count := range categoryCount {
+		allCategories = append(allCategories, template.CategoryView{
+			Name:  categoryNameBySlug[slug],
+			Slug:  slug,
+			Link:  "/" + catPath + "/" + slug + "/",
+			Count: count,
+		})
+	}
+
 	// 从 linkRepo 获取友链数据，注入到 customConfig.friends
 	if b.linkRepo != nil {
 		links, err := b.linkRepo.List(ctx)
@@ -300,6 +347,8 @@ func (b *TemplateDataBuilder) Build(ctx context.Context, posts []domain.Post, co
 			PostPath:         config.PostPath,
 			TagPath:          config.TagPath,
 			TagsPath:         config.TagsPath,
+			CategoryPath:     config.CategoryPath,
+			CategoriesPath:   config.CategoriesPath,
 			LinkPath:         config.LinkPath,
 			MemosPath:        config.MemosPath,
 			ShowFeatureImage: true,
@@ -310,6 +359,7 @@ func (b *TemplateDataBuilder) Build(ctx context.Context, posts []domain.Post, co
 		},
 		Posts:          postViews,
 		Tags:           allTags,
+		Categories:     allCategories,
 		Memos:          b.buildMemoViews(ctx, config),
 		Menus:          menuViews,
 		CommentSetting: commentSettingView,
@@ -439,6 +489,10 @@ func (b *TemplateDataBuilder) convertPost(post domain.Post, config domain.ThemeC
 
 	// 转换标签：优先走 TagIDs（与 Category 对齐），未命中 / 老文章回退到 Name 反查。
 	// 这样同名但不同 ID 的标签也能被正确解析到各自的 Slug，不受 map 覆盖影响。
+	tagLinkPath := config.TagPath
+	if tagLinkPath == "" {
+		tagLinkPath = DefaultTagPath
+	}
 	var tags []template.TagView
 	var tagNames []string
 	if len(post.TagIDs) > 0 && tagByID != nil {
@@ -447,7 +501,7 @@ func (b *TemplateDataBuilder) convertPost(post domain.Post, config domain.ThemeC
 				tags = append(tags, template.TagView{
 					Name: t.Name,
 					Slug: t.Slug,
-					Link: "/" + config.TagPath + "/" + t.Slug + "/",
+					Link: "/" + tagLinkPath + "/" + t.Slug + "/",
 				})
 				tagNames = append(tagNames, t.Name)
 			}
@@ -475,28 +529,31 @@ func (b *TemplateDataBuilder) convertPost(post domain.Post, config domain.ThemeC
 			tags = append(tags, template.TagView{
 				Name: tag,
 				Slug: tagSlug,
-				Link: "/" + config.TagPath + "/" + tagSlug + "/",
+				Link: "/" + tagLinkPath + "/" + tagSlug + "/",
 			})
 			tagNames = append(tagNames, tag)
 		}
 	}
 
 	// 转换分类：严格基于 CategoryIDs 查找
+	catPath := categoryPathOf(config.CategoryPath)
 	var categories []template.CategoryView
 	if len(post.CategoryIDs) > 0 && categoryByID != nil {
 		for _, catID := range post.CategoryIDs {
 			if cat, ok := categoryByID[catID]; ok {
 				categories = append(categories, template.CategoryView{
-					Name: cat.Name,
-					Slug: cat.Slug,
-					Link: "/" + DefaultCategoryPath + "/" + cat.Slug + "/",
+					Name:        cat.Name,
+					Slug:        cat.Slug,
+					Link:        "/" + catPath + "/" + cat.Slug + "/",
+					Cover:       cat.Cover,
+					Description: cat.Description,
 				})
 			} else {
 				// ID 未命中（说明分类已删除被置空等）
 				categories = append(categories, template.CategoryView{
 					Name: catID,
 					Slug: catID,
-					Link: "/" + DefaultCategoryPath + "/" + catID + "/",
+					Link: "/" + catPath + "/" + catID + "/",
 				})
 			}
 		}
@@ -504,9 +561,13 @@ func (b *TemplateDataBuilder) convertPost(post domain.Post, config domain.ThemeC
 		// 向后兼容：老文章无 CategoryIDs，回退使用名称字符串
 		for _, category := range post.Categories {
 			slug := ""
+			cover := ""
+			desc := ""
 			if categoryByName != nil {
 				if cat, ok := categoryByName[category]; ok {
 					slug = cat.Slug
+					cover = cat.Cover
+					desc = cat.Description
 				}
 			}
 			// 兜底：Name 可能含中文/空格/非法 URL 字符，走 slugify 保证 URL 合法。
@@ -517,9 +578,11 @@ func (b *TemplateDataBuilder) convertPost(post domain.Post, config domain.ThemeC
 				}
 			}
 			categories = append(categories, template.CategoryView{
-				Name: category,
-				Slug: slug,
-				Link: "/" + DefaultCategoryPath + "/" + slug + "/",
+				Name:        category,
+				Slug:        slug,
+				Link:        "/" + catPath + "/" + slug + "/",
+				Cover:       cover,
+				Description: desc,
 			})
 		}
 	}

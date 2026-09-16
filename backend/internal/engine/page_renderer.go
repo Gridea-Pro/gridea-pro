@@ -24,6 +24,68 @@ type PageRenderer struct {
 	logger        *slog.Logger
 	postProcessor *HtmlPostProcessor
 	manifest      *RenderManifest
+
+	// 面向用户的渲染警告。渲染子任务之间是并发的，累积时需要加锁。
+	warnMu   sync.Mutex
+	warnings []string
+}
+
+// addWarning 记录一条需要让用户看见的渲染警告。
+// 与 logger 的区别在于：这些会被上层取走并推到界面上，而不是只留在日志里。
+func (r *PageRenderer) addWarning(format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	r.warnMu.Lock()
+	r.warnings = append(r.warnings, msg)
+	r.warnMu.Unlock()
+	r.logger.Warn(msg)
+}
+
+// TakeWarnings 取走本次渲染累积的警告并清空，供上层上报给用户。
+func (r *PageRenderer) TakeWarnings() []string {
+	r.warnMu.Lock()
+	defer r.warnMu.Unlock()
+	w := r.warnings
+	r.warnings = nil
+	return w
+}
+
+// hasTemplate 判断当前主题是否提供了某个模板（覆盖三种模板引擎的扩展名）。
+func (r *PageRenderer) hasTemplate(themeName, name string) bool {
+	// 扩展名必须覆盖 jinja2_renderer 的解析列表（.html/.jinja2/.j2）与另外两种引擎，
+	// 漏一个就会把「主题其实有这个模板」误判成缺失，进而错误回退。
+	for _, ext := range []string{".html", ".ejs", ".gohtml", ".jinja2", ".j2"} {
+		if _, err := os.Stat(filepath.Join(r.appDir, DirThemes, themeName, DirTemplates, name+ext)); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+// resolveTemplate 选择实际可用的模板名：preferred 缺失时回退到 fallback。
+// 两者都缺失时仍返回 preferred，让渲染报出「模板不存在」这个真正的原因。
+func (r *PageRenderer) resolveTemplate(themeName, preferred, fallback string) (name string, fellBack bool) {
+	if r.hasTemplate(themeName, preferred) {
+		return preferred, false
+	}
+	if r.hasTemplate(themeName, fallback) {
+		return fallback, true
+	}
+	return preferred, false
+}
+
+// categoriesAsTags 把分类列表转成 TagView。
+// 仅用于回退到标签模板时——标签模板读的是 tags 变量，不转换的话页面会是空的。
+func categoriesAsTags(cats []template.CategoryView) []template.TagView {
+	out := make([]template.TagView, 0, len(cats))
+	for _, c := range cats {
+		out = append(out, template.TagView{
+			Name:  c.Name,
+			Slug:  c.Slug,
+			Link:  c.Link,
+			Count: c.Count,
+		})
+	}
+	return out
 }
 
 // NewPageRenderer 创建 PageRenderer
@@ -235,9 +297,10 @@ func (r *PageRenderer) RenderPost(ctx context.Context, buildDir string, post dom
 	// 创建文章专属数据
 	postData := *baseData
 	postData.Post = r.dataBuilder.ConvertPost(post, domain.ThemeConfig{
-		PostPath:   baseData.ThemeConfig.PostPath,
-		TagPath:    baseData.ThemeConfig.TagPath,
-		DateFormat: baseData.ThemeConfig.DateFormat,
+		PostPath:     baseData.ThemeConfig.PostPath,
+		TagPath:      baseData.ThemeConfig.TagPath,
+		CategoryPath: baseData.ThemeConfig.CategoryPath,
+		DateFormat:   baseData.ThemeConfig.DateFormat,
 	}, nil) // categoryByID 传 nil，ConvertPost 自动使用 Build() 阶段缓存的映射
 	postData.SiteTitle = postData.Post.Title + " | " + baseData.ThemeConfig.SiteName
 
@@ -248,7 +311,7 @@ func (r *PageRenderer) RenderPost(ctx context.Context, buildDir string, post dom
 	isSpecialPage := false
 	commonTemplates := map[string]bool{
 		"post": true, "index": true, "blog": true, "tag": true, "tags": true,
-		"category": true, "archives": true, "links": true, "memos": true,
+		"category": true, "categories": true, "archives": true, "links": true, "memos": true,
 		"404": true, "base": true,
 	}
 	if !commonTemplates[post.FileName] {
@@ -468,11 +531,68 @@ func (r *PageRenderer) RenderTagPages(ctx context.Context, buildDir string, data
 	return nil
 }
 
-// RenderCategoryPages 渲染每个分类的文章列表页（支持分页，复用 tag 模板）
+// RenderCategories 渲染分类总览页（列出全站分类），与标签总览页对等。
+//
+// 主题没有 categories 模板时回退用 tags 模板渲染，回退规则与分类落地页一致，
+// 见 RenderCategoryPages 的说明。
+func (r *PageRenderer) RenderCategories(ctx context.Context, buildDir string, data *template.TemplateData) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
+	// 没有任何分类时不产出空页面（与分类落地页的处理一致）
+	if len(data.Categories) == 0 {
+		return nil
+	}
+
+	tmplName, fellBack := r.resolveTemplate(data.ThemeConfig.ThemeName, "categories", "tags")
+
+	pageData := *data
+	if fellBack {
+		// 标签模板读的是 tags 变量，把分类填进去，页面才有内容且链接指向分类页。
+		pageData.Tags = categoriesAsTags(data.Categories)
+		r.addWarning("当前主题没有分类总览页模板（categories），已改用标签总览页模板渲染；页面上的措辞可能仍写着“标签”，建议联系主题作者补充分类模板")
+	}
+
+	html, err := r.renderer.Render(tmplName, &pageData)
+	if err != nil {
+		r.addWarning("分类总览页渲染失败，已跳过：%v", err)
+		return nil
+	}
+
+	categoriesPath := categoriesPathOf(data.ThemeConfig.CategoriesPath)
+	html = r.postProcess(html, "categories", "/"+categoriesPath+"/", nil)
+
+	buf := bufferPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer bufferPool.Put(buf)
+	buf.WriteString(html)
+
+	categoriesDir := filepath.Join(buildDir, categoriesPath)
+	if err := os.MkdirAll(categoriesDir, 0755); err != nil {
+		return err
+	}
+
+	r.logger.Info("✅ 分类总览页渲染成功")
+	return r.manifest.WriteFile(filepath.Join(categoriesDir, FileIndexHTML), buf.Bytes(), 0644)
+}
+
+// RenderCategoryPages 渲染每个分类的文章列表页（支持分页）。
+//
+// 主题没有 category 模板时回退用 tag 模板渲染。两者结构一致（标题 + 文章列表 + 分页），
+// 借用同主题的 tag 模板能让分类页的布局和样式与站点其余部分保持统一；代价是模板里
+// 写死的标签措辞（"#" 前缀、"所有标签" 返回链接等）会出现在分类页上。
+//
+// 这是安全网而不是正常路径：没有它，任何缺 category 模板的主题都会让分类功能整体
+// 静默失效——用户建了分类、给文章挂了分类，前台却没有任何页面，界面上也没有提示。
 func (r *PageRenderer) RenderCategoryPages(ctx context.Context, buildDir string, data *template.TemplateData) error {
 	// 收集所有分类
 	categoryPosts := make(map[string][]template.PostView)
-	categoryNames := make(map[string]string) // slug -> name
+	categoryNames := make(map[string]string)  // slug -> name
+	categoryCovers := make(map[string]string) // slug -> 封面
+	categoryDescs := make(map[string]string)  // slug -> 描述
 	for _, post := range data.Posts {
 		// 过滤草稿与"不在列表显示"的文章，避免通过分类页泄露（与首页/归档/RSS/sitemap 一致）。
 		if post.HideInList || !post.Published {
@@ -481,6 +601,12 @@ func (r *PageRenderer) RenderCategoryPages(ctx context.Context, buildDir string,
 		for _, cat := range post.Categories {
 			categoryPosts[cat.Slug] = append(categoryPosts[cat.Slug], post)
 			categoryNames[cat.Slug] = cat.Name
+			if cat.Cover != "" {
+				categoryCovers[cat.Slug] = cat.Cover
+			}
+			if cat.Description != "" {
+				categoryDescs[cat.Slug] = cat.Description
+			}
 		}
 	}
 
@@ -488,7 +614,21 @@ func (r *PageRenderer) RenderCategoryPages(ctx context.Context, buildDir string,
 		return nil
 	}
 
+	catPath := categoryPathOf(data.ThemeConfig.CategoryPath)
+	tmplName, fellBack := r.resolveTemplate(data.ThemeConfig.ThemeName, "category", "tag")
+	if fellBack {
+		r.addWarning("当前主题没有分类页模板（category），已改用标签页模板渲染分类页；页面上的措辞可能仍写着“标签”，建议联系主题作者补充分类模板")
+	}
+
 	size := pageSize(data.ThemeConfig.PostPageSize, 10)
+
+	// 渲染失败先攒着，等全部跑完聚合成一条警告：逐个分类弹 toast 会在
+	// 「模板本身有语法错误」时按分类数量刷屏。
+	var (
+		failMu     sync.Mutex
+		failedCats []string
+		firstErr   error
+	)
 
 	g, catCtx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
@@ -504,19 +644,32 @@ func (r *PageRenderer) RenderCategoryPages(ctx context.Context, buildDir string,
 			default:
 			}
 
+			catLink := "/" + catPath + "/" + catSlug + "/"
 			catBaseData := *data
 			catBaseData.Category = template.CategoryView{
-				Name:  catName,
-				Slug:  catSlug,
-				Link:  "/" + DefaultCategoryPath + "/" + catSlug + "/",
-				Count: len(catPosts),
+				Name:        catName,
+				Slug:        catSlug,
+				Link:        catLink,
+				Count:       len(catPosts),
+				Cover:       categoryCovers[catSlug],
+				Description: categoryDescs[catSlug],
+			}
+			if fellBack {
+				// 标签模板读的是 tag 变量：填上当前分类，至少让标题和链接显示的是
+				// 分类本身而不是空值。模板里写死的标签字样改不掉。
+				catBaseData.Tag = template.TagView{
+					Name:  catName,
+					Slug:  catSlug,
+					Link:  catLink,
+					Count: len(catPosts),
+				}
 			}
 			catBaseData.SiteTitle = catName + " | " + data.ThemeConfig.SiteName
 
-			catDir := filepath.Join(buildDir, DefaultCategoryPath, catSlug)
+			catDir := filepath.Join(buildDir, catPath, catSlug)
 			err := r.renderPaginated(catCtx, paginatedRenderConfig{
-				templateName: "category",
-				baseURL:      "/" + DefaultCategoryPath + "/" + catSlug + "/",
+				templateName: tmplName,
+				baseURL:      catLink,
 				firstPageDir: catDir,
 				pageBaseDir:  catDir,
 				pageSize:     size,
@@ -524,7 +677,12 @@ func (r *PageRenderer) RenderCategoryPages(ctx context.Context, buildDir string,
 				baseData:     &catBaseData,
 			})
 			if err != nil {
-				r.logger.Error(fmt.Sprintf("分类 %s 页渲染失败: %v，跳过", catName, err))
+				failMu.Lock()
+				failedCats = append(failedCats, catName)
+				if firstErr == nil {
+					firstErr = err
+				}
+				failMu.Unlock()
 			}
 			return nil
 		})
@@ -534,8 +692,24 @@ func (r *PageRenderer) RenderCategoryPages(ctx context.Context, buildDir string,
 		return err
 	}
 
-	r.logger.Info(fmt.Sprintf("✅ 分类页渲染成功（共 %d 个）", len(categoryPosts)))
+	if len(failedCats) > 0 {
+		// 不预设原因：模板缺失、语法错误、include 找不到都会走到这里，
+		// 直接把真实 error 交给用户，比断言「模板缺失」更有助于排查。
+		r.addWarning("有 %d 个分类页渲染失败，已跳过（%s）：%v",
+			len(failedCats), strings.Join(summarizeNames(failedCats, 3), "、"), firstErr)
+	}
+
+	r.logger.Info(fmt.Sprintf("✅ 分类页渲染成功（共 %d 个）", len(categoryPosts)-len(failedCats)))
 	return nil
+}
+
+// summarizeNames 取前 max 个名称，超出部分折叠成「等 N 个」，避免警告文案过长。
+func summarizeNames(names []string, max int) []string {
+	if len(names) <= max {
+		return names
+	}
+	out := append([]string{}, names[:max]...)
+	return append(out, fmt.Sprintf("等 %d 个", len(names)))
 }
 
 // buildArchivesByYear 将文章列表按年份分组

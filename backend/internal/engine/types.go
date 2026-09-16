@@ -3,6 +3,7 @@ package engine
 import (
 	"encoding/xml"
 	"gridea-pro/backend/internal/template"
+	"strings"
 )
 
 // CDATA 安全的原始 HTML 输出结构
@@ -108,4 +109,26 @@ func getVisiblePosts(posts []template.PostView) []template.PostView {
 		}
 	}
 	return list
+}
+
+// safePathSegment 校验路径前缀：它会被 filepath.Join 进 buildDir 并 MkdirAll，
+// 含分隔符或 ".." 时产物会落到 output 目录之外。非法值一律回退到默认值。
+func safePathSegment(configured, fallback string) string {
+	if configured == "" {
+		return fallback
+	}
+	if strings.ContainsAny(configured, `/\`) || strings.Contains(configured, "..") {
+		return fallback
+	}
+	return configured
+}
+
+// categoryPathOf 返回分类文章页的路径前缀，未配置或非法时回退到默认值。
+func categoryPathOf(configured string) string {
+	return safePathSegment(configured, DefaultCategoryPath)
+}
+
+// categoriesPathOf 返回分类总览页的路径前缀，未配置或非法时回退到默认值。
+func categoriesPathOf(configured string) string {
+	return safePathSegment(configured, DefaultCategoriesPath)
 }

@@ -169,6 +169,7 @@ func createCategoryTool() mcp.Tool {
 		mcp.WithString("name", mcp.Description("Category name"), mcp.Required()),
 		mcp.WithString("slug", mcp.Description("Category slug"), mcp.Required()),
 		mcp.WithString("description", mcp.Description("Description")),
+		mcp.WithString("cover", mcp.Description("Cover image path or URL (optional)")),
 	)
 }
 
@@ -188,6 +189,7 @@ func createCategoryHandler(s *service.CategoryService) server.ToolHandlerFunc {
 			Slug: slug,
 		}
 		cat.Description = request.GetString("description", "")
+		cat.Cover = request.GetString("cover", "")
 
 		if err := s.SaveCategory(ctx, cat, ""); err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed: %v", err)), nil
@@ -203,6 +205,7 @@ func updateCategoryTool() mcp.Tool {
 		mcp.WithString("name", mcp.Description("New category name (optional)")),
 		mcp.WithString("slug", mcp.Description("New slug (optional)")),
 		mcp.WithString("description", mcp.Description("New description (optional)")),
+		mcp.WithString("cover", mcp.Description("New cover image path or URL (optional)")),
 	)
 }
 
@@ -227,6 +230,11 @@ func updateCategoryHandler(s *service.CategoryService) server.ToolHandlerFunc {
 		}
 		if desc := request.GetString("description", ""); desc != "" {
 			updated.Description = desc
+		}
+		// 用「参数是否出现」而不是「值是否为空」判断，否则传空串无法清除封面——
+		// 界面上有「移除封面」按钮，两个入口的能力要对等。
+		if _, ok := request.GetArguments()["cover"]; ok {
+			updated.Cover = request.GetString("cover", "")
 		}
 
 		if err := s.SaveCategory(ctx, updated, id); err != nil {

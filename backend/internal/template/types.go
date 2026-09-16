@@ -40,6 +40,9 @@ type TemplateData struct {
 	// 所有标签
 	Tags []TagView `json:"tags"`
 
+	// 所有分类
+	Categories []CategoryView `json:"categories"`
+
 	// 闪念列表（闪念页使用）
 	Memos []MemoView `json:"memos"`
 
@@ -66,6 +69,8 @@ type ThemeConfigView struct {
 	PostPath         string `json:"postPath"`
 	TagPath          string `json:"tagPath"`
 	TagsPath         string `json:"tagsPath"`
+	CategoryPath     string `json:"categoryPath"`
+	CategoriesPath   string `json:"categoriesPath"`
 	LinkPath         string `json:"linkPath"`
 	MemosPath        string `json:"memosPath"`
 	ShowFeatureImage bool   `json:"showFeatureImage"`
@@ -157,10 +162,12 @@ type MemoView struct {
 
 // CategoryView 分类视图
 type CategoryView struct {
-	Name  string `json:"name"`
-	Slug  string `json:"slug"`
-	Link  string `json:"link"`
-	Count int    `json:"count"`
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Link        string `json:"link"`
+	Count       int    `json:"count"`
+	Cover       string `json:"cover"`
+	Description string `json:"description"`
 }
 
 // MenuView 菜单视图

@@ -206,6 +206,7 @@ func (r *EjsRenderer) renderViaGoja(templateName string, data *template.Template
 				// 建立引用，避免拷贝
 				if (!data.site.posts) data.site.posts = data.posts;
 				if (!data.site.tags) data.site.tags = data.tags;
+				if (!data.site.categories) data.site.categories = data.categories;
 				if (!data.site.menus) data.site.menus = data.menus;
 
 				return ejs.render(template, data, {
@@ -258,6 +259,9 @@ func (r *EjsRenderer) sanitizeData(data *template.TemplateData) {
 	}
 	if data.Tags == nil {
 		data.Tags = []template.TagView{}
+	}
+	if data.Categories == nil {
+		data.Categories = []template.CategoryView{}
 	}
 	if data.Memos == nil {
 		data.Memos = []template.MemoView{}

@@ -245,12 +245,13 @@ func (r *Jinja2Renderer) buildContext(data *template.TemplateData) pongo2.Contex
 		"theme_config": themeConfigValue,
 
 		// 内容数据
-		"post":     toContextValue(data.Post),
-		"posts":    toContextValue(data.Posts),
-		"tags":     toContextValue(data.Tags),
-		"menus":    toContextValue(data.Menus),
-		"memos":    toContextValue(data.Memos),
-		"archives": toContextValue(data.Archives),
+		"post":       toContextValue(data.Post),
+		"posts":      toContextValue(data.Posts),
+		"tags":       toContextValue(data.Tags),
+		"categories": toContextValue(data.Categories),
+		"menus":      toContextValue(data.Menus),
+		"memos":      toContextValue(data.Memos),
+		"archives":   toContextValue(data.Archives),
 
 		// 友链数据
 		"links": linksValue,
@@ -262,10 +263,12 @@ func (r *Jinja2Renderer) buildContext(data *template.TemplateData) pongo2.Contex
 		"commentSetting": toContextValue(data.CommentSetting),
 
 		// 上下文信息
-		"current_tag": toContextValue(data.Tag),
-		"tag":         toContextValue(data.Tag), // alias
-		"currentTag":  toContextValue(data.Tag), // alias 兼容性
-		"category":    toContextValue(data.Category),
+		"current_tag":      toContextValue(data.Tag),
+		"tag":              toContextValue(data.Tag), // alias
+		"currentTag":       toContextValue(data.Tag), // alias 兼容性
+		"category":         toContextValue(data.Category),
+		"current_category": toContextValue(data.Category), // alias，与 current_tag 对齐
+		"currentCategory":  toContextValue(data.Category), // alias 兼容性
 
 		// 实用工具
 		"now": time.Now(),
@@ -279,6 +282,9 @@ func (r *Jinja2Renderer) buildContext(data *template.TemplateData) pongo2.Contex
 		}
 		if _, exists := siteMap["tags"]; !exists {
 			siteMap["tags"] = ctx["tags"]
+		}
+		if _, exists := siteMap["categories"]; !exists {
+			siteMap["categories"] = ctx["categories"]
 		}
 		if _, exists := siteMap["menus"]; !exists {
 			siteMap["menus"] = ctx["menus"]

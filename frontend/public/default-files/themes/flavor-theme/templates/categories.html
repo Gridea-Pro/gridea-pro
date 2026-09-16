@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}分类 | {{ config.siteName }}{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">分类</h1>
+    {% if categories|length > 0 %}
+    <p class="page-subtitle meta-text">共 {{ categories|length }} 个分类</p>
+    {% endif %}
+  </div>
+
+  {% if categories|length > 0 %}
+  <div class="cat-grid">
+    {% for category in categories %}
+    <a href="{{ category.link }}" class="cat-grid__item">
+      <div class="cat-grid__media">
+        {% if category.cover %}
+        <img src="{{ category.cover }}" alt="{{ category.name }}" loading="lazy" />
+        {% else %}
+        <div class="cat-grid__fallback">{{ category.name|first }}</div>
+        {% endif %}
+        <span class="cat-grid__count">{{ category.count }} 篇</span>
+      </div>
+      <div class="cat-grid__body">
+        <div class="cat-grid__name">{{ category.name }}</div>
+        {% if category.description %}
+        <div class="cat-grid__desc">{{ category.description }}</div>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p class="empty-state__text">暂无分类</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

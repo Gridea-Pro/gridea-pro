@@ -17,6 +17,13 @@
       {% if post.stats %}
       <span class="post-reading-time">{{ post.stats.text }}</span>
       {% endif %}
+      {% if post.categories|length > 0 %}
+      <div class="post-tags-inline post-categories-inline">
+        {% for category in post.categories %}
+        <a href="{{ category.link }}" class="tag-link category-link">{{ category.name }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
       {% if post.tags|length > 0 %}
       <div class="post-tags-inline">
         {% for tag in post.tags %}

@@ -24,6 +24,11 @@
                         <span>
                             {{.Post.Stats.Text}}
                         </span>
+                        {{range .Post.Categories}}
+                        <a href="{{.Link}}" class="post-tag post-category">
+                            {{.Name}}
+                        </a>
+                        {{end}}
                         {{range .Post.Tags}}
                         <a href="{{.Link}}" class="post-tag">
                             # {{.Name}}

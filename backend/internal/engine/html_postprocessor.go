@@ -43,7 +43,7 @@ func NewHtmlPostProcessor(seo *domain.SeoSetting, cdn *domain.CdnSetting, pwa *d
 }
 
 // Process 对渲染后的 HTML 进行后处理
-// pageType: "index", "post", "tags", "tag", "archives", "links", "memos", "404", "blog", "category"
+// pageType: "index", "post", "tags", "tag", "archives", "links", "memos", "404", "blog", "category", "categories"
 // pageURL: 当前页面的相对 URL（如 "/" 、"/post/hello/"）
 // post: 文章页时传入当前文章数据，其他页传 nil
 func (p *HtmlPostProcessor) Process(html, pageType, pageURL string, post *template.PostView) string {

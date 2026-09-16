@@ -17,6 +17,19 @@
           <h2 class="post-title"><%= post.title %></h2>
           <div class="post-info post-detail-info">
             <span><i class="icon-calendar-outline"></i> <%= post.dateFormat %></span>
+            <% if (post.categories.length > 0) { %>
+              <span>
+                <i class="icon-folder-outline"></i>
+                <% post.categories.forEach(function(category, index) { %>
+                  <a href="<%= category.link %>">
+                    <%= category.name %>
+                    <% if (index !== post.categories.length - 1) { %>
+                      ，
+                    <% } %>
+                  </a>
+                <% }); %>
+              </span>
+            <% } %>
             <% if (post.tags.length > 0) { %>
               <span>
                 <i class="icon-pricetags-outline"></i>

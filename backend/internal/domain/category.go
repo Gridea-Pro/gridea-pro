@@ -12,6 +12,9 @@ type Category struct {
 	Name        string `json:"name"`
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
+	// Cover 分类封面图，站点内相对路径（如 /post-images/xxx.webp）或外链 URL。
+	// 存在站点目录而不是主题目录，换主题不会丢。
+	Cover string `json:"cover,omitempty"`
 }
 
 // Validate 校验分类数据
