@@ -80,7 +80,7 @@
             @click="pickFavicon">
             <img v-if="faviconPath" :src="faviconPath" class="w-full h-full object-cover" />
             <div v-else class="flex flex-col items-center text-muted-foreground">
-              <i class="ri-add-line text-2xl mb-1"></i>
+              <Plus class="w-6 h-6 mb-1" />
               <span class="text-xs">Upload</span>
             </div>
           </div>
@@ -97,7 +97,7 @@
             @click="pickAvatar">
             <img v-if="avatarPath" :src="avatarPath" class="w-full h-full object-cover" />
             <div v-else class="flex flex-col items-center text-muted-foreground">
-              <i class="ri-add-line text-2xl mb-1"></i>
+              <Plus class="w-6 h-6 mb-1" />
               <span class="text-xs">Upload</span>
             </div>
           </div>
@@ -121,6 +121,7 @@ variant="default"
 
 <script lang="ts" setup>
 import { reactive, onMounted, ref } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useSiteStore } from '@/stores/site'
 import { toast } from 'vue-sonner'

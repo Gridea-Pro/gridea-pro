@@ -59,7 +59,7 @@
                   <img v-if="form[field.name]" :src="getImageUrl(form[field.name])"
                     class="w-full h-full object-cover" />
                   <div v-else class="flex flex-col items-center text-muted-foreground">
-                    <i class="ri-upload-2-line text-2xl mb-1"></i>
+                    <Upload class="w-6 h-6 mb-1" />
                   </div>
                   <div v-if="form[field.name]"
                     class="delete-btn hidden absolute top-1 right-1 bg-destructive hover:bg-destructive/90 text-white rounded-full w-5 h-5 flex items-center justify-center z-10 shadow-sm border border-white transition-colors cursor-pointer"
@@ -93,6 +93,7 @@
 
 <script lang="ts" setup>
 import { reactive, ref, computed, onMounted } from 'vue'
+import { Upload } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from '@/helpers/toast'
 import FooterBox from '@/components/FooterBox/index.vue'

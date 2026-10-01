@@ -124,7 +124,7 @@
                       <img v-if="form[item.name]" :src="getImageUrl(form[item.name])"
                         class="w-full h-full object-cover" />
                       <div v-else class="flex flex-col items-center text-muted-foreground">
-                        <i class="ri-upload-2-line text-2xl mb-1"></i>
+                        <Upload class="w-6 h-6 mb-1" />
                       </div>
                       <!-- 悬浮删除/重置按钮 -->
                       <div v-if="form[item.name]"
@@ -156,12 +156,12 @@
                       <Button size="icon" variant="ghost"
                         class="h-6 w-6 text-info hover:text-info hover:bg-info/10"
                         @click="addConfigItem(item.name, Number(configItemIndex), item.arrayItems)">
-                        <i class="ri-add-line"></i>
+                        <Plus class="w-4 h-4" />
                       </Button>
                       <Button size="icon" variant="ghost"
                         class="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
                         @click="deleteConfigItem(form[item.name], Number(configItemIndex))">
-                        <i class="ri-subtract-line"></i>
+                        <Minus class="w-4 h-4" />
                       </Button>
                     </div>
 
@@ -208,7 +208,7 @@
                             @click="handleImageUpload(item.name, field.name, Number(configItemIndex))">
                             <img v-if="configItem[field.name]" :src="getImageUrl(configItem[field.name])"
                               class="w-full h-full object-cover" />
-                            <i v-else class="ri-add-line text-muted-foreground"></i>
+                            <Plus v-else class="w-4 h-4 text-muted-foreground" />
 
                             <!-- 悬浮删除/重置按钮 -->
                             <div v-if="configItem[field.name]"
@@ -228,7 +228,7 @@
                   </div>
                   <Button v-if="!form[item.name] || form[item.name].length === 0" variant="outline"
                     class="w-full border-dashed" @click="addConfigItem(item.name, -1, item.arrayItems)">
-                    <i class="ri-add-line mr-2"></i> {{ t('settings.theme.addItem') }}
+                    <Plus class="w-4 h-4 mr-2" /> {{ t('settings.theme.addItem') }}
                   </Button>
                 </div>
 
@@ -241,7 +241,7 @@
       <footer-box>
         <div class="flex justify-between w-full">
           <Button variant="ghost" size="icon" class="h-8 w-8" :title="t('settings.theme.resetToDefaults')" @click="resetThemeCustomConfig">
-            <i class="ri-arrow-go-back-line text-lg"></i>
+              <RotateCcw class="w-4 h-4" />
           </Button>
           <Button variant="default"
             class="w-18 h-8 text-xs justify-center rounded-full bg-primary text-background hover:bg-primary/90 cursor-pointer"
@@ -261,6 +261,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { Plus, Minus, Upload, RotateCcw } from 'lucide-vue-next'
 import type { IThemeConfigItem } from '@/interfaces/theme'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
