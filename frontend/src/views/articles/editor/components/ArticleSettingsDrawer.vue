@@ -114,7 +114,7 @@
                             </div>
                             <div v-else>
                                 <img src="@/assets/images/image_upload.svg" class="upload-img mx-auto w-20">
-                                <i class="ri-upload-2-line upload-icon text-lg mt-2 block text-muted-foreground"></i>
+                                <Upload class="upload-icon w-5 h-5 mt-2 mx-auto block text-muted-foreground" />
                                 <div class="text-xs text-muted-foreground mt-2">{{ $t('article.selectLocalImage') }}</div>
                             </div>
                         </div>
@@ -160,6 +160,7 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch, nextTick } from 'vue'
+import { Upload } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

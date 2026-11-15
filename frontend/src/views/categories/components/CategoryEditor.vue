@@ -31,7 +31,7 @@
                             @click="$emit('upload-cover')">
                             <img v-if="coverPreview" :src="coverPreview" class="w-full h-full object-cover" />
                             <div v-else class="flex flex-col items-center text-muted-foreground">
-                                <i class="ri-image-add-line text-2xl mb-1"></i>
+                                <ImagePlus class="w-6 h-6 mb-1" />
                                 <span class="text-xs">{{ t('category.coverHint') }}</span>
                             </div>
                             <button
@@ -64,6 +64,7 @@ variant="default"
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { ImagePlus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useSiteStore } from '@/stores/site'
 import { DEFAULT_CATEGORY_PATH } from '@/helpers/constants'
