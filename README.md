@@ -28,7 +28,7 @@
 ---
 
 <p align="center">
-  <b>预览站点</b>&nbsp;&nbsp;👉&nbsp;&nbsp;<a href="https://are.ink/">are.ink</a>
+  <b>预览站点 · 作者博客</b>&nbsp;&nbsp;👉&nbsp;&nbsp;<a href="https://are.ink/">are.ink</a>
 </p>
 
 ---
@@ -295,6 +295,19 @@ git checkout -b feature/your-feature
 
 # 开发完成后提交 PR
 ```
+
+---
+
+## 作者与设计文章
+
+Gridea Pro 由 [Eliauk](https://github.com/Tespera) 开发。它的产品思考、架构设计与技术取舍，都记录在作者的博客 [述尔](https://are.ink/)：
+
+- [我为什么复活了 Gridea](https://are.ink/post/why-i-revived-gridea/)
+- [Gridea Pro 后端架构深度解析](https://are.ink/post/gridea-pro-backend-architecture-deep-dive/)
+- [Gridea Pro MCP 的设计理念与技术取舍](https://are.ink/post/gridea-pro-mcp-design-philosophy/)
+- [从零实现 CDN 图床：Gridea Pro 如何让图片管理彻底自动化](https://are.ink/post/gridea-pro-cdn/)
+- [Gridea Pro vs Hexo vs Hugo 深度对比](https://are.ink/post/gridea-pro-vs-hexo-vs-hugo/)
+- [从 Gridea 迁移到 Gridea Pro：零风险完整指南](https://are.ink/post/migrating-from-gridea-to-gridea-pro/)
 
 ---
 

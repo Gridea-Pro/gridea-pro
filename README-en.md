@@ -28,7 +28,7 @@
 ---
 
 <p align="center">
-  <b>Live Demo</b>&nbsp;&nbsp;👉&nbsp;&nbsp;<a href="https://are.ink/">are.ink</a>
+  <b>Live Demo · Author's Blog</b>&nbsp;&nbsp;👉&nbsp;&nbsp;<a href="https://are.ink/">are.ink</a>
 </p>
 
 ---
@@ -282,6 +282,19 @@ git checkout -b feature/your-feature
 
 # Submit a PR when ready
 ```
+
+---
+
+## Author & Design Notes
+
+Gridea Pro is built by [Eliauk](https://github.com/Tespera). The product thinking, architecture and trade-offs behind it are written up on the author's blog, [述尔](https://are.ink/) (in Chinese):
+
+- [Why I revived Gridea](https://are.ink/post/why-i-revived-gridea/)
+- [A deep dive into the Gridea Pro backend architecture](https://are.ink/post/gridea-pro-backend-architecture-deep-dive/)
+- [Design philosophy and trade-offs of the Gridea Pro MCP server](https://are.ink/post/gridea-pro-mcp-design-philosophy/)
+- [Building an automatic CDN image pipeline](https://are.ink/post/gridea-pro-cdn/)
+- [Gridea Pro vs Hexo vs Hugo](https://are.ink/post/gridea-pro-vs-hexo-vs-hugo/)
+- [Migrating from Gridea to Gridea Pro](https://are.ink/post/migrating-from-gridea-to-gridea-pro/)
 
 ---
 
