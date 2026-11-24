@@ -28,67 +28,47 @@
 
 ---
 
-**Gridea Pro** is a free, open-source, cross-platform desktop client for writing and publishing static blogs on macOS, Windows and Linux. It is created and maintained by [Eliauk](#author) (GitHub: [@Tespera](https://github.com/Tespera)), with contributions from the community. Built from scratch with Go, Wails and Vue 3, Gridea Pro is a rewrite of [Gridea](https://github.com/getgridea/gridea), the open-source blog client by [EryouHao](https://github.com/EryouHao) that has been unmaintained since 2022. It is compatible with existing Gridea sites and themes, and is licensed under GPL-3.0.
+**Gridea Pro** is a free, open-source, cross-platform desktop client for writing and publishing static blogs on macOS, Windows and Linux. It is created and maintained by [Eliauk](https://are.ink/) (GitHub: [@Tespera](https://github.com/Tespera)), with contributions from the community. Built from scratch with Go, Wails and Vue 3, Gridea Pro is a rewrite of [Gridea](https://github.com/getgridea/gridea), the open-source blog client by [EryouHao](https://github.com/EryouHao) that has been unmaintained since 2022. It is compatible with existing Gridea sites and themes, and is licensed under GPL-3.0.
 
 > [!NOTE]
 > **How Gridea Pro relates to Gridea**: Gridea (10k+ stars on GitHub) stopped receiving updates after v0.9.3 in May 2022. Gridea Pro is an independent, ground-up rewrite and is not made by the original Gridea team. Existing Gridea users can migrate directly, and site data and themes remain compatible; see [Migrating from Gridea](#migrating-from-gridea). Many thanks to EryouHao for creating Gridea and helping countless people start their blogs.
 
-Example site: the author's blog, [Shu'er (are.ink)](https://are.ink/), is built and published with Gridea Pro.
+Example site: [Shu'er (are.ink)](https://are.ink/), the blog of Gridea Pro's author, is built and published with Gridea Pro.
 
 > The app interface is available in 11 languages, including English. The documentation is currently in Chinese.
 
 ## Screenshots
 
-<table>
-  <tr>
-    <td align="center"><b>Posts</b></td>
-    <td align="center"><b>Editor</b></td>
-  </tr>
-  <tr>
-    <td><img src="images/post.png" alt="Gridea Pro post list with tags and publishing status"></td>
-    <td><img src="images/editor.png" alt="Gridea Pro Markdown editor with live preview"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Memos</b></td>
-    <td align="center"><b>Comments</b></td>
-  </tr>
-  <tr>
-    <td><img src="images/memos.png" alt="Gridea Pro memos with activity heatmap"></td>
-    <td><img src="images/comments.png" alt="Gridea Pro comment management"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Menus</b></td>
-    <td align="center"><b>Categories</b></td>
-  </tr>
-  <tr>
-    <td><img src="images/menus.png" alt="Gridea Pro menu management"></td>
-    <td><img src="images/categories.png" alt="Gridea Pro category management"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Tags</b></td>
-    <td align="center"><b>Themes</b></td>
-  </tr>
-  <tr>
-    <td><img src="images/tags.png" alt="Gridea Pro tag management"></td>
-    <td><img src="images/themes.png" alt="Gridea Pro theme manager with visual settings"></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="images/showcase-hero.png" alt="Gridea Pro main window: post list on the left, Markdown editor on the right" width="100%">
+</p>
+
+<p align="center">
+  <img src="images/showcase-features.png" alt="Gridea Pro screens: memos, themes, comments, categories, tags and links" width="100%">
+</p>
+
+> The screenshots show the Chinese interface; English is one of the 11 available interface languages.
 
 ## Why Gridea Pro
 
-Hugo, Hexo and Jekyll are excellent static site generators, but they are built for developers: you install a runtime, work in a terminal, edit configuration files and set up deployment yourself. Gridea Pro takes a different path: **download and start writing. Writing, theme settings and publishing all happen in a graphical app, with AI built in.**
+Hugo, Hexo and Jekyll are excellent static site generators, but they are built for developers: you install a runtime, work in a terminal, edit configuration files and set up deployment yourself. Publii is also a desktop app, with a focus on visual editing and managing several sites. Gridea Pro makes a different trade-off: **download and start writing. Writing, theme settings and publishing all happen in a graphical app, with AI built in and Chinese-language writers well supported.**
 
-| | Gridea Pro | Hugo | Hexo |
-|---|:---:|:---:|:---:|
-| How you use it | Desktop app | Command line | Command line + Node.js |
-| Getting started | Works out of the box | Terminal experience needed | Node.js and terminal experience needed |
-| Writing | Built-in Markdown editor | Your own editor | Your own editor |
-| Theme settings | Visual settings in the app | Edit config files | Edit config files |
-| Publishing | One click, several targets at once | Manual or CI | Manual or CI |
-| AI integration | Built-in MCP server and model providers | — | — |
-| Template engines | Jinja2 / Go Templates / EJS | Go Templates | EJS / Pug / Nunjucks |
+| | **Gridea Pro** | Publii | Hugo | Hexo | Jekyll |
+|---|:---:|:---:|:---:|:---:|:---:|
+| 🧭 Type | **Desktop app** | Desktop app | CLI | CLI | CLI |
+| ⚙️ Runtime | **Ready to use** | Ready to use | Single binary | Node.js | Ruby |
+| ✍️ Editor | **Markdown + live preview** | Visual / block / Markdown | Your own | Your own | Your own |
+| 🎨 Theme settings | **In-app forms** | In-app forms | Config files | Config files | Config files |
+| 🧩 Template engines | **Jinja2 / Go / EJS** | Handlebars | Go Templates | EJS / Nunjucks etc. | Liquid |
+| 🚀 Publishing | **✅ One click, many targets at once** | ✅ One click | CLI / CI | CLI / CI | CLI / CI |
+| 💬 Memos & comments | **✅** | — | — | — | — |
+| 🤖 AI (MCP) | **✅** | — | — | — | — |
+| 🔁 Migrate from Gridea | **✅** | — | — | — | — |
+| 📄 License | **GPL-3.0** | GPL-3.0 | Apache-2.0 | MIT | MIT |
 
-> Hugo and Hexo suit developers who are comfortable with terminals and code. Gridea Pro is for writers who would rather not touch the command line.
+- **Publishing targets**: Gridea Pro supports GitHub Pages, Netlify, Vercel, Coding Pages and SFTP / FTP; Publii supports GitHub Pages, Netlify, Amazon S3, Google Cloud, SFTP and more; Jekyll is built natively by GitHub Pages.
+- **Runtime**: Gridea Pro uses Go and the system WebView, Publii uses Electron; neither needs a separate runtime.
+- **Which to choose**: Hugo, Hexo and Jekyll suit developers comfortable with terminals and code; Publii suits people who prefer WYSIWYG editing or run several sites; Gridea Pro is for writers who want to focus on Markdown and let AI help look after their blog.
 
 ## Features
 
@@ -232,7 +212,7 @@ Gridea Pro is a free, open-source, cross-platform desktop client for writing sta
 
 ### Who develops Gridea Pro?
 
-Gridea Pro is created and maintained by Eliauk (GitHub: [@Tespera](https://github.com/Tespera)), with contributions from the community. See [Author](#author).
+Gridea Pro is created and maintained by [Eliauk](https://are.ink/) (GitHub: [@Tespera](https://github.com/Tespera)), with contributions from the community.
 
 ### How is Gridea Pro related to Gridea?
 
@@ -274,9 +254,9 @@ wails dev
 wails build
 ```
 
-## Author
+## Further reading
 
-Gridea Pro is created and maintained by **Eliauk**, a software product manager based in Shenzhen and a long-time Gridea user. After Gridea stopped being maintained, Eliauk rewrote the client from scratch and documents the product thinking, architecture and technical trade-offs behind it on the blog [Shu'er](https://are.ink/). The articles below are in Chinese.
+The product thinking, architecture and technical trade-offs behind Gridea Pro are written up on the blog [Shu'er](https://are.ink/). The articles below are in Chinese.
 
 **Articles bundled with the app**
 
@@ -294,10 +274,9 @@ Gridea Pro is created and maintained by **Eliauk**, a software product manager b
 - [Gridea Pro vs Hexo vs Hugo — 深度对比分析报告](https://are.ink/post/gridea-pro-vs-hexo-vs-hugo/)
 - [从 Gridea 迁移到 Gridea Pro：零风险完整指南](https://are.ink/post/migrating-from-gridea-to-gridea-pro/)
 
-Thanks to all [contributors](https://github.com/Gridea-Pro/gridea-pro/graphs/contributors).
-
 ## Acknowledgements
 
+- All [contributors](https://github.com/Gridea-Pro/gridea-pro/graphs/contributors)
 - [Gridea](https://github.com/getgridea/gridea), the original project by [@EryouHao](https://github.com/EryouHao)
 - [Wails](https://wails.io/), Go desktop app framework
 - [Vue 3](https://vuejs.org/), frontend framework

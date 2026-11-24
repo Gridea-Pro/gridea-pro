@@ -28,65 +28,43 @@
 
 ---
 
-**Gridea Pro** 是一款开源、免费、跨平台的桌面端静态博客写作客户端，支持 macOS、Windows 与 Linux。它由 [Eliauk](#作者)（GitHub：[@Tespera](https://github.com/Tespera)）创建并主导维护，社区贡献者共同参与。Gridea Pro 基于 Go、Wails 与 Vue 3 从零重写了自 2022 年起停止维护的开源博客客户端 [Gridea](https://github.com/getgridea/gridea)（原作者 [EryouHao](https://github.com/EryouHao)），兼容 Gridea 的站点数据与主题，以 GPL-3.0 协议开源。
+**Gridea Pro** 是一款开源、免费、跨平台的桌面端静态博客写作客户端，支持 macOS、Windows 与 Linux。它由 [Eliauk](https://are.ink/)（GitHub：[@Tespera](https://github.com/Tespera)）创建并主导维护，社区贡献者共同参与。Gridea Pro 基于 Go、Wails 与 Vue 3 从零重写了自 2022 年起停止维护的开源博客客户端 [Gridea](https://github.com/getgridea/gridea)（原作者 [EryouHao](https://github.com/EryouHao)），兼容 Gridea 的站点数据与主题，以 GPL-3.0 协议开源。
 
 > [!NOTE]
 > **Gridea Pro 与 Gridea 的关系**：Gridea（GitHub 10k+ Star）在 2022 年 5 月发布 v0.9.3 后停止更新。Gridea Pro 是对它的从零重写，独立开发，并非 Gridea 原团队出品。原有 Gridea 用户可以直接迁移，站点数据与主题保持兼容，详见[从 Gridea 迁移](#从-gridea-迁移)。感谢原作者 EryouHao 创造了 Gridea，帮助无数人建立了自己的博客。
 
-示例站点：作者博客 [述尔（are.ink）](https://are.ink/) 即由 Gridea Pro 生成与发布。
+示例站点：Gridea Pro 作者博客 [述尔（are.ink）](https://are.ink/) 即由 Gridea Pro 生成与发布。
 
 ## 软件截图
 
-<table>
-  <tr>
-    <td align="center"><b>文章管理</b></td>
-    <td align="center"><b>写作编辑器</b></td>
-  </tr>
-  <tr>
-    <td><img src="images/post.png" alt="Gridea Pro 文章管理界面：文章列表、标签与发布状态"></td>
-    <td><img src="images/editor.png" alt="Gridea Pro Markdown 编辑器：左侧书写、右侧实时预览"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>闪念</b></td>
-    <td align="center"><b>评论管理</b></td>
-  </tr>
-  <tr>
-    <td><img src="images/memos.png" alt="Gridea Pro 闪念界面：短笔记与热力图"></td>
-    <td><img src="images/comments.png" alt="Gridea Pro 评论管理界面"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>菜单管理</b></td>
-    <td align="center"><b>分类管理</b></td>
-  </tr>
-  <tr>
-    <td><img src="images/menus.png" alt="Gridea Pro 菜单管理界面"></td>
-    <td><img src="images/categories.png" alt="Gridea Pro 分类管理界面"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>标签管理</b></td>
-    <td align="center"><b>主题管理</b></td>
-  </tr>
-  <tr>
-    <td><img src="images/tags.png" alt="Gridea Pro 标签管理界面"></td>
-    <td><img src="images/themes.png" alt="Gridea Pro 主题管理界面：可视化切换与配置主题"></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="images/showcase-hero.png" alt="Gridea Pro 主界面：左侧为文章列表，右侧为 Markdown 编辑器" width="100%">
+</p>
+
+<p align="center">
+  <img src="images/showcase-features.png" alt="Gridea Pro 功能界面：闪念、主题、评论、分类、标签、友链" width="100%">
+</p>
 
 ## 为什么选择 Gridea Pro
 
-Hugo、Hexo、Jekyll 都是优秀的静态网站生成器，但它们面向开发者：需要安装运行环境、使用命令行、编辑配置文件并自行配置部署流程。Gridea Pro 选择另一条路：**下载即用，写作、主题配置与发布都在图形界面中完成，并集成 AI 能力。**
+Hugo、Hexo、Jekyll 都是优秀的静态网站生成器，但它们面向开发者：需要安装运行环境、使用命令行、编辑配置文件并自行配置部署流程。Publii 同样是桌面客户端，侧重可视化编辑与多站点管理。Gridea Pro 的取舍是：**下载即用，写作、主题配置与发布都在图形界面里完成，同时内置 AI 能力，并照顾中文写作者的使用习惯。**
 
-| | Gridea Pro | Hugo | Hexo |
-|---|:---:|:---:|:---:|
-| 使用方式 | 桌面应用 | 命令行 | 命令行 + Node.js |
-| 上手门槛 | 下载即用 | 需要终端经验 | 需要 Node.js 与终端经验 |
-| 写作环境 | 内置 Markdown 编辑器 | 自选外部编辑器 | 自选外部编辑器 |
-| 主题配置 | 应用内可视化配置 | 修改配置文件 | 修改配置文件 |
-| 发布 | 一键发布，可多平台同时上线 | 手动或 CI | 手动或 CI |
-| AI 集成 | 内置 MCP 服务与模型接入 | — | — |
-| 模板引擎 | Jinja2 / Go Templates / EJS | Go Templates | EJS / Pug / Nunjucks |
+| | **Gridea Pro** | Publii | Hugo | Hexo | Jekyll |
+|---|:---:|:---:|:---:|:---:|:---:|
+| 🧭 形态 | **桌面客户端** | 桌面客户端 | 命令行 | 命令行 | 命令行 |
+| ⚙️ 运行环境 | **下载即用** | 下载即用 | 单个可执行文件 | Node.js | Ruby |
+| ✍️ 编辑器 | **Markdown + 实时预览** | 可视化 / 区块 / Markdown | 外部编辑器 | 外部编辑器 | 外部编辑器 |
+| 🎨 主题设置 | **应用内表单** | 应用内表单 | 配置文件 | 配置文件 | 配置文件 |
+| 🧩 模板引擎 | **Jinja2 / Go / EJS** | Handlebars | Go Templates | EJS / Nunjucks 等 | Liquid |
+| 🚀 发布 | **✅ 一键，多平台同时** | ✅ 一键 | 命令行 / CI | 命令行 / CI | 命令行 / CI |
+| 💬 闪念与评论管理 | **✅** | — | — | — | — |
+| 🤖 AI 集成（MCP） | **✅** | — | — | — | — |
+| 🔁 从 Gridea 迁移 | **✅** | — | — | — | — |
+| 📄 开源协议 | **GPL-3.0** | GPL-3.0 | Apache-2.0 | MIT | MIT |
 
-> Hugo 与 Hexo 适合熟悉终端与代码的开发者；Gridea Pro 面向希望专注写作、不愿接触命令行的写作者。
+- **发布平台**：Gridea Pro 支持 GitHub Pages、Netlify、Vercel、Coding Pages 与 SFTP / FTP；Publii 支持 GitHub Pages、Netlify、Amazon S3、Google Cloud、SFTP 等；Jekyll 由 GitHub Pages 原生支持构建。
+- **运行环境**：Gridea Pro 基于 Go 与系统自带的 WebView，Publii 基于 Electron，两者都无需另装运行环境。
+- **怎么选**：Hugo、Hexo、Jekyll 适合熟悉终端与代码的开发者；Publii 适合偏好所见即所得编辑、或需要管理多个站点的用户；Gridea Pro 面向希望专注写作、用 Markdown 记录、并让 AI 帮忙打理博客的写作者。
 
 ## 核心功能
 
@@ -230,7 +208,7 @@ Gridea Pro 是一款开源、免费、跨平台的桌面端静态博客写作客
 
 ### Gridea Pro 由谁开发？
 
-Gridea Pro 由 Eliauk（GitHub：[@Tespera](https://github.com/Tespera)）创建并主导维护，社区贡献者共同参与。参见[作者](#作者)。
+Gridea Pro 由 [Eliauk](https://are.ink/)（GitHub：[@Tespera](https://github.com/Tespera)）创建并主导维护，社区贡献者共同参与。
 
 ### Gridea Pro 和 Gridea 是什么关系？
 
@@ -278,9 +256,9 @@ wails dev
 wails build
 ```
 
-## 作者
+## 延伸阅读
 
-Gridea Pro 由 **Eliauk** 创建并主导维护。Eliauk 是一名软件产品经理，居住在深圳，也是原版 Gridea 的长期用户。Gridea 停止维护后，Eliauk 从零重写了这款客户端，并把产品思考、架构设计与技术取舍记录在个人博客[「述尔」](https://are.ink/)。
+Gridea Pro 的产品思考、架构设计与技术取舍记录在博客[「述尔」](https://are.ink/)。
 
 **随客户端预置的文章**
 
@@ -298,10 +276,9 @@ Gridea Pro 由 **Eliauk** 创建并主导维护。Eliauk 是一名软件产品�
 - [Gridea Pro vs Hexo vs Hugo — 深度对比分析报告](https://are.ink/post/gridea-pro-vs-hexo-vs-hugo/)
 - [从 Gridea 迁移到 Gridea Pro：零风险完整指南](https://are.ink/post/migrating-from-gridea-to-gridea-pro/)
 
-感谢所有[贡献者](https://github.com/Gridea-Pro/gridea-pro/graphs/contributors)。
-
 ## 致谢
 
+- 所有[贡献者](https://github.com/Gridea-Pro/gridea-pro/graphs/contributors)
 - [Gridea](https://github.com/getgridea/gridea) —— 原版项目，感谢 [@EryouHao](https://github.com/EryouHao)
 - [Wails](https://wails.io/) —— Go 桌面应用框架
 - [Vue 3](https://vuejs.org/) —— 前端框架
