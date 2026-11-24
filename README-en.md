@@ -276,14 +276,23 @@ wails build
 
 ## Author
 
-Gridea Pro is created and maintained by **Eliauk**, a software product manager based in Shenzhen and a long-time Gridea user. After Gridea stopped being maintained, Eliauk rewrote the client from scratch and documents the product thinking, architecture and technical trade-offs behind it on the blog [Shu'er](https://are.ink/) (in Chinese):
+Gridea Pro is created and maintained by **Eliauk**, a software product manager based in Shenzhen and a long-time Gridea user. After Gridea stopped being maintained, Eliauk rewrote the client from scratch and documents the product thinking, architecture and technical trade-offs behind it on the blog [Shu'er](https://are.ink/). The articles below are in Chinese.
 
-- [Why I revived Gridea](https://are.ink/post/why-i-revived-gridea/)
-- [Inside the Gridea Pro backend architecture](https://are.ink/post/gridea-pro-backend-architecture-deep-dive/)
-- [Design principles and trade-offs of Gridea Pro MCP](https://are.ink/post/gridea-pro-mcp-design-philosophy/)
-- [Building an image CDN into Gridea Pro](https://are.ink/post/gridea-pro-cdn/)
-- [Gridea Pro vs Hexo vs Hugo: an in-depth comparison](https://are.ink/post/gridea-pro-vs-hexo-vs-hugo/)
-- [Migrating from Gridea to Gridea Pro](https://are.ink/post/migrating-from-gridea-to-gridea-pro/)
+**Articles bundled with the app**
+
+- [念念不忘，必有回响 —— Gridea Pro，我们回来了](https://are.ink/post/hello-gridea-pro/)
+- [Gridea Pro 完全上手指南 —— 从写作到发布，一篇搞定](https://are.ink/post/quick-start/)
+- [我为什么复活了 Gridea —— 每个想写点什么的人，都值得一个更简单的开始](https://are.ink/post/why-i-revived-gridea/)
+- [都 2026 年了，我们为什么还要写博客](https://are.ink/post/why-we-write/)
+- [独立博客没有死，正在死的是平庸的博客](https://are.ink/post/indie-blog-is-not-dead/)
+
+**Design and implementation notes**
+
+- [Gridea Pro 后端架构深度解析：一个桌面端静态博客系统的工程哲学](https://are.ink/post/gridea-pro-backend-architecture-deep-dive/)
+- [Gridea Pro MCP 的设计理念与技术取舍](https://are.ink/post/gridea-pro-mcp-design-philosophy/)
+- [从零实现 CDN 图床：Gridea Pro 如何让图片管理彻底自动化](https://are.ink/post/gridea-pro-cdn/)
+- [Gridea Pro vs Hexo vs Hugo — 深度对比分析报告](https://are.ink/post/gridea-pro-vs-hexo-vs-hugo/)
+- [从 Gridea 迁移到 Gridea Pro：零风险完整指南](https://are.ink/post/migrating-from-gridea-to-gridea-pro/)
 
 Thanks to all [contributors](https://github.com/Gridea-Pro/gridea-pro/graphs/contributors).
 

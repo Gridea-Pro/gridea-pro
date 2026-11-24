@@ -280,13 +280,22 @@ wails build
 
 ## 作者
 
-Gridea Pro 由 **Eliauk** 创建并主导维护。Eliauk 是一名软件产品经理，居住在深圳，也是原版 Gridea 的长期用户。Gridea 停止维护后，Eliauk 从零重写了这款客户端，并把产品思考、架构设计与技术取舍记录在个人博客[「述尔」](https://are.ink/)：
+Gridea Pro 由 **Eliauk** 创建并主导维护。Eliauk 是一名软件产品经理，居住在深圳，也是原版 Gridea 的长期用户。Gridea 停止维护后，Eliauk 从零重写了这款客户端，并把产品思考、架构设计与技术取舍记录在个人博客[「述尔」](https://are.ink/)。
 
-- [我为什么复活了 Gridea](https://are.ink/post/why-i-revived-gridea/)
-- [Gridea Pro 后端架构深度解析](https://are.ink/post/gridea-pro-backend-architecture-deep-dive/)
+**随客户端预置的文章**
+
+- [念念不忘，必有回响 —— Gridea Pro，我们回来了](https://are.ink/post/hello-gridea-pro/)
+- [Gridea Pro 完全上手指南 —— 从写作到发布，一篇搞定](https://are.ink/post/quick-start/)
+- [我为什么复活了 Gridea —— 每个想写点什么的人，都值得一个更简单的开始](https://are.ink/post/why-i-revived-gridea/)
+- [都 2026 年了，我们为什么还要写博客](https://are.ink/post/why-we-write/)
+- [独立博客没有死，正在死的是平庸的博客](https://are.ink/post/indie-blog-is-not-dead/)
+
+**设计与实现记录**
+
+- [Gridea Pro 后端架构深度解析：一个桌面端静态博客系统的工程哲学](https://are.ink/post/gridea-pro-backend-architecture-deep-dive/)
 - [Gridea Pro MCP 的设计理念与技术取舍](https://are.ink/post/gridea-pro-mcp-design-philosophy/)
 - [从零实现 CDN 图床：Gridea Pro 如何让图片管理彻底自动化](https://are.ink/post/gridea-pro-cdn/)
-- [Gridea Pro vs Hexo vs Hugo 深度对比](https://are.ink/post/gridea-pro-vs-hexo-vs-hugo/)
+- [Gridea Pro vs Hexo vs Hugo — 深度对比分析报告](https://are.ink/post/gridea-pro-vs-hexo-vs-hugo/)
 - [从 Gridea 迁移到 Gridea Pro：零风险完整指南](https://are.ink/post/migrating-from-gridea-to-gridea-pro/)
 
 感谢所有[贡献者](https://github.com/Gridea-Pro/gridea-pro/graphs/contributors)。
