@@ -61,11 +61,11 @@
             {{end}}
 
             {{if and .CommentSetting .CommentSetting.ShowComment}}
-            {{if eq .CommentSetting.CommentPlatform "gitalk"}}
+            {{if eq .CommentSetting.Platform "Gitalk"}}
             {{template "gitalk" .}}
             {{end}}
 
-            {{if eq .CommentSetting.CommentPlatform "disqus"}}
+            {{if eq .CommentSetting.Platform "Disqus"}}
             {{template "disqus" .}}
             {{end}}
             {{end}}
