@@ -1,178 +1,161 @@
 <p align="center">
-  <img src="build/appicon.png" alt="Gridea Pro" width="100">
+  <img src="build/appicon.png" alt="Gridea Pro app icon" width="100">
 </p>
 
-<h1 align="center">Gridea Pro</h1>
+<h1 align="center">Gridea Pro: open-source desktop client for writing static blogs</h1>
 
 <p align="center">
-  The next-generation desktop static blog client — write like you're in Notion, publish with one click.
-</p>
-<p align="center">
-  A static blog writing client built on Wails (Go + Vue 3). Free and open source, forever.
+  Write in Markdown and publish to GitHub Pages, Vercel or Netlify in one click — blogging as easy as using Notion.
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3.0-blue.svg" alt="License"></a>
-  <a href="https://github.com/Gridea-Pro/gridea-pro/releases"><img src="https://img.shields.io/github/v/release/Gridea-Pro/gridea-pro?color=brightgreen" alt="Release"></a>
-  <a href="https://github.com/Gridea-Pro/gridea-pro/releases"><img src="https://img.shields.io/github/downloads/Gridea-Pro/gridea-pro/total?label=Downloads&color=orange" alt="Downloads"></a>
-  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Go-1.22+-00ADD8.svg?logo=go&logoColor=white" alt="Go">
-  <img src="https://img.shields.io/badge/Vue-3.x-4FC08D.svg?logo=vue.js&logoColor=white" alt="Vue 3">
-  <a href="README.md"><img src="https://img.shields.io/badge/中文-README-orange.svg" alt="Chinese"></a>
+  <a href="https://github.com/Gridea-Pro/gridea-pro/releases/latest"><img src="https://img.shields.io/github/v/release/Gridea-Pro/gridea-pro?color=brightgreen&label=release" alt="Latest release"></a>
+  <a href="https://github.com/Gridea-Pro/gridea-pro/releases"><img src="https://img.shields.io/github/downloads/Gridea-Pro/gridea-pro/total?label=downloads&color=orange" alt="Downloads"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="GPL-3.0 license"></a>
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg" alt="Runs on macOS, Windows and Linux">
+  <a href="go.mod"><img src="https://img.shields.io/github/go-mod/go-version/Gridea-Pro/gridea-pro?color=00ADD8" alt="Go version"></a>
 </p>
 
 <p align="center">
-  <b>English</b> · <a href="README.md">简体中文</a>
+  <a href="https://gridea.pro/en/"><b>Website</b></a> ·
+  <a href="https://gridea.pro/download/">Download</a> ·
+  <a href="https://gridea.pro/docs/">Docs (Chinese)</a> ·
+  <a href="https://gridea.pro/themes/">Themes</a> ·
+  <a href="https://gridea.pro/changelog/">Changelog</a> ·
+  <a href="#faq">FAQ</a> ·
+  <a href="README.md">简体中文</a>
 </p>
 
 ---
 
-<p align="center">
-  <b>Live Demo · Author's Blog</b>&nbsp;&nbsp;👉&nbsp;&nbsp;<a href="https://are.ink/">are.ink</a>
-</p>
+**Gridea Pro** is a free, open-source, cross-platform desktop client for writing and publishing static blogs on macOS, Windows and Linux. It is created and maintained by [Eliauk](#author) (GitHub: [@Tespera](https://github.com/Tespera)), with contributions from the community. Built from scratch with Go, Wails and Vue 3, Gridea Pro is a rewrite of [Gridea](https://github.com/getgridea/gridea), the open-source blog client by [EryouHao](https://github.com/EryouHao) that has been unmaintained since 2022. It is compatible with existing Gridea sites and themes, and is licensed under GPL-3.0.
 
----
+> [!NOTE]
+> **How Gridea Pro relates to Gridea**: Gridea (10k+ stars on GitHub) stopped receiving updates after v0.9.3 in May 2022. Gridea Pro is an independent, ground-up rewrite and is not made by the original Gridea team. Existing Gridea users can migrate directly, and site data and themes remain compatible; see [Migrating from Gridea](#migrating-from-gridea). Many thanks to EryouHao for creating Gridea and helping countless people start their blogs.
 
-**Gridea Pro** is a complete rewrite of [Gridea](https://github.com/getgridea/gridea) (10k+ Stars), rebuilt from scratch with Go + Wails + Vue 3. The original Gridea has been unmaintained for about four years. Gridea Pro carries forward its core vision: **making it effortless for anyone to own their own blog.**
+Example site: the author's blog, [Shu'er (are.ink)](https://are.ink/), is built and published with Gridea Pro.
 
-Special thanks to the original author [@EryouHao](https://github.com/EryouHao) for creating [Gridea](https://github.com/getgridea/gridea) and helping countless people start their blogs.
-
----
+> The app interface is available in 11 languages, including English. The documentation is currently in Chinese.
 
 ## Screenshots
 
 <table>
   <tr>
-    <td align="center"><b>Post Management</b></td>
-    <td align="center"><b>Writing Editor</b></td>
+    <td align="center"><b>Posts</b></td>
+    <td align="center"><b>Editor</b></td>
   </tr>
   <tr>
-    <td><img src="images/post.png" alt="Post Management"></td>
-    <td><img src="images/editor.png" alt="Writing Editor"></td>
+    <td><img src="images/post.png" alt="Gridea Pro post list with tags and publishing status"></td>
+    <td><img src="images/editor.png" alt="Gridea Pro Markdown editor with live preview"></td>
   </tr>
   <tr>
     <td align="center"><b>Memos</b></td>
-    <td align="center"><b>Comment Management</b></td>
+    <td align="center"><b>Comments</b></td>
   </tr>
   <tr>
-    <td><img src="images/memos.png" alt="Memos"></td>
-    <td><img src="images/comments.png" alt="Comment Management"></td>
+    <td><img src="images/memos.png" alt="Gridea Pro memos with activity heatmap"></td>
+    <td><img src="images/comments.png" alt="Gridea Pro comment management"></td>
   </tr>
   <tr>
-    <td align="center"><b>Menu Management</b></td>
-    <td align="center"><b>Category Management</b></td>
+    <td align="center"><b>Menus</b></td>
+    <td align="center"><b>Categories</b></td>
   </tr>
   <tr>
-    <td><img src="images/menus.png" alt="Menu Management"></td>
-    <td><img src="images/categories.png" alt="Category Management"></td>
+    <td><img src="images/menus.png" alt="Gridea Pro menu management"></td>
+    <td><img src="images/categories.png" alt="Gridea Pro category management"></td>
   </tr>
   <tr>
-    <td align="center"><b>Tag Management</b></td>
-    <td align="center"><b>Theme Management</b></td>
+    <td align="center"><b>Tags</b></td>
+    <td align="center"><b>Themes</b></td>
   </tr>
   <tr>
-    <td><img src="images/tags.png" alt="Tag Management"></td>
-    <td><img src="images/themes.png" alt="Theme Management"></td>
+    <td><img src="images/tags.png" alt="Gridea Pro tag management"></td>
+    <td><img src="images/themes.png" alt="Gridea Pro theme manager with visual settings"></td>
   </tr>
 </table>
 
----
+## Why Gridea Pro
 
-## Why Gridea Pro?
-
-Hugo, Hexo, and Jekyll are great tools — but they're built for developers. You need to install Node.js, learn the CLI, and write your own deployment scripts. Gridea Pro takes a different path: **download and go, everything lives in a GUI, with AI capabilities built right in.**
+Hugo, Hexo and Jekyll are excellent static site generators, but they are built for developers: you install a runtime, work in a terminal, edit configuration files and set up deployment yourself. Gridea Pro takes a different path: **download and start writing. Writing, theme settings and publishing all happen in a graphical app, with AI built in.**
 
 | | Gridea Pro | Hugo | Hexo |
 |---|:---:|:---:|:---:|
-| Installation | Desktop app | CLI | CLI + Node.js |
-| Learning curve | Zero — no terminal needed | Requires CLI experience | Requires Node.js + CLI |
-| Writing environment | Built-in Monaco editor | Choose your own editor | Choose your own editor |
-| Theme switching | Visual UI in-app | Edit config files | Edit config files |
-| One-click deploy | ✅ GUI | ❌ Manual / CI | ❌ Manual / CI |
-| AI integration | ✅ MCP + built-in model | ❌ | ❌ |
-| Memory usage | ~30–50 MB | — | — |
-| Template engines | Jinja2 / EJS / Go | Go Templates | EJS / Nunjucks |
+| How you use it | Desktop app | Command line | Command line + Node.js |
+| Getting started | Works out of the box | Terminal experience needed | Node.js and terminal experience needed |
+| Writing | Built-in Markdown editor | Your own editor | Your own editor |
+| Theme settings | Visual settings in the app | Edit config files | Edit config files |
+| Publishing | One click, several targets at once | Manual or CI | Manual or CI |
+| AI integration | Built-in MCP server and model providers | — | — |
+| Template engines | Jinja2 / Go Templates / EJS | Go Templates | EJS / Pug / Nunjucks |
 
-> Hugo and Hexo are powerful tools for developers. Gridea Pro is designed for people who just want to write.
-
----
+> Hugo and Hexo suit developers who are comfortable with terminals and code. Gridea Pro is for writers who would rather not touch the command line.
 
 ## Features
 
-### ✍️ Writing & Editor
+### Writing
 
-- **Monaco Editor** (the same engine behind VS Code): syntax highlighting, IntelliSense, Vim/Emacs key bindings
-- Markdown extensions: math formulas (KaTeX), footnotes, task lists, Emoji, auto table of contents
-- Code block syntax highlighting for all major languages
-- Live preview
-- Precise CJK word count and estimated reading time
+- Markdown editor powered by **Monaco** (the engine behind VS Code) with live preview
+- Markdown extensions: KaTeX math, footnotes, task lists, emoji and an automatic table of contents
+- Syntax highlighting in code blocks
+- Accurate word counts for Chinese, Japanese and Korean, plus reading-time estimates
 
-### 📋 Content Management
+### Content
 
-- Posts: tags, categories, pinning, drafts, custom URL slugs, featured images
-- **Memos**: quick-capture notes with `#tag` syntax, image attachments, and heatmap statistics
-- Friend links and navigation menu management
-- Comment management: reply and delete (requires a connected comment system)
-- Full-text search
+- Posts with tags, categories, pinning, drafts, custom URLs and featured images
+- Category landing pages and category covers (since v1.3)
+- **Memos**: short notes with `#tags`, image attachments and an activity heatmap
+- Friend links and navigation menus
+- Comment management: reply to and delete comments in the app (requires a comment system)
+- Full-text search in the app
 
-### 🎨 Theme System
+### Themes
 
-- **9 built-in themes**, switch with one click: `amore`, `flavor`, `claudo`, `letters`, `inotes`, `fly`, `simple`, `notes`, and more
-- Three template engines: **Jinja2 (Pongo2)**, **EJS**, **Go Templates**
-- Visual theme configuration — `config.json` declarations are rendered as a UI form, no file editing required
-- Dark mode and responsive layout support
+- Ships with Flavor, Amore, iNotes, Notes, Fly, Simple and more, switchable in one click
+- The [official theme repository](https://github.com/Gridea-Pro/gridea-pro-themes) offers 30+ themes; preview them in the [theme gallery](https://gridea.pro/themes/)
+- Three template engines: **Jinja2 (Pongo2, recommended)**, **Go Templates** and **EJS**
+- Theme settings are declared in the theme's `config.json` and shown as a visual form in the app
+- Compatible with legacy Gridea themes, including LESS stylesheets
 
-### 🚀 Deployment
+### Publishing
 
-- One-click deploy to 5 platforms: GitHub Pages, Vercel, Netlify, Coding, SFTP/FTP
-- Pure Go Git engine built in — **no system Git required**, more reliable syncing
-- CDN media upload: automatically sync images and assets to a GitHub repository on deploy, with customizable path templates
-- Custom domain (CNAME) support
+- Publish in one click to **GitHub Pages, Netlify, Vercel, Coding Pages**, or your own server over **SFTP / FTP**; enable several targets at once
+- OAuth sign-in for GitHub, Netlify and Vercel; tokens and passwords are stored in the system keychain
+- Built-in Git engine written in pure Go, so **no system Git is required**
+- Image CDN: images are uploaded to a CDN on publish, keeping the site repository small
+- Custom domains (CNAME)
+- Automatic app updates
 
-### 🔍 SEO
+### SEO
 
-- Auto-generates `sitemap.xml` (with image metadata), `robots.txt`, RSS/Atom Feed
-- Open Graph and Twitter Card meta tags for social sharing
-- JSON-LD structured data
-- Google Analytics, Baidu Analytics, Google Search Console verification
+- Generates `sitemap.xml` (with image data), `robots.txt` and RSS / Atom feeds
+- Open Graph and Twitter Card tags, plus JSON-LD structured data
+- Google Analytics, Baidu Analytics and Google Search Console verification
 - Custom `<head>` code injection
 
-### 💬 Comment Systems
+### Comments
 
-7 comment systems built in — enable with a checkbox, no manual code integration needed:
+Seven comment systems, each enabled with a checkbox: Gitalk, Giscus, Disqus, Valine, Waline, Twikoo and Cusdis.
 
-<table>
-  <tr>
-    <td align="center"><b>Gitalk</b></td>
-    <td align="center"><b>Giscus</b></td>
-    <td align="center"><b>Disqus</b></td>
-    <td align="center"><b>Valine</b></td>
-    <td align="center"><b>Waline</b></td>
-    <td align="center"><b>Twikoo</b></td>
-    <td align="center"><b>Cusdis</b></td>
-  </tr>
-</table>
+### AI integration (MCP)
 
-### 🤖 AI Integration (MCP)
+Gridea Pro includes an [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server, so AI assistants such as Claude and Cursor can manage your blog directly.
 
-Gridea Pro implements the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/), letting AI assistants like Claude and Cursor manage your blog directly:
+**36 MCP tools** covering the whole workflow:
 
-**25+ MCP tools** covering the full blog workflow:
+| Area | Capabilities |
+|------|--------------|
+| Posts | List, read, create, update, delete |
+| Memos | List, create, update, delete, heatmap stats |
+| Tags / categories | Full CRUD |
+| Menus / links | Full CRUD |
+| Comments | List, reply, delete |
+| Themes | List themes, read and update theme settings |
+| Site | Read and update global settings |
+| Render & publish | Trigger rendering and publishing (publishing must be enabled explicitly) |
 
-| Category | Tools |
-|----------|-------|
-| Posts | list, get, create, update, delete |
-| Memos | list, create, update, delete, heatmap stats |
-| Tags / Categories | full CRUD |
-| Menus / Links | full CRUD |
-| Comments | list, reply, delete |
-| Themes | list themes, get / update theme config |
-| Site | get / update global settings |
-| Render & Deploy | trigger render, trigger deploy (opt-in) |
+**5 built-in workflow prompts**: writing assistant, turning memos into a post, content review, site health check and post translation.
 
-**5 built-in workflow prompts**: writing assistant, memo-to-post, content review, site health check, post translation.
-
-**MCP configuration example:**
+**MCP configuration example** (Windows):
 
 ```json
 {
@@ -188,140 +171,142 @@ Gridea Pro implements the [Model Context Protocol (MCP)](https://modelcontextpro
 }
 ```
 
-> The `command` points to a **standalone `gridea-pro-mcp.exe` binary** (shipped alongside the GUI client `Gridea Pro.exe`; they are two separate programs), not a `--mcp` mode of the GUI. `SOURCE_DIR` is the Gridea Pro data directory (default `~/Documents/Gridea Pro`).
+- `command` points to the **standalone `gridea-pro-mcp` program**, which ships alongside the GUI app. On macOS it is at `/Applications/Gridea Pro.app/Contents/MacOS/gridea-pro-mcp`.
+- `SOURCE_DIR` is your Gridea Pro site directory, `~/Documents/Gridea Pro` by default.
+- With `DEPLOY_ENABLED=true` the AI can trigger publishing. It is off by default.
+- MCP responses can arrive out of order; match them by JSON-RPC `id`. See [#118](https://github.com/Gridea-Pro/gridea-pro/issues/118).
 
-> ⚠️ **Response order**: MCP responses may arrive out of order. The stdio transport from [mark3labs/mcp-go](https://github.com/mark3labs/mcp-go) v0.43.2 processes handlers concurrently in goroutines. **Match responses by JSON-RPC `id`**, not by arrival order. See [#118](https://github.com/Gridea-Pro/gridea-pro/issues/118).
+**Model providers**: a built-in free model (20 requests per day) works without an API key. You can also connect OpenAI, Anthropic, Gemini, DeepSeek, Kimi, Qwen, GLM, Doubao, Mistral, xAI, OpenRouter or any OpenAI-compatible service.
 
-> Set `DEPLOY_ENABLED=true` to allow AI to trigger deployments. Disabled by default — requires manual confirmation.
+### PWA and languages
 
-**Built-in AI model**: Use the built-in free model with no API key required (20 calls/day limit). Or connect your own: 13 providers supported, including OpenAI, Anthropic, DeepSeek, Gemini, Kimi, Qwen, GLM, and more.
+- Turn your blog into a PWA in one click, with configurable name, icons and theme color
+- The app interface is available in 11 languages: Simplified Chinese, Traditional Chinese, English, Japanese, Korean, German, Spanish, French, Italian, Portuguese (Brazil) and Russian
 
-### 📱 PWA Support
+## Download
 
-- Enable Progressive Web App with a single toggle
-- Configurable: app name, icon, theme color, screen orientation, and more
-- Users can "install" your blog to their phone or desktop for offline access
+Get the installer for your platform from the [download page](https://gridea.pro/download/) or [GitHub Releases](https://github.com/Gridea-Pro/gridea-pro/releases/latest):
 
-### 🌍 Internationalization
+| Platform | Package | Requirements |
+|----------|---------|--------------|
+| macOS | `.dmg` (Apple silicon / Intel) | macOS 12 or later |
+| Windows | Installer or portable `.exe` (x64 / ARM64) | Windows 10 or later with the WebView2 runtime |
+| Linux | `.deb` / `.rpm` / `.AppImage` (x86_64) | deb: Ubuntu 24.04+; rpm: Fedora 39+; AppImage needs WebKit2GTK 4.1 |
 
-The app interface supports **11 languages**:
+> [!TIP]
+> - macOS says the app "is damaged and can't be opened": run `xattr -cr "/Applications/Gridea Pro.app"` in Terminal, then open it again.
+> - Windows SmartScreen blocks the installer: click "More info" → "Run anyway" (installers are not yet code-signed).
+> - The AppImage asks for FUSE: run `sudo dnf install fuse-libs` on Fedora or `sudo apt install libfuse2` on Ubuntu.
 
-`English` · `简体中文` · `繁體中文` · `日本語` · `한국어` · `Deutsch` · `Español` · `Français` · `Italiano` · `Português (BR)` · `Русский`
+### Migrating from Gridea
 
----
+Point the site directory in Gridea Pro at your existing Gridea data directory. The migration runs automatically on launch. Back up first; see the [migration guide](https://gridea.pro/docs/getting-started/migration/) (Chinese).
 
-## Getting Started
+## Theme development
 
-### Download & Install
+Gridea Pro supports three template engines; Jinja2 (Pongo2) is recommended. Theme layout:
 
-Download the installer for your platform from the [Releases](https://github.com/Gridea-Pro/gridea-pro/releases) page:
+```
+my-theme/
+├── config.json          # Theme settings schema (rendered as a form in the app)
+├── templates/
+│   ├── index.html       # Home page
+│   ├── post.html        # Post page
+│   ├── tag.html         # Tag page
+│   ├── archives.html    # Archives
+│   └── partials/        # Reusable partials
+└── assets/
+    ├── styles/
+    └── scripts/
+```
 
-| Platform | Package |
-|----------|---------|
-| macOS | `.dmg` |
-| Windows | `.exe` |
-| Linux | `.AppImage` / `.deb` / `.rpm` |
+- Docs (Chinese): [theme guide](https://gridea.pro/docs/themes/) · [template variables](https://gridea.pro/docs/themes/variables/) · [config schema](https://gridea.pro/docs/themes/config-schema/)
+- Submit a theme: [Gridea-Pro/gridea-pro-themes](https://github.com/Gridea-Pro/gridea-pro-themes)
+- Build themes with AI: [theme-builder-skill](https://github.com/Gridea-Pro/theme-builder-skill)
 
-Double-click to install and start writing.
+## FAQ
 
-> **AppImage Note**: Some Linux distributions (e.g., newer Fedora) do not ship with FUSE by default. If you encounter an "AppImages require FUSE" error, install it manually: `sudo dnf install fuse-libs` (Fedora) or `sudo apt install libfuse2` (Ubuntu).
+### What is Gridea Pro?
 
-**Migrating from Gridea**: Point the "Site Directory" setting to your existing Gridea data folder. Gridea Pro will migrate your data automatically on first launch — no manual steps required.
+Gridea Pro is a free, open-source, cross-platform desktop client for writing static blogs. You write in Markdown on your own computer; Gridea Pro generates a static website and publishes it to GitHub Pages, Netlify, Vercel or your own server in one click.
 
-### Build from Source
+### Who develops Gridea Pro?
 
-**Prerequisites**: Go 1.22+, Node.js 18+, [Wails v2](https://wails.io/)
+Gridea Pro is created and maintained by Eliauk (GitHub: [@Tespera](https://github.com/Tespera)), with contributions from the community. See [Author](#author).
+
+### How is Gridea Pro related to Gridea?
+
+Gridea Pro is an independent, ground-up rewrite of Gridea and is not made by the original Gridea team. It is compatible with Gridea sites and themes, and can migrate an existing Gridea site directly.
+
+### Is Gridea Pro free?
+
+Yes, completely. The source code is licensed under GPL-3.0. The built-in free AI model allows 20 requests per day; connecting your own model provider removes the limit.
+
+### Where is my data stored?
+
+Everything stays in your local site directory (`~/Documents/Gridea Pro` by default). Publishing uploads only the generated static files to the platforms you choose. Gridea Pro runs no servers of its own; when you use AI features, the relevant content is sent to the model provider you select.
+
+### More questions
+
+See the [FAQ](https://gridea.pro/docs/faq/) (Chinese) or ask in [Discussions](https://github.com/Gridea-Pro/gridea-pro/discussions).
+
+## Community
+
+Report bugs and request features in [Issues](https://github.com/Gridea-Pro/gridea-pro/issues), and ask questions in [Discussions](https://github.com/Gridea-Pro/gridea-pro/discussions). Chinese-speaking users can also join the WeChat group via the QR code in the [Chinese README](README.md#社区).
+
+## Contributing
+
+Issues and pull requests are welcome. Please read [CONTRIBUTING.en.md](CONTRIBUTING.en.md) first.
+
+### Build from source
+
+Requirements: Go 1.25+, Node.js 20+, [Wails v2](https://wails.io/)
 
 ```bash
 git clone https://github.com/Gridea-Pro/gridea-pro.git
 cd gridea-pro
-
 cd frontend && npm install && cd ..
 
-# Development mode (hot reload)
+# Development mode with hot reload
 wails dev
 
 # Production build
 wails build
 ```
 
----
+## Author
 
-## Theme Development
-
-Gridea Pro supports three template engines. Jinja2 (Pongo2) is recommended. Theme directory structure:
-
-```
-my-theme/
-├── config.json          # Theme config declaration (auto-generates the settings UI panel)
-├── templates/
-│   ├── index.html       # Home page
-│   ├── post.html        # Post detail page
-│   ├── tag.html         # Tag page
-│   ├── archives.html    # Archives page
-│   └── partials/        # Reusable components
-└── assets/
-    ├── styles/
-    └── scripts/
-```
-
-See the [Theme Development Guide](https://github.com/Gridea-Pro/gridea-pro/wiki/Theme-Development) for full documentation.
-
----
-
-## Contributing
-
-Issues and Pull Requests are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before contributing.
-
-```bash
-# Fork and clone
-git clone https://github.com/<your-username>/gridea-pro.git
-
-# Create a feature branch
-git checkout -b feature/your-feature
-
-# Submit a PR when ready
-```
-
----
-
-## Author & Design Notes
-
-Gridea Pro is built by [Eliauk](https://github.com/Tespera). The product thinking, architecture and trade-offs behind it are written up on the author's blog, [述尔](https://are.ink/) (in Chinese):
+Gridea Pro is created and maintained by **Eliauk**, a software product manager based in Shenzhen and a long-time Gridea user. After Gridea stopped being maintained, Eliauk rewrote the client from scratch and documents the product thinking, architecture and technical trade-offs behind it on the blog [Shu'er](https://are.ink/) (in Chinese):
 
 - [Why I revived Gridea](https://are.ink/post/why-i-revived-gridea/)
-- [A deep dive into the Gridea Pro backend architecture](https://are.ink/post/gridea-pro-backend-architecture-deep-dive/)
-- [Design philosophy and trade-offs of the Gridea Pro MCP server](https://are.ink/post/gridea-pro-mcp-design-philosophy/)
-- [Building an automatic CDN image pipeline](https://are.ink/post/gridea-pro-cdn/)
-- [Gridea Pro vs Hexo vs Hugo](https://are.ink/post/gridea-pro-vs-hexo-vs-hugo/)
+- [Inside the Gridea Pro backend architecture](https://are.ink/post/gridea-pro-backend-architecture-deep-dive/)
+- [Design principles and trade-offs of Gridea Pro MCP](https://are.ink/post/gridea-pro-mcp-design-philosophy/)
+- [Building an image CDN into Gridea Pro](https://are.ink/post/gridea-pro-cdn/)
+- [Gridea Pro vs Hexo vs Hugo: an in-depth comparison](https://are.ink/post/gridea-pro-vs-hexo-vs-hugo/)
 - [Migrating from Gridea to Gridea Pro](https://are.ink/post/migrating-from-gridea-to-gridea-pro/)
 
----
+Thanks to all [contributors](https://github.com/Gridea-Pro/gridea-pro/graphs/contributors).
 
 ## Acknowledgements
 
-- [Gridea](https://github.com/getgridea/gridea) — The original project. Thanks to [@EryouHao](https://github.com/EryouHao) for the pioneering work
-- [Wails](https://wails.io/) — Go desktop application framework
-- [Vue 3](https://vuejs.org/) — Frontend framework
-- [Monaco Editor](https://microsoft.github.io/monaco-editor/) — Editor engine
-- [Pongo2](https://github.com/flosch/pongo2) — Jinja2-compatible template engine for Go
-- [KaTeX](https://katex.org/) — Math formula rendering
-- [Tailwind CSS](https://tailwindcss.com/) — CSS framework
+- [Gridea](https://github.com/getgridea/gridea), the original project by [@EryouHao](https://github.com/EryouHao)
+- [Wails](https://wails.io/), Go desktop app framework
+- [Vue 3](https://vuejs.org/), frontend framework
+- [Monaco Editor](https://microsoft.github.io/monaco-editor/), editor engine
+- [Pongo2](https://github.com/flosch/pongo2), Jinja2 template engine for Go
+- [KaTeX](https://katex.org/), math rendering
+- [Tailwind CSS](https://tailwindcss.com/), CSS framework
 
----
-
-## Star History
+## Star history
 
 <a href="https://www.star-history.com/#Gridea-Pro/gridea-pro&Date">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Gridea-Pro/gridea-pro&type=Date&theme=dark" />
     <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Gridea-Pro/gridea-pro&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Gridea-Pro/gridea-pro&type=Date" />
+    <img alt="Gridea Pro GitHub star history chart" src="https://api.star-history.com/svg?repos=Gridea-Pro/gridea-pro&type=Date" />
   </picture>
 </a>
 
----
-
 ## License
 
-[GPL-3.0](LICENSE) &copy; Gridea Pro
+[GPL-3.0](LICENSE) © 2026 Eliauk and Gridea Pro contributors
