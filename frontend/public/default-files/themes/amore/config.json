@@ -1,7 +1,7 @@
 {
   "name": "Amore",
   "version": "1.1.0",
-  "author": "Amore",
+  "author": "Eliauk",
   "description": "极简博客主题，聚焦阅读体验，支持明/暗双主题、阅读进度、闪念热力图等。",
   "engine": "ejs",
   "templateEngine": "ejs",
