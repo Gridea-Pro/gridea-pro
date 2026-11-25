@@ -1,7 +1,8 @@
 {
   "name": "Notes",
   "version": "1.2.0",
-  "author": "EryouHao",
+  "author": "Eliauk",
+  "credits": "原作：EryouHao（Gridea 原版主题）",
   "repository": "https://github.com/getgridea/gridea-theme-notes",
   "customConfig": [
     {

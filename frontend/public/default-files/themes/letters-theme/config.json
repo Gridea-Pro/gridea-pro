@@ -2,7 +2,7 @@
   "name": "Letters",
   "version": "1.0.0",
   "description": "极简 Newsletter 风格博客主题，专注阅读体验",
-  "author": "Gridea Pro",
+  "author": "Eliauk",
   "license": "MIT",
   "engine": "jinja2",
   "minGrideaVersion": "1.0.0",

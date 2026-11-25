@@ -1,7 +1,7 @@
 {
   "name": "Sonnet",
   "version": "1.0.0",
-  "author": "Gridea Pro",
+  "author": "Eliauk",
   "description": "A premium dark theme inspired by modern tech aesthetics. Features glassmorphism cards, smooth gradients, and elegant typography.",
   "engine": "gotemplate",
   "templateEngine": "gotemplate",

@@ -7,10 +7,10 @@
 <script>
 
     var options = {
-        shortname: '{{.CommentSetting.DisqusShortname}}',
-        apikey: '{{.CommentSetting.DisqusApiKey}}',
+        shortname: '{{.CommentSetting.Shortname}}',
+        apikey: '{{.CommentSetting.APIKey}}',
     }
-    var disqusApi = '{{.CommentSetting.DisqusApi}}';
+    var disqusApi = '{{.CommentSetting.API}}';
     if (disqusApi) {
         options.api = disqusApi;
     }

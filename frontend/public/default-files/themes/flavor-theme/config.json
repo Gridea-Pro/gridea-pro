@@ -1,7 +1,7 @@
 {
   "name": "flavor",
   "version": "1.0.0",
-  "author": "Gridea Pro",
+  "author": "Eliauk",
   "description": "A dark editorial theme inspired by modern newsletter platforms. Features cinematic hero sections, compact post cards, and Spectral serif typography.",
   "engine": "jinja2",
   "templateEngine": "jinja2",

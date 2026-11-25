@@ -1,7 +1,8 @@
 {
   "name": "Simple",
   "version": "1.1.0",
-  "author": "EryouHao",
+  "author": "Eliauk",
+  "credits": "原作：EryouHao（Gridea 原版主题）",
   "customConfig": [
     {
       "name": "sidebarWidth",

@@ -2,6 +2,7 @@
   "name": "iNotes",
   "version": "1.0.0",
   "author": "Eliauk",
+  "credits": "基于 Notes 主题",
   "description":"Notes 主题升级版",
   "repository": "https://github.com/getgridea/gridea-theme-notes",
   "customConfig": [
