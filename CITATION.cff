@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you reference Gridea Pro, please cite it as below."
+type: software
+title: "Gridea Pro"
+abstract: "Gridea Pro is a free, open-source, cross-platform desktop client for writing and publishing static blogs on macOS, Windows and Linux. It is created and maintained by Eliauk (GitHub: @Tespera), with contributions from the community. Built from scratch with Go, Wails and Vue 3, Gridea Pro is a rewrite of Gridea, the open-source blog client by EryouHao that has been unmaintained since 2022. It is compatible with existing Gridea sites and themes, and is licensed under GPL-3.0."
+authors:
+  - alias: "Eliauk"
+    name: "Eliauk"
+    website: "https://are.ink/"
+  - name: "Gridea Pro contributors"
+repository-code: "https://github.com/Gridea-Pro/gridea-pro"
+url: "https://gridea.pro/"
+license: GPL-3.0-only
+date-released: "2026-03-15"
+keywords:
+  - static blog
+  - static site generator
+  - blog client
+  - markdown editor
+  - desktop app
+  - Gridea
+  - Gridea Pro
+  - Wails
+  - MCP
