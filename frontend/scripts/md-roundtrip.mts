@@ -103,7 +103,8 @@ const SAMPLES: Array<{ name: string; md: string; expect?: string }> = [
   { name: 'subsup', md: 'H~2~O and x^2^' },
   { name: 'inline-math', md: 'inline $E=mc^2$ here' },
   { name: 'block-math', md: '$$\n\\int_0^1 x dx\n$$' },
-  { name: 'emoji', md: 'hello :smile: world' },
+  { name: 'emoji-unicode', md: 'hello 😄 ❤️ 🚀 world' },
+  { name: 'emoji-shortcode', md: 'hello :smile: world', expect: 'hello 😄 world' },
   { name: 'more-break', md: 'intro\n\n<!-- more -->\n\nbody' },
   { name: 'footnote', md: 'text with note[^1]\n\n[^1]: the note' },
   { name: 'footnote-dup-ref', md: 'see[^1] and again[^1] here\n\n[^1]: shared note' },
@@ -229,7 +230,7 @@ for (const c of cases) {
   const target = c.expect ?? c.md
   const onePass = out1 === out2
   const converged = out2 === out3
-  const miss = missingWords(c.md, out1)
+  const miss = missingWords(isSample && c.expect ? target : c.md, out1)
   const addedEntities = entityCount(out1) - entityCount(c.md)
   const exact = norm(out1) === norm(target)
   if (onePass) idem1++
