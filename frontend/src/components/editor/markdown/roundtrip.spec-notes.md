@@ -38,7 +38,7 @@
 | 上标 | `Script.ts` | `sup` | `^x^` | markdown-it-sup |
 | 行内公式 | `Math.ts` | `inlineMath` | `$x$` | **@iktakahiro/markdown-it-katex 同款界定规则** |
 | 块公式 | `Math.ts` | `blockMath` | `$$\nx\n$$` | 同上 |
-| Emoji | `Emoji.ts` | `emoji` | `:name:` | markdown-it-emoji（仅命中已知短码） |
+| Emoji | `Emoji.ts` | `emoji` | 原生 Unicode（兼容 `:name:` 读入） | 兼容 markdown-it-emoji 历史短码并输出标准 Unicode |
 | 脚注引用/定义 | `Footnote.ts` | `footnoteRef`/`footnoteDef` | `[^id]` / `[^id]: text` | markdown-it-footnote（基础版） |
 | 阅读更多 | `MoreBreak.ts` | `html`(拦截 more 注释) | `<!-- more -->` | 后端 more 正则 |
 | 原始 HTML 透传 | `RawHtml.ts` | `html`(兜底) | 原样 | html:true |
